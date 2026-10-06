@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VTS 근무표 인식 테스트</title>
+<style>
+  :root{--bg:#0f1720;--panel:#172230;--line:#2a3747;--accent:#3b9eff;--text:#e8eef5;--muted:#8fa3b8;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;padding:16px;}
+  h1{font-size:18px;margin:0 0 4px;}
+  p.sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;}
+  .step h2{font-size:14px;margin:0 0 10px;color:var(--accent);}
+  button{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:13px;cursor:pointer;}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  input[type=number]{width:56px;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:4px;padding:4px;}
+  label{font-size:13px;color:var(--muted);margin-right:4px;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+  canvas{max-width:100%;border:1px solid var(--line);border-radius:6px;}
+  #srcCanvas{max-width:none;touch-action:pan-x pan-y;}
+  #srcWrap{overflow:auto;max-height:62vh;}
+  #warpWrap{overflow:auto;}
+  #zoomRow{display:flex;align-items:center;gap:8px;margin:8px 0;}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-top:8px;}
+  td,th{border:1px solid var(--line);padding:2px;text-align:center;}
+  td input{width:100%;background:transparent;border:none;color:var(--text);text-align:center;font-size:12px;}
+  th{background:#1c2a3a;color:var(--muted);font-weight:normal;}
+  #progress{font-size:12px;color:var(--muted);}
+  .hint{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<h1>VTS 근무표 인식 테스트</h1>
+<p class="sub">사진 선택 → 네 모서리 터치(순서: 좌상→우상→우하→좌하) → 행/열 입력 → 인식. 브라우저에서만 동작, 서버 전송 없음.</p>
+
+<div class="step">
+  <h2>1. 사진 선택</h2>
+  <div id="errBox" style="display:none;background:#5a1f1f;color:#ffb3b3;padding:8px;border-radius:6px;font-size:12px;margin-bottom:8px;white-space:pre-wrap;"></div>
+  <input type="file" id="fileInput" accept="image/*">
+  <div id="zoomRow"><label>확대</label><input type="range" id="zoom" min="100" max="400" value="100"><span id="zoomVal">100%</span></div>
+  <div id="srcWrap"><canvas id="srcCanvas"></canvas></div>
+  <canvas id="loupe" width="160" height="160" style="display:none;position:fixed;top:14px;right:14px;border:2px solid var(--accent);border-radius:8px;z-index:50;background:#000;"></canvas>
+  <p class="hint">표의 네 모서리를 순서대로 탭하세요(좌상→우상→우하→좌하). 찍은 점은 손가락으로 끌어서 미세 조정할 수 있고, 끄는 동안 우상단에 확대경이 뜹니다.</p>
+  <div class="row"><button class="ghost" id="resetCorners">모서리 초기화</button><button class="ghost" id="undoCorner">마지막 점 취소</button></div>
+</div>
+
+<div class="step">
+  <h2>2. 격자 구성</h2>
+  <div class="row">
+    <button class="ghost" id="presetRoster">프리셋: 명단표(18행×6열)</button>
+    <button class="ghost" id="presetDay">프리셋: 주간 시간표(11행×10열)</button>
+    <button class="ghost" id="presetNight">프리셋: 야간 시간표(11행×16열)</button>
+  </div>
+  <div class="row">
+    <label>행(섹터+대기+휴게 등)</label><input type="number" id="rows" value="11" min="1" max="40">
+    <label>열(시간 칸)</label><input type="number" id="cols" value="10" min="1" max="40">
+  </div>
+  <div class="row">
+    <label>헤더 행 수(상단 라벨, 생략 가능)</label><input type="number" id="headerRows" value="0" min="0" max="5">
+    <label>헤더 열 수(좌측 라벨)</label><input type="number" id="headerCols" value="1" min="0" max="5">
+  </div>
+  <div class="row">
+    <label>열 폭 비율</label><input type="text" id="colRatio" placeholder="예: 1,3,4,1,3,4 (비우면 균등폭)" style="width:220px">
+  </div>
+  <p class="hint">명단표처럼 번호/계급/서명 칸 너비가 서로 다르면, 균등폭으로는 글자가 칸 경계에서 잘려 인식이 깨집니다. 위 보정된 사진을 보고 실제 칸 너비 비율을 숫자로 입력하세요(쉼표 구분, 열 개수와 같은 개수).</p>
+  <button id="warpBtn" disabled>원근 보정 + 격자 표시</button>
+  <div id="warpWrap"><canvas id="warpCanvas"></canvas></div>
+</div>
+
+<div class="step">
+  <h2>3. 인식</h2>
+  <div class="row">
+    <button id="ocrBtn" disabled>셀별 OCR 실행</button>
+    <span id="progress"></span>
+  </div>
+  <p class="hint">셀마다 Tesseract(한글+영문)로 개별 인식합니다. 행×열이 많으면 시간이 걸립니다.</p>
+  <div id="resultWrap"></div>
+  <div class="row">
+    <button class="ghost" id="exportBtn">결과 CSV 복사</button>
+    <button id="saveSetBtn" disabled>이 결과 저장하고 다음 표 찍기</button>
+  </div>
+  <p class="hint">사진 한 장에 명단표·시간표가 같이 있으면: 결과를 먼저 저장 → "모서리 초기화" → 같은 사진에서 다음 표 모서리를 새로 찍고 반복하세요.</p>
+  <div id="savedList"></div>
+  <div class="row"><button class="ghost" id="exportAllBtn">저장된 결과 전체 CSV 복사</button></div>
+</div>
+
+<script>
+window.onerror=function(msg,src,line,col,err){
+  const box=document.getElementById('errBox');
+  box.style.display='block';
+  box.textContent='JS 오류: '+msg+' (줄 '+line+')'+(err&&err.stack?'\n'+err.stack:'');
+  return false;
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" onerror="document.getElementById('errBox').style.display='block';document.getElementById('errBox').textContent='Tesseract.js 로딩 실패 — 인터넷 연결 또는 CDN 접근을 확인하세요. (이 메시지가 보여도 1단계 사진 선택은 동작해야 합니다)'"></script>
+<script>
+const srcCanvas=document.getElementById('srcCanvas'), srcCtx=srcCanvas.getContext('2d');
+const warpCanvas=document.getElementById('warpCanvas'), warpCtx=warpCanvas.getContext('2d');
+const loupe=document.getElementById('loupe'), loupeCtx=loupe.getContext('2d');
+const cleanCanvas=document.createElement('canvas'), cleanCtx=cleanCanvas.getContext('2d'); // 마커 없는 원본(워프용 픽셀 소스)
+let img=new Image(), corners=[], dragIdx=-1, baseDisplayWidth=900;
+const WARP_W=1000;
+function applyZoom(){
+  const pct=+document.getElementById('zoom').value;
+  srcCanvas.style.width=(baseDisplayWidth*pct/100)+'px';
+  srcCanvas.style.height='auto';
+}
+document.getElementById('zoom').addEventListener('input',e=>{
+  document.getElementById('zoomVal').textContent=e.target.value+'%';
+  applyZoom();
+});
+
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const box=document.getElementById('errBox'); box.style.display='none';
+  const f=e.target.files[0];
+  if(!f){ box.style.display='block'; box.textContent='파일이 선택되지 않았습니다.'; return; }
+  const url=URL.createObjectURL(f);
+  img=new Image();
+  img.onload=()=>{
+    const scale=Math.min(1, 1400/img.width);
+    srcCanvas.width=cleanCanvas.width=img.width*scale;
+    srcCanvas.height=cleanCanvas.height=img.height*scale;
+    cleanCtx.drawImage(img,0,0,cleanCanvas.width,cleanCanvas.height);
+    corners=[]; document.getElementById('warpBtn').disabled=true;
+    baseDisplayWidth=Math.min(window.innerWidth-48, srcCanvas.width);
+    document.getElementById('zoom').value=100;
+    document.getElementById('zoomVal').textContent='100%';
+    applyZoom();
+    redrawSrc();
+  };
+  img.onerror=()=>{ box.style.display='block'; box.textContent='이미지를 불러오지 못했습니다. 다른 사진/형식으로 시도해주세요.'; };
+  img.src=url;
+});
+
+function canvasPos(e){
+  const r=srcCanvas.getBoundingClientRect();
+  const scaleX=srcCanvas.width/r.width, scaleY=srcCanvas.height/r.height;
+  return {x:(e.clientX-r.left)*scaleX, y:(e.clientY-r.top)*scaleY};
+}
+function nearestCornerIdx(p){
+  const threshold=28*(srcCanvas.width/srcCanvas.getBoundingClientRect().width);
+  let best=-1,bd=threshold;
+  corners.forEach((c,i)=>{const d=Math.hypot(c.x-p.x,c.y-p.y); if(d<bd){bd=d;best=i;}});
+  return best;
+}
+function updateLoupe(p){
+  loupe.style.display='block';
+  const Z=3, S=160/Z; // 원본에서 잘라올 정사각형 한 변
+  loupeCtx.clearRect(0,0,160,160);
+  loupeCtx.drawImage(cleanCanvas, p.x-S/2, p.y-S/2, S, S, 0,0,160,160);
+  loupeCtx.strokeStyle='#ff3c3c'; loupeCtx.lineWidth=1;
+  loupeCtx.beginPath(); loupeCtx.moveTo(80,0); loupeCtx.lineTo(80,160); loupeCtx.moveTo(0,80); loupeCtx.lineTo(160,80); loupeCtx.stroke();
+}
+// 모서리 근처를 누르면 '드래그'로 처리(화면 스크롤을 막고 점을 옮김), 빈 곳을 누르면 그대로 두어
+// 브라우저 기본 팬/스크롤이 동작하게 둔다(확대했을 때 빈 곳을 스와이프해서 이동할 수 있도록).
+srcCanvas.addEventListener('pointerdown',e=>{
+  const p=canvasPos(e);
+  const idx=nearestCornerIdx(p);
+  if(idx<0) return; // 빈 곳: 아무것도 하지 않음 → 브라우저가 스크롤 처리
+  e.preventDefault();
+  dragIdx=idx;
+  corners[dragIdx]=p;
+  redrawSrc(); updateLoupe(p);
+});
+srcCanvas.addEventListener('pointermove',e=>{
+  if(dragIdx<0) return;
+  e.preventDefault();
+  const p=canvasPos(e);
+  corners[dragIdx]=p;
+  redrawSrc(); updateLoupe(p);
+});
+window.addEventListener('pointerup',()=>{
+  if(dragIdx<0)return;
+  dragIdx=-1; loupe.style.display='none';
+  if(corners.length===4) document.getElementById('warpBtn').disabled=false;
+});
+// 탭(눌렀다 거의 안 움직이고 뗌) = 새 모서리 추가. 드래그였던 경우는 위 pointerdown에서 이미 처리됨.
+srcCanvas.addEventListener('click',e=>{
+  if(corners.length>=4) return;
+  const p=canvasPos(e);
+  if(nearestCornerIdx(p)>=0) return; // 기존 점 근처 탭은 무시(드래그로 이미 처리됨)
+  corners.push(p);
+  redrawSrc();
+  if(corners.length===4) document.getElementById('warpBtn').disabled=false;
+});
+document.getElementById('resetCorners').onclick=()=>{corners=[];redrawSrc();document.getElementById('warpBtn').disabled=true;};
+document.getElementById('undoCorner').onclick=()=>{corners.pop();redrawSrc();document.getElementById('warpBtn').disabled=true;};
+
+function redrawSrc(){
+  srcCtx.drawImage(cleanCanvas,0,0);
+  srcCtx.strokeStyle='#3b9eff'; srcCtx.fillStyle='rgba(59,158,255,.9)'; srcCtx.lineWidth=2; srcCtx.font='16px sans-serif';
+  corners.forEach((p,i)=>{
+    srcCtx.beginPath(); srcCtx.arc(p.x,p.y,10,0,Math.PI*2); srcCtx.fill();
+    srcCtx.fillStyle='#fff'; srcCtx.fillText(i+1,p.x-4,p.y+5); srcCtx.fillStyle='rgba(59,158,255,.9)';
+  });
+  if(corners.length>1){
+    srcCtx.beginPath(); srcCtx.moveTo(corners[0].x,corners[0].y);
+    for(let i=1;i<corners.length;i++) srcCtx.lineTo(corners[i].x,corners[i].y);
+    if(corners.length===4) srcCtx.closePath();
+    srcCtx.stroke();
+  }
+}
+
+// --- 3x3 homography: maps 'to' rectangle pixel -> 'from' quad pixel (backward mapping) ---
+function computeHomography(from,to){
+  // solves M such that M*from = to (8 unknowns, h22=1), via Gaussian elimination
+  const A=[],b=[];
+  for(let i=0;i<4;i++){
+    const {x:sx,y:sy}=from[i], {x:dx,y:dy}=to[i];
+    A.push([sx,sy,1,0,0,0,-sx*dx,-sy*dx]); b.push(dx);
+    A.push([0,0,0,sx,sy,1,-sx*dy,-sy*dy]); b.push(dy);
+  }
+  for(let col=0;col<8;col++){
+    let piv=col;
+    for(let r=col+1;r<8;r++) if(Math.abs(A[r][col])>Math.abs(A[piv][col])) piv=r;
+    [A[col],A[piv]]=[A[piv],A[col]]; [b[col],b[piv]]=[b[piv],b[col]];
+    for(let r=0;r<8;r++){
+      if(r===col)continue;
+      const f=A[r][col]/A[col][col];
+      for(let c=col;c<8;c++) A[r][c]-=f*A[col][c];
+      b[r]-=f*b[col];
+    }
+  }
+  const h=A.map((row,i)=>b[i]/row[i]);
+  return [h[0],h[1],h[2],h[3],h[4],h[5],h[6],h[7],1];
+}
+function applyH(H,x,y){
+  const d=H[6]*x+H[7]*y+H[8];
+  return {x:(H[0]*x+H[1]*y+H[2])/d, y:(H[3]*x+H[4]*y+H[5])/d};
+}
+
+let warpH=null, warpHeight=0;
+const cleanWarpCanvas=document.createElement('canvas'); // 격자선 없는 워프 결과(OCR용)
+document.getElementById('warpBtn').onclick=()=>{
+  const aspect=(()=>{
+    const w1=Math.hypot(corners[1].x-corners[0].x,corners[1].y-corners[0].y);
+    const w2=Math.hypot(corners[2].x-corners[3].x,corners[2].y-corners[3].y);
+    const h1=Math.hypot(corners[3].x-corners[0].x,corners[3].y-corners[0].y);
+    const h2=Math.hypot(corners[2].x-corners[1].x,corners[2].y-corners[1].y);
+    return ((h1+h2)/2)/((w1+w2)/2);
+  })();
+  warpHeight=Math.round(WARP_W*aspect);
+  warpCanvas.width=WARP_W; warpCanvas.height=warpHeight;
+  const dstCorners=[{x:0,y:0},{x:WARP_W,y:0},{x:WARP_W,y:warpHeight},{x:0,y:warpHeight}];
+  // H maps dst(x,y) -> src(x,y)  (so build it with from=dst,to=src)
+  warpH=computeHomography(dstCorners, corners);
+  const cleanImgData=cleanCtx.getImageData(0,0,cleanCanvas.width,cleanCanvas.height); // 마커 없는 원본에서 샘플링
+  const out=warpCtx.createImageData(WARP_W,warpHeight);
+  for(let y=0;y<warpHeight;y++)for(let x=0;x<WARP_W;x++){
+    const s=applyH(warpH,x,y);
+    const sx=Math.round(s.x), sy=Math.round(s.y);
+    const di=(y*WARP_W+x)*4;
+    if(sx>=0&&sy>=0&&sx<cleanCanvas.width&&sy<cleanCanvas.height){
+      const si=(sy*cleanCanvas.width+sx)*4;
+      out.data[di]=cleanImgData.data[si]; out.data[di+1]=cleanImgData.data[si+1];
+      out.data[di+2]=cleanImgData.data[si+2]; out.data[di+3]=255;
+    } else { out.data[di+3]=0; }
+  }
+  warpCtx.putImageData(out,0,0);
+  cleanWarpCanvas.width=WARP_W; cleanWarpCanvas.height=warpHeight;
+  cleanWarpCanvas.getContext('2d').putImageData(out,0,0); // 격자선 없는 인식용 원본 보관
+  drawGrid();
+  document.getElementById('ocrBtn').disabled=false;
+};
+
+function getGridSpec(){
+  return {
+    rows:+document.getElementById('rows').value,
+    cols:+document.getElementById('cols').value,
+    hr:+document.getElementById('headerRows').value,
+    hc:+document.getElementById('headerCols').value
+  };
+}
+// 비율 문자열("1,3,4" 등)을 누적 경계(0~1)로 변환. 비어있거나 개수가 안 맞으면 균등폭.
+function parseBoundaries(str,count){
+  const parts=(str||'').split(',').map(s=>parseFloat(s.trim())).filter(v=>!isNaN(v)&&v>0);
+  const base=parts.length===count?parts:Array(count).fill(1);
+  const total=base.reduce((a,b)=>a+b,0);
+  let acc=0; return base.map(v=>{acc+=v; return acc/total;}); // 길이=count, 각 칸의 "오른쪽 끝" 누적 비율
+}
+function drawGrid(){
+  const {rows,cols}=getGridSpec();
+  const colB=parseBoundaries(document.getElementById('colRatio').value,cols);
+  warpCtx.strokeStyle='rgba(255,60,60,.8)'; warpCtx.lineWidth=1;
+  colB.forEach(f=>{const x=WARP_W*f;warpCtx.beginPath();warpCtx.moveTo(x,0);warpCtx.lineTo(x,warpHeight);warpCtx.stroke();});
+  warpCtx.beginPath();warpCtx.moveTo(0,0);warpCtx.lineTo(0,warpHeight);warpCtx.stroke();
+  for(let r=0;r<=rows;r++){const y=warpHeight/rows*r;warpCtx.beginPath();warpCtx.moveTo(0,y);warpCtx.lineTo(WARP_W,y);warpCtx.stroke();}
+}
+['rows','cols','headerRows','headerCols'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{if(warpH)recomputeWarp();}));
+function recomputeWarp(){document.getElementById('warpBtn').onclick();}
+function applyPreset(rows,cols,ratio){
+  document.getElementById('rows').value=rows;
+  document.getElementById('cols').value=cols;
+  document.getElementById('colRatio').value=ratio||'';
+  if(warpH) recomputeWarp(); else if(corners.length===4) document.getElementById('warpBtn').disabled=false;
+}
+// 번호(좁음)/계급/서명(넓음) × 2벌 — 실제 비율은 표마다 조금씩 다르니 격자선 보고 colRatio를 조정하세요.
+document.getElementById('presetRoster').onclick=()=>applyPreset(18,6,'1,3,4,1,3,4');
+document.getElementById('presetDay').onclick=()=>applyPreset(11,10,'');
+document.getElementById('presetNight').onclick=()=>applyPreset(11,16,'');
+
+// 그레이스케일 변환 + Otsu 임계값으로 흑백 이진화 (사진 조명 얼룩/배경 무늬 제거, 작은 글씨 인식률 개선)
+function preprocessCell(canvas){
+  const ctx=canvas.getContext('2d');
+  const id=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d=id.data, n=d.length/4;
+  const gray=new Uint8ClampedArray(n); const hist=new Array(256).fill(0);
+  for(let i=0;i<n;i++){ const v=0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]; gray[i]=v; hist[v|0]++; }
+  let sum=0; for(let t=0;t<256;t++) sum+=t*hist[t];
+  let sumB=0,wB=0,varMax=0,threshold=150;
+  for(let t=0;t<256;t++){
+    wB+=hist[t]; if(wB===0)continue;
+    const wF=n-wB; if(wF===0)break;
+    sumB+=t*hist[t];
+    const mB=sumB/wB, mF=(sum-sumB)/wF;
+    const between=wB*wF*(mB-mF)*(mB-mF);
+    if(between>varMax){varMax=between;threshold=t;}
+  }
+  for(let i=0;i<n;i++){ const v=gray[i]>threshold?255:0; d[i*4]=d[i*4+1]=d[i*4+2]=v; }
+  ctx.putImageData(id,0,0);
+}
+
+let worker=null, lastResults=null;
+document.getElementById('ocrBtn').onclick=async()=>{
+  const {rows,cols}=getGridSpec();
+  const btn=document.getElementById('ocrBtn'); btn.disabled=true;
+  const prog=document.getElementById('progress');
+  if(!worker){
+    prog.textContent='OCR 엔진(한글) 로딩 중... 수 MB 다운로드라 몇십 초 걸릴 수 있습니다.';
+    try{
+      worker=await Tesseract.createWorker('kor+eng',1,{
+        logger:m=>{ prog.textContent='엔진 로딩: '+(m.status||'')+(m.progress!=null?' '+Math.round(m.progress*100)+'%':''); }
+      });
+      await worker.setParameters({tessedit_pageseg_mode:'7'}); // 셀 하나 = 한 줄 텍스트로 가정
+    }catch(err){
+      const box=document.getElementById('errBox');
+      box.style.display='block';
+      box.textContent='한글 OCR 엔진 로딩 실패: '+(err&&err.message?err.message:err)+'\n→ 이 파일을 다운로드 앱 미리보기가 아니라 Chrome/Samsung Internet 같은 실제 브라우저로 열어서 다시 시도해주세요.';
+      btn.disabled=false; worker=null; return;
+    }
+  }
+  const colB=parseBoundaries(document.getElementById('colRatio').value,cols);
+  const cellH=warpHeight/rows;
+  const results=[];
+  const cell=document.createElement('canvas');
+  const cctx=cell.getContext('2d');
+  const big=document.createElement('canvas');
+  const bctx=big.getContext('2d');
+  const UPSCALE=3, pad=4;
+  for(let r=0;r<rows;r++){
+    results.push([]);
+    for(let c=0;c<cols;c++){
+      prog.textContent=`인식 중... 행 ${r+1}/${rows}, 열 ${c+1}/${cols}`;
+      const colLeft=(c===0?0:colB[c-1])*WARP_W, colRight=colB[c]*WARP_W;
+      const x=Math.max(0,colLeft-pad), y=Math.max(0,r*cellH-pad);
+      const w=colRight-x+pad, h=cellH-(y-(r*cellH-pad))+pad; // 가장자리(0,0) 클램프돼도 실제 자른 폭/높이만큼만 사용
+      cell.width=w; cell.height=h;
+      cctx.fillStyle='#fff'; cctx.fillRect(0,0,w,h);
+      cctx.drawImage(cleanWarpCanvas, x,y,w,h, 0,0,w,h);
+      big.width=w*UPSCALE; big.height=h*UPSCALE;
+      bctx.imageSmoothingEnabled=true;
+      bctx.drawImage(cell,0,0,big.width,big.height);
+      preprocessCell(big);
+      const {data}=await worker.recognize(big);
+      results[r].push((data.text||'').trim());
+      if(r===0&&c===0) window.__firstConf=data.confidence; // 진단용: 첫 셀 신뢰도
+    }
+  }
+  lastResults=results;
+  renderResults(results,rows,cols);
+  prog.textContent='완료 (첫 셀 신뢰도: '+(window.__firstConf!=null?window.__firstConf:'?')+' — 보통 한글이 제대로 읽히면 70 이상, 언어팩이 안 맞으면 대체로 매우 낮거나 들쭉날쭉합니다)';
+  btn.disabled=false;
+  document.getElementById('saveSetBtn').disabled=false;
+};
+
+let savedSets=[];
+function gridToCsv(grid){
+  return grid.map(row=>row.map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+}
+function currentGrid(){
+  const rows=+document.getElementById('rows').value, cols=+document.getElementById('cols').value;
+  const grid=Array.from({length:rows},()=>Array(cols).fill(''));
+  document.querySelectorAll('#resultWrap input').forEach(i=>{grid[+i.dataset.r][+i.dataset.c]=i.value.replace(/\n/g,' ');});
+  return grid;
+}
+document.getElementById('saveSetBtn').onclick=()=>{
+  const name=prompt('이 결과의 이름(예: 명단표, 주간시간표, 야간시간표)','표'+(savedSets.length+1));
+  if(name===null)return;
+  savedSets.push({name,grid:currentGrid()});
+  renderSavedList();
+  document.getElementById('resetCorners').click();
+  document.getElementById('ocrBtn').disabled=true;
+  document.getElementById('resultWrap').innerHTML='';
+  document.getElementById('saveSetBtn').disabled=true;
+};
+function renderSavedList(){
+  document.getElementById('savedList').innerHTML=savedSets.map((s,i)=>
+    `<div class="row">✅ ${s.name} (${s.grid.length}행×${s.grid[0].length}열) <button class="ghost" data-i="${i}" onclick="navigator.clipboard.writeText(gridToCsv(savedSets[${i}].grid));alert('복사됨');">CSV 복사</button></div>`
+  ).join('');
+}
+document.getElementById('exportAllBtn').onclick=()=>{
+  if(savedSets.length===0){alert('저장된 결과가 없습니다. 먼저 "이 결과 저장하고 다음 표 찍기"를 눌러주세요.');return;}
+  const text=savedSets.map(s=>`# ${s.name}\n${gridToCsv(s.grid)}`).join('\n\n');
+  navigator.clipboard.writeText(text).then(()=>alert('전체 CSV가 클립보드에 복사됐습니다.'));
+};
+
+function renderResults(results,rows,cols){
+  let html='<table>';
+  for(let r=0;r<rows;r++){
+    html+='<tr>';
+    for(let c=0;c<cols;c++) html+=`<td><input value="${(results[r][c]||'').replace(/"/g,'&quot;')}" data-r="${r}" data-c="${c}"></td>`;
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('resultWrap').innerHTML=html;
+}
+document.getElementById('exportBtn').onclick=()=>{
+  if(!lastResults){alert('먼저 인식을 실행하세요.');return;}
+  const inputs=document.querySelectorAll('#resultWrap input');
+  const rows=+document.getElementById('rows').value, cols=+document.getElementById('cols').value;
+  const grid=Array.from({length:rows},()=>Array(cols).fill(''));
+  inputs.forEach(i=>{grid[+i.dataset.r][+i.dataset.c]=i.value.replace(/\n/g,' ');});
+  const csv=grid.map(row=>row.map(v=>`"${v.replace(/"/g,'""')}"`).join(',')).join('\n');
+  navigator.clipboard.writeText(csv).then(()=>alert('CSV가 클립보드에 복사됐습니다.'));
+};
+</script>
+</body>
+</html>
