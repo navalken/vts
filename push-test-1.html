@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VTS 알림 테스트</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VTS 알림">
+<meta name="theme-color" content="#125cbe">
+<style>
+  :root{--bg:#0f1720;--panel:#172230;--line:#2a3747;--accent:#3b9eff;--text:#e8eef5;--muted:#8fa3b8;--ok:#6cd67a;--bad:#ff7b7b;--warn:#f0c040;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom));}
+  h1{font-size:18px;margin:0 0 4px;}
+  p.sub,.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:4px 0 12px;}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;}
+  .step h2{font-size:14px;margin:0 0 8px;color:var(--accent);}
+  button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 14px;font-size:14px;min-height:44px;margin:4px 6px 4px 0;}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+  input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:10px;font-size:14px;margin:4px 0 8px;}
+  label{font-size:12px;color:var(--muted);}
+  .env div{font-size:13px;line-height:1.55;padding:3px 0;border-bottom:1px dashed var(--line);}
+  .ok{color:var(--ok);} .bad{color:var(--bad);} .warn{color:var(--warn);}
+  #log{white-space:pre-wrap;font-size:12px;line-height:1.5;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;min-height:90px;max-height:260px;overflow:auto;}
+</style>
+</head>
+<body>
+<h1>VTS 알림 테스트</h1>
+<p class="sub">아이폰·갤럭시에서 근무 알림(푸시)이 실제로 도착하는지 확인하는 임시 페이지입니다.</p>
+
+<div class="step">
+  <h2>0. 이 기기 점검 (자동)</h2>
+  <div class="env" id="env">확인 중...</div>
+  <button class="ghost" id="btnRefresh">다시 점검</button>
+</div>
+
+<div class="step">
+  <h2>1단계. 이 기기만으로 (서버 필요 없음)</h2>
+  <p class="hint">알림 허용과 알림 표시가 되는지 확인합니다. 아이폰은 <b>홈 화면에 추가한 아이콘으로 연 상태</b>에서만 됩니다.</p>
+  <button id="btnPerm">① 알림 허용하기</button>
+  <button id="btnLocal">② 지금 테스트 알림</button>
+  <button class="ghost" id="btnTimer">③ 10초 뒤 알림 (참고)</button>
+  <p class="hint">③은 앱을 닫으면 대개 오지 않습니다 — 그래서 근무 15분 전 알림에는 서버 푸시(2단계)가 필요합니다.</p>
+</div>
+
+<div class="step">
+  <h2>2단계. 서버 푸시 (앱을 닫아도 오는지)</h2>
+  <p class="hint">안내 문서대로 Cloudflare Worker를 만든 뒤 아래에 입력하세요. 값은 이 기기에만 저장됩니다.</p>
+  <label>Worker 주소 (예: https://vts-push.내계정.workers.dev)</label>
+  <input id="workerUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://...">
+  <label>관리자 키 (Worker에 넣은 ADMIN_KEY)</label>
+  <input id="adminKey" type="password" autocomplete="off" placeholder="ADMIN_KEY">
+  <button id="btnSub">④ 푸시 구독하기</button>
+  <button id="btnNow">⑤ 지금 푸시 받기</button><br>
+  <button id="btnL1">⑥ 1분 뒤 푸시</button>
+  <button id="btnL3">⑦ 3분 뒤 푸시</button>
+  <p class="hint">⑥⑦은 누른 뒤 <b>앱을 닫거나 화면을 끄고</b> 기다리세요. 정확도는 ±1분 정도입니다.</p>
+  <button class="ghost" id="btnLog">발송 기록 보기</button>
+  <button class="ghost" id="btnUnsub">구독 해제</button>
+</div>
+
+<div class="step">
+  <h2>기록</h2>
+  <div id="log"></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ua = navigator.userAgent || '';
+const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isAndroid = /Android/i.test(ua);
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const hasNotif = typeof Notification !== 'undefined';
+let swReg = null;
+
+function log(msg) {
+  const t = new Date().toLocaleTimeString('ko-KR');
+  $('log').textContent = `[${t}] ${msg}\n` + $('log').textContent;
+}
+function iosVer() { const m = ua.match(/OS (\d+)[_.](\d+)/); return m ? { major: +m[1], minor: +m[2] } : null; }
+function u8ToB64u(buf) { let s = ''; new Uint8Array(buf).forEach(c => s += String.fromCharCode(c)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64uToU8(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+
+async function refreshEnv() {
+  const rows = [];
+  const add = (state, label, msg) => rows.push(`<div><span class="${state}">${state === 'ok' ? '✅' : state === 'bad' ? '❌' : '⚠️'}</span> <b>${label}</b> — ${msg}</div>`);
+  const v = iosVer();
+  if (!window.isSecureContext) add('bad', '안전한 연결(https)', `아니오 — 지금 주소(${location.protocol}//…)에서는 알림·푸시가 막힙니다. 파일을 폰에서 직접 열지 말고 GitHub Pages 주소(https://…github.io/…/push-test.html)로 여세요`);
+  add('ok', '기기', isIOS ? ('iPhone/iPad' + (v ? ` (iOS ${v.major}.${v.minor})` : '')) : isAndroid ? 'Android' : 'PC/기타');
+  if (isIOS) {
+    if (!v) add('warn', 'iOS 버전', '확인하지 못했습니다(설정 → 일반 → 정보에서 16.4 이상인지 확인)');
+    else if (v.major > 16 || (v.major === 16 && v.minor >= 4)) add('ok', 'iOS 버전', '16.4 이상입니다');
+    else add('bad', 'iOS 버전', 'iOS 16.4 이상이 필요합니다 — 업데이트가 필요합니다');
+  }
+  if (standalone) add('ok', '홈 화면 앱으로 실행', '네');
+  else if (isIOS) add('bad', '홈 화면 앱으로 실행', '아니오 — Safari 공유 버튼(□↑) → "홈 화면에 추가" → 만들어진 아이콘으로 다시 여세요');
+  else add('warn', '홈 화면 앱으로 실행', '브라우저 탭에서도 알림은 되지만, 메뉴(⋮) → "홈 화면에 추가"로 설치하는 것을 권장합니다');
+  add('serviceWorker' in navigator ? 'ok' : 'bad', '서비스 워커', 'serviceWorker' in navigator ? '지원' : '지원 안 함');
+  add(hasNotif ? 'ok' : 'bad', '알림 기능(Notification)', hasNotif ? '지원' : '없음 — 아이폰은 홈 화면 앱으로 열어야 나타납니다');
+  add('PushManager' in window ? 'ok' : 'bad', '푸시 기능(Push)', 'PushManager' in window ? '지원' : '없음 — 아이폰은 홈 화면 앱으로 열어야 나타납니다');
+  if (hasNotif) {
+    const p = Notification.permission;
+    add(p === 'granted' ? 'ok' : p === 'denied' ? 'bad' : 'warn', '알림 권한', p === 'granted' ? '허용됨' : p === 'denied' ? '차단됨 — 기기 설정 → 알림에서 이 앱을 허용으로 바꾸세요' : '아직 안 물어봄 — ①을 눌러 허용하세요');
+  }
+  try {
+    const reg = swReg || (('serviceWorker' in navigator) ? await navigator.serviceWorker.getRegistration() : null);
+    const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
+    add(sub ? 'ok' : 'warn', '푸시 구독', sub ? ('완료 (' + new URL(sub.endpoint).hostname + ')') : '아직 — ④를 눌러 구독하세요');
+  } catch (e) { /* 무시 */ }
+  $('env').innerHTML = rows.join('');
+}
+
+async function initSW() {
+  if (!('serviceWorker' in navigator)) { log('서비스 워커를 지원하지 않는 환경입니다'); refreshEnv(); return; }
+  try {
+    swReg = await navigator.serviceWorker.register('sw.js');
+    await navigator.serviceWorker.ready;
+    log('서비스 워커 준비 완료');
+  } catch (e) { log('서비스 워커 등록 실패: ' + e.message); }
+  refreshEnv();
+}
+
+async function showLocal(title, body) {
+  const reg = swReg || await navigator.serviceWorker.ready;
+  await reg.showNotification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'local-' + Date.now() });
+}
+
+$('btnRefresh').onclick = refreshEnv;
+$('btnPerm').onclick = async () => {
+  if (!window.isSecureContext) { log('❌ https 주소가 아니라서 알림 권한을 받을 수 없습니다. GitHub Pages 주소로 여세요.'); refreshEnv(); return; }
+  if (!hasNotif) { log('이 환경에는 알림 기능이 없습니다. 아이폰이라면 홈 화면에 추가한 아이콘으로 다시 열어보세요.'); return; }
+  try { const r = await Notification.requestPermission(); log('알림 권한 결과: ' + r); } catch (e) { log('권한 요청 실패: ' + e.message); }
+  refreshEnv();
+};
+$('btnLocal').onclick = async () => {
+  try {
+    if (!hasNotif || Notification.permission !== 'granted') { log('먼저 ① 알림 허용을 눌러 허용해주세요'); return; }
+    await showLocal('테스트 알림 (이 기기)', '이 알림이 보이면 알림 표시는 정상입니다.');
+    log('테스트 알림을 요청했습니다 — 화면 위/알림 센터를 확인하세요');
+  } catch (e) { log('실패: ' + e.message); }
+};
+$('btnTimer').onclick = () => {
+  if (!hasNotif || Notification.permission !== 'granted') { log('먼저 ① 알림 허용을 눌러 허용해주세요'); return; }
+  log('10초 뒤 알림 예약 — 지금 앱을 홈으로 보내보세요(앱이 살아있어야만 옵니다)');
+  setTimeout(() => showLocal('10초 뒤 알림', '앱이 살아있어서 왔습니다').catch(e => log('실패: ' + e.message)), 10000);
+};
+
+// ----- 2단계: 서버 푸시 -----
+['workerUrl', 'adminKey'].forEach(id => {
+  const v = localStorage.getItem('vts_' + id); if (v) $(id).value = v;
+  $(id).addEventListener('change', e => localStorage.setItem('vts_' + id, e.target.value.trim()));
+});
+function cfg() { return { url: ($('workerUrl').value || '').trim().replace(/\/+$/, ''), key: ($('adminKey').value || '').trim() }; }
+async function api(path, method = 'GET', body) {
+  const { url, key } = cfg();
+  if (!url) throw new Error('Worker 주소를 입력하세요');
+  const res = await fetch(url + path, { method, headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key }, body: body ? JSON.stringify(body) : undefined });
+  let data = null; try { data = await res.json(); } catch (_) { /* 본문 없음 */ }
+  if (!res.ok) throw new Error('서버 응답 ' + res.status + ': ' + ((data && data.error) || ''));
+  return data;
+}
+function getSub() { const s = localStorage.getItem('vts_sub'); if (!s) throw new Error('먼저 ④ 푸시 구독하기를 눌러주세요'); return JSON.parse(s); }
+function explain(status, detail) {
+  if (status === 201) return '정상 접수(201) — 곧 알림이 도착해야 합니다';
+  if (status === 404 || status === 410) return `구독이 만료됨(${status}) — ④ 푸시 구독하기를 다시 누르세요`;
+  if (status === 400 || status === 401 || status === 403) return `인증/형식 문제(${status}) — ${detail || ''}`;
+  if (status === 413) return '내용이 너무 큼(413)';
+  if (status === 429) return '너무 자주 보냄(429)';
+  return `예상 밖 응답(${status}) ${detail || ''}`;
+}
+
+$('btnSub').onclick = async () => {
+  try {
+    if (!('PushManager' in window)) { log('이 환경에서는 푸시를 쓸 수 없습니다(아이폰은 홈 화면에 추가한 아이콘으로 열어야 합니다)'); return; }
+    const { url } = cfg(); if (!url) { log('Worker 주소를 먼저 입력하세요'); return; }
+    if (Notification.permission !== 'granted') {
+      const r = await Notification.requestPermission();
+      if (r !== 'granted') { log('알림이 허용되지 않아 구독할 수 없습니다 (' + r + ')'); return; }
+    }
+    const { publicKey } = await (await fetch(url + '/vapid-public')).json();
+    const reg = swReg || await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey && u8ToB64u(sub.options.applicationServerKey) !== publicKey) { await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToU8(publicKey) });
+    localStorage.setItem('vts_sub', JSON.stringify(sub.toJSON()));
+    log('푸시 구독 완료 — 푸시 서버: ' + new URL(sub.endpoint).hostname);
+    refreshEnv();
+  } catch (e) { log('구독 실패: ' + e.message); }
+};
+$('btnNow').onclick = async () => {
+  try {
+    const sub = getSub();
+    const r = await api('/send-now', 'POST', { sub, title: 'VTS 근무 알림', body: '지금 보낸 서버 푸시입니다 (' + new Date().toLocaleTimeString('ko-KR') + ')' });
+    log('서버 → 푸시 서비스: ' + explain(r.status, r.detail));
+  } catch (e) { log('실패: ' + e.message); }
+};
+async function later(sec) {
+  try {
+    const sub = getSub();
+    const r = await api('/schedule', 'POST', { sub, afterSec: sec, title: 'VTS 근무 알림', body: `${sec / 60}분 전에 예약한 서버 푸시입니다` });
+    log(`예약됨 (${sec / 60}분 뒤, 대기 ${r.pending}건) — 이제 앱을 닫거나 화면을 끄고 기다리세요`);
+  } catch (e) { log('실패: ' + e.message); }
+}
+$('btnL1').onclick = () => later(60);
+$('btnL3').onclick = () => later(180);
+$('btnLog').onclick = async () => {
+  try {
+    const r = await api('/log');
+    if (!r.log.length) { log(`발송 기록 없음 (대기 중 ${r.queue}건)`); return; }
+    r.log.slice(0, 5).forEach(x => log(`예약 발송 기록: ${x.at ? x.at.replace('T', ' ').slice(0, 19) : ''} → ${x.error ? '오류 ' + x.error : explain(x.status, x.detail)}`));
+    log(`(대기 중 ${r.queue}건)`);
+  } catch (e) { log('실패: ' + e.message); }
+};
+$('btnUnsub').onclick = async () => {
+  try {
+    const reg = swReg || await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe();
+    localStorage.removeItem('vts_sub'); log('구독을 해제했습니다'); refreshEnv();
+  } catch (e) { log('실패: ' + e.message); }
+};
+
+log('페이지 열림 — ' + (standalone ? '홈 화면 앱 모드' : '브라우저 탭 모드'));
+initSW();
+</script>
+</body>
+</html>
