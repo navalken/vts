@@ -45,6 +45,7 @@ button:disabled{opacity:.5}
     <input id="newName" placeholder="목록에 없으면 이름 직접 입력" maxlength="20">
     <button id="reg">알림 허용하고 등록</button>
   </div>
+  <button id="test" style="margin-top:12px;background:#667085">내 폰으로 시험 알림 보내기</button>
   <div class="msg" id="msg" hidden></div>
 </div>
 <details class="mut"><summary>고급(관리자용)</summary>
@@ -84,6 +85,18 @@ $('load').onclick = async () => {
     $('nameBox').hidden = false; $('msg').hidden = true;
     ls.set('vts_reg_team', team); ls.set('vts_reg_code', code); ls.set('vts_reg_worker', base());
   } catch (e) { say('연결 실패: ' + e.message, 'bad'); }
+};
+
+$('test').onclick = async () => {
+  const name = ($('newName').value.trim() || $('name').value || ls.get('vts_reg_name'));
+  if (!$('team').value || !$('code').value.trim() || !name) return say('팀·팀 코드·이름을 먼저 입력(또는 등록)하세요.', 'bad');
+  say('시험 알림 요청 중…');
+  try {
+    const res = await fetch(base() + '/test-push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: $('team').value, name, code: $('code').value.trim() }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) return say(j.error || ('오류 ' + res.status), 'bad');
+    say(j.status === 201 ? '✅ 보냈습니다(서버 응답 201). 몇 초 안에 알림이 와야 합니다. 안 오면 기기 알림 설정·절전 모드를 확인하세요.' : ('푸시 서비스 응답 ' + j.status + ' ' + (j.detail || '') + (j.status === 404 || j.status === 410 ? '\n등록이 만료됐습니다. 다시 등록하세요.' : '')), j.status === 201 ? 'ok' : 'bad');
+  } catch (e) { say('실패: ' + e.message, 'bad'); }
 };
 
 $('reg').onclick = async () => {
