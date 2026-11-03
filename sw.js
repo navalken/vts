@@ -14,14 +14,14 @@ self.addEventListener('push', event => {
     icon: 'icon-192.png',
     badge: 'icon-192.png',
     tag: d.tag || ('vts-' + Date.now()),
-    data: { url: d.url || './push-test.html', receivedAt: Date.now() }
+    data: { url: d.url || './register.html', receivedAt: Date.now() }
   };
   event.waitUntil(self.registration.showNotification(title, opts));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || './push-test.html';
+  const url = (event.notification.data && event.notification.data.url) || './register.html';
   event.waitUntil((async () => {
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of all) { if ('focus' in c) { await c.focus(); return; } }

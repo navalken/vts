@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VTS 근무 알림 등록</title>
+<link rel="manifest" href="manifest-register.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VTS 알림">
+<meta name="theme-color" content="#125cbe">
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#162033;--mut:#667085;--pri:#125cbe;--ok:#12803c;--bad:#c0392b;--bd:#d9dfe9}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1720;--card:#18212d;--tx:#e8edf5;--mut:#9aa7ba;--pri:#5aa2ff;--ok:#4cc27a;--bad:#ff7b6b;--bd:#2b3646}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 -apple-system,"Noto Sans KR",sans-serif;padding:16px;padding-bottom:40px}
+.wrap{max-width:480px;margin:0 auto}
+h1{font-size:20px;margin:8px 0 16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-weight:600;margin:0 0 6px}
+select,input{width:100%;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);margin-bottom:14px}
+button{width:100%;padding:14px;font-size:17px;font-weight:700;border:0;border-radius:12px;background:var(--pri);color:#fff}
+button:disabled{opacity:.5}
+.msg{margin-top:12px;padding:12px;border-radius:10px;background:var(--bg);white-space:pre-wrap}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.mut{color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔔 VTS 근무 알림 등록</h1>
+<div class="card" id="iosBox" hidden>
+  <b>아이폰은 먼저 홈 화면에 추가해야 합니다</b>
+  <ol class="mut"><li>Safari로 이 페이지를 엽니다(다른 앱 안의 브라우저 X)</li><li>아래 공유 버튼(□↑) → <b>홈 화면에 추가</b></li><li>생긴 <b>VTS 알림</b> 아이콘으로 다시 열어 등록합니다</li></ol>
+</div>
+<div class="card">
+  <label for="team">팀</label>
+  <select id="team"><option value="">선택</option><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select>
+  <label for="code">우리 팀 코드</label>
+  <input id="code" autocomplete="off" autocapitalize="off" placeholder="팀 코드">
+  <button id="load">명단 불러오기</button>
+  <div id="nameBox" hidden style="margin-top:14px">
+    <label for="name">내 이름</label>
+    <select id="name"></select>
+    <input id="newName" placeholder="목록에 없으면 이름 직접 입력" maxlength="20">
+    <button id="reg">알림 허용하고 등록</button>
+  </div>
+  <div class="msg" id="msg" hidden></div>
+</div>
+<details class="mut"><summary>고급(관리자용)</summary>
+  <input id="worker" placeholder="Worker 주소 https://…workers.dev" style="margin-top:10px">
+</details>
+</div>
+<script>
+// 관리자가 한 번만 채워 넣으세요(비워두면 아래 '고급'에서 입력). 예: 'https://vts-push.내계정.workers.dev'
+const WORKER_URL = 'https://vts-push.navalken100.workers.dev';
+const $ = id => document.getElementById(id);
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if (isIOS && !standalone) $('iosBox').hidden = false;
+const ls = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+$('worker').value = WORKER_URL || ls.get('vts_reg_worker');
+$('team').value = ls.get('vts_reg_team');
+$('code').value = ls.get('vts_reg_code');
+const base = () => ($('worker').value || '').trim().replace(/\/+$/, '');
+function say(t, cls) { const m = $('msg'); m.hidden = false; m.className = 'msg ' + (cls || ''); m.textContent = t; }
+function u8ToB64u(buf) { let s = ''; new Uint8Array(buf).forEach(c => s += String.fromCharCode(c)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64uToU8(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+let swReg = null;
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+
+$('load').onclick = async () => {
+  const team = $('team').value, code = $('code').value.trim();
+  if (!base()) return say('Worker 주소가 없습니다. 관리자에게 문의하세요.', 'bad');
+  if (!team || !code) return say('팀과 팀 코드를 입력하세요.', 'bad');
+  say('명단 불러오는 중…');
+  try {
+    const res = await fetch(base() + '/names?team=' + team + '&code=' + encodeURIComponent(code));
+    const j = await res.json();
+    if (!res.ok) return say(j.error || ('오류 ' + res.status), 'bad');
+        $('name').innerHTML = '<option value="">내 이름 선택(없으면 아래에 입력)</option>' + j.names.map(n => `<option value="${n.name.replace(/"/g, '&quot;')}">${n.name.replace(/</g, '&lt;')}${n.registered ? ' (등록됨)' : ''}</option>`).join('');
+    const prev = ls.get('vts_reg_name'); if (prev && j.names.some(n => n.name === prev)) $('name').value = prev;
+    $('nameBox').hidden = false; $('msg').hidden = true;
+    ls.set('vts_reg_team', team); ls.set('vts_reg_code', code); ls.set('vts_reg_worker', base());
+  } catch (e) { say('연결 실패: ' + e.message, 'bad'); }
+};
+
+$('reg').onclick = async () => {
+  const name = ($('newName').value.trim() || $('name').value);
+  if (!name) return say('이름을 선택하거나 입력하세요.', 'bad');
+  if (!('PushManager' in window) || !('Notification' in window)) return say(isIOS ? '이 화면에서는 알림을 쓸 수 없습니다. 홈 화면에 추가한 아이콘으로 다시 여세요.' : '이 브라우저는 푸시 알림을 지원하지 않습니다.', 'bad');
+  $('reg').disabled = true;
+  try {
+    const perm = await Notification.requestPermission(); // 버튼을 누른 직접 동작 안에서 호출(iOS 필수)
+    if (perm !== 'granted') return say('알림이 허용되지 않았습니다. 기기 설정 → 알림에서 허용으로 바꾼 뒤 다시 시도하세요.', 'bad');
+    const { publicKey } = await (await fetch(base() + '/vapid-public')).json();
+    const reg = swReg || await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options && sub.options.applicationServerKey && u8ToB64u(sub.options.applicationServerKey) !== publicKey) { await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToU8(publicKey) });
+    const res = await fetch(base() + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: $('team').value, name, code: $('code').value.trim(), sub: sub.toJSON() }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) return say(j.error || ('등록 실패 ' + res.status), 'bad');
+    ls.set('vts_reg_name', name); $('newName').value = '';
+    say(`✅ ${name}님 등록 완료\n이 기기로 근무 알림이 옵니다. 폰을 바꾸면 다시 등록하세요.`, 'ok');
+  } catch (e) { say('등록 실패: ' + e.message, 'bad'); }
+  finally { $('reg').disabled = false; }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VTS 근무표 간단 테스트</title>
+<style>
+:root{--bg:#0f1720;--panel:#172230;--line:#2a3747;--accent:#3b9eff;--text:#e8eef5;--muted:#8fa3b8;--ok:#6cd67a;--bad:#ff8a8a;--warn:#ffd36b;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;padding:14px;font-size:15px;}
+h1{font-size:17px;margin:4px 0 12px;} h3{font-size:14px;margin:16px 0 6px;color:var(--accent);}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;}
+.step h2{font-size:15px;margin:0 0 10px;} .step h2 span{display:inline-block;background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;font-size:13px;margin-right:6px;}
+button{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-size:15px;cursor:pointer;}
+button.big{width:48%;} button.no{background:#2fa36b;} button.yes{background:#d98b1f;}
+select,input,textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px;font-size:14px;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;} .hint{color:var(--muted);font-size:12.5px;margin:6px 0;line-height:1.5;}
+.msg{font-size:13px;margin:8px 0;white-space:pre-line;color:var(--muted);} .msg.ok{color:var(--ok);} .msg.bad{color:var(--bad);} .msg.warn{color:var(--warn);}
+#photoPrev{display:none;max-width:100%;max-height:200px;border-radius:8px;margin-top:8px;border:1px solid var(--line);}
+.scroll{overflow-x:auto;} table{border-collapse:collapse;font-size:12px;} td,th{border:1px solid var(--line);padding:3px 4px;text-align:center;min-width:54px;} th{background:#1d2b3b;font-weight:600;white-space:nowrap;}
+td.bad{background:#4a2020;cursor:pointer;} td.chg{background:#4a3f12;} td.unv{outline:1px dashed #8fa3b8;outline-offset:-3px;background:#1b2838;} .pick{color:#fff;font-weight:700;} .dim{color:#8a8a8a;text-decoration:line-through;}
+td small{display:block;color:var(--muted);font-size:10px;} td.bad small{display:inline;}
+.cellin{width:44px;text-align:center;padding:3px;font-size:13px;}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;} .roster label{display:flex;gap:4px;align-items:center;} .roster input{width:100%;min-width:0;padding:6px;}
+details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:pointer;}
+
+.box{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:10px 0;}
+.box>summary{font-size:14px;font-weight:600;color:var(--text);cursor:pointer;}
+.people{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px;}
+.person{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);} .person b{font-size:14px;}
+.tag{background:#3b9eff;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;}
+.pl{margin-top:4px;line-height:1.9;} .pk{display:inline-block;min-width:30px;color:var(--muted);font-size:11px;}
+.chip{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11.5px;background:#22364d;} .chip.c-s{background:#1f5a3a;} .chip.c-대기{background:#5a4a1f;} .chip.c-휴게{background:#33384a;color:#b9c3d3;}
+</style></head>
+<body>
+<h1>VTS 근무표 — <span id="teamTitle">1팀</span></h1>
+<div class="row" style="margin:0 0 10px;"><label>팀</label><select id="team"><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select><span class="hint">패턴·직원 이름은 팀마다 따로 저장됩니다</span></div>
+
+<div class="step">
+  <h2><span>1</span>기본 패턴 (엑셀)</h2>
+  <input type="file" id="patternFile" accept=".xlsx,.xls">
+  <div id="patternMsg" class="msg">아직 올리지 않음 (한 번 올리면 이 폰에 저장됩니다)</div>
+  <div class="row"><label>주간 패턴</label><select id="patDay"></select></div>
+  <div class="row"><label>야간 패턴</label><select id="patNight"></select></div>
+</div>
+
+<div class="step">
+  <h2><span>2</span>일일 근무표 (사진)</h2>
+  <input type="file" id="photoFile" accept="image/*">
+  <div id="photoMsg" class="msg"></div>
+  <img id="photoPrev" alt="">
+</div>
+
+<div class="step" id="step3">
+  <h2><span>3</span>기존 패턴에서 변동사항 있습니까?</h2>
+  <div class="row"><label>근무</label><select id="shift"><option value="both">종일 (주간+야간)</option><option value="day">주간만</option><option value="night">야간만</option></select></div>
+  <div class="row"><button class="big yes" id="btnYes">예 (직접 입력)</button><button class="big no" id="btnNo">아니오 (사진 확인)</button></div>
+  <div id="runMsg" class="msg"></div>
+  <div id="result"></div>
+</div>
+
+<div class="box" id="pubBox" style="margin:14px 0;padding:12px;border:1px solid #d9dfe9;border-radius:12px">
+  <b>④ 알림 예약</b>
+  <p class="hint">③이 맞으면 누르세요. 이 팀 사람들에게 장소 바뀌기 전 알림이 예약됩니다. 같은 날 다시 누르면 새 내용으로 교체됩니다. 누구든(휴가 대체자도) 할 수 있습니다.</p>
+  <div class="row"><label>날짜</label> <input id="pubDate" type="date"> <label>몇 분 전</label> <input id="pubLead" type="number" value="15" min="1" max="60" style="width:70px"></div>
+  <div class="row"><button id="pubBtn">확정 — 알림 예약</button> <button id="staffBtn" style="background:#6b7280">알림 등록 현황</button></div>
+  <div id="pubMsg" class="msg"></div>
+</div>
+<details><summary>설정 (처음 한 번만)</summary>
+  <div class="row"><label>Worker 주소</label><input id="gvWorker" style="width:100%" placeholder="https://vts-push.내계정.workers.dev"></div>
+  <div class="row"><label>우리 팀 코드</label><input id="gvAdmin" type="password" style="width:100%"></div>
+  <div class="row"><label>이 팀의 직원 이름 목록 (쉼표/줄바꿈, 이름 자동 교정용)</label><textarea id="knownNames" rows="3" style="width:100%"></textarea></div>
+  <div class="row"><button id="rawBtn" style="background:#6b7280;font-size:13px;padding:8px 12px;">문제 분석용: 구글 원본 데이터 저장</button></div>
+</details>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const GV_FIX={'0':'O','1':'I','|':'I','l':'I','!':'I','ㅇ':'O','ㅣ':'I','ㄴ':'L','〇':'O','○':'O','◯':'O','｜':'I','°':'O','º':'O','˚':'O','8':'B'}; // 알파벳 O/I를 숫자·기호로 읽는 경우 보정(코드 모드 전용)
+function visionSymbols(resp){
+  const out=[];
+  const r0=resp&&resp.responses&&resp.responses[0];
+  if(r0&&r0.error) throw new Error('구글 응답 오류: '+(r0.error.message||JSON.stringify(r0.error)));
+  const pages=(r0&&r0.fullTextAnnotation&&r0.fullTextAnnotation.pages)||[];
+  pages.forEach(p=>(p.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(pa=>(pa.words||[]).forEach(w=>(w.symbols||[]).forEach(s=>{
+    const v=(s.boundingBox&&s.boundingBox.vertices)||[];
+    if(v.length<4) return;
+    const xs=v.map(q=>q.x||0), ys=v.map(q=>q.y||0);
+    const x0=Math.min(...xs), x1=Math.max(...xs), y0=Math.min(...ys), y1=Math.max(...ys);
+    out.push({t:s.text||'', cx:(x0+x1)/2, cy:(y0+y1)/2, h:y1-y0, conf:(typeof s.confidence==='number'?s.confidence:0)});
+  })))));
+  return out;
+}
+// ===== 자동 배치(모서리 없이): 구글이 준 글자 위치만으로 표의 행·열을 계산 =====
+const SECTOR_RE=/([1-9])(섹|센|색|세)(터|더|타)/;
+function normCode(t){ return (GV_FIX[t]||t).toUpperCase(); }
+function linfit(xs,ys){
+  const n=xs.length, mx=xs.reduce((a,b)=>a+b,0)/n, my=ys.reduce((a,b)=>a+b,0)/n;
+  let sxx=0,sxy=0; for(let i=0;i<n;i++){ sxx+=(xs[i]-mx)*(xs[i]-mx); sxy+=(xs[i]-mx)*(ys[i]-my); }
+  const slope=sxx?sxy/sxx:0; return {slope,icpt:my-slope*mx};
+}
+function median(a){ const s=a.slice().sort((x,y)=>x-y), m=s.length>>1; return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function visionWords(resp){
+  const out=[]; const r0=resp&&resp.responses&&resp.responses[0];
+  const pages=(r0&&r0.fullTextAnnotation&&r0.fullTextAnnotation.pages)||[];
+  pages.forEach(p=>(p.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(pa=>(pa.words||[]).forEach(w=>{
+    const v=(w.boundingBox&&w.boundingBox.vertices)||[]; if(v.length<4) return;
+    const xs=v.map(q=>q.x||0), ys=v.map(q=>q.y||0);
+    const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+    out.push({t:(w.symbols||[]).map(s=>s.text||'').join(''),cx:(x0+x1)/2,cy:(y0+y1)/2,w:x1-x0,h:y1-y0});
+  }))));
+  return out;
+}
+// 섹터 시간표(1~9섹터 × 시간 칸). which: 0=위쪽 표, 1=아래쪽 표
+function autoSectorGrid(symbols,words,which){
+  const labs=[];
+  const LAB2=/(섹|센|색|세)(터|더|타)/;
+  const digitOf=t=>{ t=t.replace(/\s/g,''); if(/^[2-9]$/.test(t)) return +t; if(/^(1|I|l|\||!|ㅣ|｜)$/.test(t)) return 1; return 0; };
+  words.forEach(w=>{
+    const t=w.t.replace(/\s/g,'');
+    let m=t.match(SECTOR_RE);
+    if(m){ labs.push({n:+m[1],cx:w.cx,cy:w.cy,w:w.w,h:w.h}); return; }
+    if(LAB2.test(t)&&t.length<=3){ // "섹터"만 읽힌 경우: 바로 왼쪽의 숫자 글자를 찾아 붙임(없으면 순서로 채움)
+      let n=0; words.forEach(d=>{ const dg=digitOf(d.t); if(dg&&Math.abs(d.cy-w.cy)<=Math.max(10,(w.h||16)*0.8)&&d.cx<w.cx&&w.cx-d.cx<(w.w||30)*2.2) n=dg; });
+      labs.push({n,cx:w.cx,cy:w.cy,w:w.w,h:w.h});
+    }
+  });
+  labs.sort((a,b)=>a.cy-b.cy);
+  // 숫자를 못 찾은 라벨은 앞 라벨 다음 번호로 채움(표 하나는 위에서 아래로 1→9 순서)
+  { const gaps=[]; for(let i=1;i<labs.length;i++) gaps.push(labs[i].cy-labs[i-1].cy); const mg=gaps.length?median(gaps):0;
+    labs.forEach((l,i)=>{ if(l.n) return; const pv=labs[i-1];
+      l.n=(pv&&mg&&(l.cy-pv.cy)<2.2*mg&&pv.n<9)?pv.n+1:1; }); }
+  const groups=[]; let cur=[];
+  labs.forEach(l=>{ if(cur.length&&l.n<=cur[cur.length-1].n){ groups.push(cur); cur=[]; } cur.push(l); });
+  if(cur.length) groups.push(cur);
+  const good=groups.filter(g=>g.length>=4);
+  if(!good.length) return {error:'"1섹터~9섹터" 글자를 찾지 못했습니다(표가 사진에 충분히 크게 나왔는지 확인하세요)'};
+  let g=good[Math.min(which||0,good.length-1)];
+  let fx,fy;
+  for(let pass=0;pass<2;pass++){ // 직선에서 벗어난 라벨은 1회 제거
+    const ns=g.map(l=>l.n);
+    fx=linfit(ns,g.map(l=>l.cx)); fy=linfit(ns,g.map(l=>l.cy));
+    const dl0=Math.hypot(fx.slope,fy.slope);
+    const keep=g.filter(l=>Math.hypot(l.cx-(fx.icpt+fx.slope*l.n),l.cy-(fy.icpt+fy.slope*l.n))<=0.4*dl0);
+    if(keep.length===g.length||keep.length<4) break; g=keep;
+  }
+  const d={x:fx.slope,y:fy.slope}, dl=Math.hypot(d.x,d.y), O={x:fx.icpt,y:fy.icpt};
+  if(!(dl>4)) return {error:'행 간격을 계산하지 못했습니다'};
+  const R={x:d.y/dl,y:-d.x/dl};
+  const labHalf=median(g.map(l=>l.w))/2/dl;
+  const pts=[];
+  symbols.forEach(s=>{
+    const ch=normCode(s.t); if(!/^[A-R]$/.test(ch)) return;
+    const px=s.cx-O.x, py=s.cy-O.y;
+    const v=(px*d.x+py*d.y)/(dl*dl), u=(px*R.x+py*R.y)/dl;
+    if(v<0.5||v>9.5||Math.abs(v-Math.round(v))>0.42||u<labHalf+0.3) return;
+    pts.push({ch,row:Math.round(v)-1,u,conf:s.conf,raw:s.t});
+  });
+  if(pts.length<9) return {error:'시간표 글자를 충분히 찾지 못했습니다('+pts.length+'개)'};
+  const su=pts.slice().sort((a,b)=>a.u-b.u); const clusters=[[su[0]]];
+  for(let i=1;i<su.length;i++){ if(su[i].u-su[i-1].u>0.8) clusters.push([]); clusters[clusters.length-1].push(su[i]); }
+  const colU=clusters.map(c=>c.reduce((a,b)=>a+b.u,0)/c.length);
+  pts.forEach(p=>{ let k=0,best=1e9; colU.forEach((cu,i)=>{ const dd=Math.abs(p.u-cu); if(dd<best){best=dd;k=i;} }); p.col=k; });
+  const N=colU.length;
+  const grid=Array.from({length:9},()=>Array(N).fill('')), conf=Array.from({length:9},()=>Array(N).fill(-1));
+  pts.forEach(p=>{ if(p.conf>conf[p.row][p.col]){ conf[p.row][p.col]=p.conf; grid[p.row][p.col]=p.ch; } });
+  const alts=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!alts[p.row][p.col].includes(p.ch)) alts[p.row][p.col].push(p.ch); });
+  const raws=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!raws[p.row][p.col].includes(p.raw)) raws[p.row][p.col].push(p.raw); }); // 보정 전 원본 글자(숫자 0·8 등 — 구글이 글자 모양에 자신 없을 때 숫자로 읽음) // 한 칸 안에서 구글이 읽은 모든 후보 글자
+  const centers=grid.map((row,i)=>row.map((_,k)=>({x:O.x+(i+1)*d.x+colU[k]*dl*R.x, y:O.y+(i+1)*d.y+colU[k]*dl*R.y})));
+  const filled=grid.flat().filter(Boolean).length;
+  const gaps=colU.slice(1).map((c,i)=>c-colU[i]);
+  return {grid,alts,raws,conf,centers,rowPitch:dl,colPitch:(gaps.length?median(gaps):2)*dl,
+    diag:{tables:good.length,labels:g.length,letters:pts.length,cols:N,filled,total:9*N,angle:Math.atan2(R.y,R.x)*180/Math.PI}};
+}
+// 명단표(번호·계급·서명 | 번호·계급·성명 × A~R 18줄)
+function autoRoster(symbols,words){
+  const HEAD=['번호','계급','서명','성명'];
+  const hw=words.filter(w=>HEAD.includes(w.t.replace(/\s/g,'')));
+  if(hw.length<6) return {error:'머리글(번호·계급·서명·성명)을 6개 찾지 못했습니다('+hw.length+'개)'};
+  // 같은 줄에 있는 머리글 묶기: 가장 많이 모인 줄
+  const hh=median(hw.map(w=>w.h)); let best=[];
+  hw.forEach(a=>{ const row=hw.filter(b=>Math.abs(b.cy-a.cy)<=Math.max(hh*1.2,(Math.abs(b.cx-a.cx))*0.12)); if(row.length>best.length) best=row; });
+  best=best.slice().sort((a,b)=>a.cx-b.cx);
+  if(best.length!==6) return {error:'머리글 줄에서 6개를 찾지 못했습니다('+best.length+'개)'};
+  const names=best.map(w=>w.t.replace(/\s/g,''));
+  if(names[0]!=='번호'||names[1]!=='계급'||names[3]!=='번호'||names[4]!=='계급') return {error:'머리글 순서가 예상과 다릅니다: '+names.join(',')};
+  const f=linfit(best.map(w=>w.cx),best.map(w=>w.cy));
+  const phi=Math.atan(f.slope), R={x:Math.cos(phi),y:Math.sin(phi)}, D={x:-Math.sin(phi),y:Math.cos(phi)};
+  const O={x:best[0].cx,y:best[0].cy};
+  const U=p=>(p.x-O.x)*R.x+(p.y-O.y)*R.y, V=p=>(p.x-O.x)*D.x+(p.y-O.y)*D.y;
+  const uh=best.map(w=>U({x:w.cx,y:w.cy}));
+  // 행 위치: 번호 칸의 A~R 글자로 추정
+  const ALPHA='ABCDEFGHIJKLMNOPQR';
+  const tolL=0.5*(uh[1]-uh[0]), tolR=0.5*(uh[4]-uh[3]);
+  let letters=[];
+  symbols.forEach(s=>{
+    const raw=s.t, ch=normCode(raw); const idx=ALPHA.indexOf(ch); if(idx<0||ch.length!==1) return;
+    if(/^[a-z]$/.test(raw)) return;                              // 소문자(o·m·n 등)는 번호 글자가 아님
+    if(raw!==ch&&!(s.conf>=0.5)) return;                         // 1·|·0 처럼 보정이 필요한 글자는 신뢰도 높을 때만
+    if(!(s.conf>=0.4)) return;                                   // 신뢰도 낮은 글자는 줄 위치 계산에서 제외
+    const p={x:s.cx,y:s.cy}, u=U(p), v=V(p);
+    if((Math.abs(u-uh[0])<tolL||Math.abs(u-uh[3])<tolR)&&v>0) letters.push({idx,v});
+  });
+  if(letters.length<6) return {error:'번호 칸의 A~R 글자를 충분히 찾지 못했습니다('+letters.length+'개)'};
+  // 명단표 위쪽부터 "A,B,C…가 일정한 간격으로 이어지는 구간"만 사용(아래 시간표의 글자·시간 숫자 "00:00"이 섞이지 않게)
+  { const sv=letters.slice().sort((a,b)=>a.v-b.v), cl=[];
+    sv.forEach(l=>{ const c=cl[cl.length-1]; if(c&&l.v-c.vs[c.vs.length-1]<=10){ c.vs.push(l.v); c.ls.push(l); } else cl.push({vs:[l.v],ls:[l]}); });
+    cl.forEach(c=>{ c.v=c.vs.reduce((a,b)=>a+b,0)/c.vs.length; const cnt={}; c.ls.forEach(l=>cnt[l.idx]=(cnt[l.idx]||0)+1); c.idx=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a-b)[0]; });
+    const first=cl.slice(0,9), gaps=[]; for(let i=1;i<first.length;i++) gaps.push(first[i].v-first[i-1].v);
+    const g0=gaps.length?median(gaps):0;
+    if(g0>3){
+      const ok=[cl[0]]; let miss=0;
+      for(let i=1;i<cl.length;i++){ const pv=ok[ok.length-1], di=cl[i].idx-pv.idx, gap=cl[i].v-pv.v;
+        if(di>=1&&Math.abs(gap-di*g0)<=0.35*g0*di+0.15*g0){ ok.push(cl[i]); miss=0; } else if(++miss>=2) break; }
+      letters=ok.flatMap(c=>c.ls);
+    }
+  }
+  if(letters.length<6) return {error:'번호 칸의 A~R 글자가 이어진 구간을 찾지 못했습니다('+letters.length+'개)'};
+  const pitches=[]; for(let i=0;i<letters.length;i++)for(let j=i+1;j<letters.length;j++){ if(letters[j].idx!==letters[i].idx) pitches.push((letters[j].v-letters[i].v)/(letters[j].idx-letters[i].idx)); }
+  let pitch=median(pitches.filter(x=>x>0)); let v0=median(letters.map(l=>l.v-pitch*l.idx));
+  letters=letters.filter(l=>Math.abs(l.v-(v0+pitch*l.idx))<=0.3*pitch);
+  if(letters.length>=6){ const fit=linfit(letters.map(l=>l.idx),letters.map(l=>l.v)); pitch=fit.slope; v0=fit.icpt; }
+  if(!(pitch>3)) return {error:'행 간격을 계산하지 못했습니다'};
+  const grid=Array.from({length:18},(_,r)=>['','','','','','']);
+  const cellSyms=Array.from({length:18},()=>Array.from({length:6},()=>[]));
+  const spacing=uh.map((x,k)=>k===0?uh[1]-uh[0]:k===5?uh[5]-uh[4]:Math.min(uh[k]-uh[k-1],uh[k+1]-uh[k]));
+  symbols.forEach(s=>{
+    const p={x:s.cx,y:s.cy}, u=U(p), v=V(p);
+    const r=Math.round((v-v0)/pitch); if(r<0||r>17||Math.abs(v-(v0+pitch*r))>0.5*pitch) return;
+    let k=0,bd=1e9; uh.forEach((x,i)=>{ const dd=Math.abs(u-x); if(dd<bd){bd=dd;k=i;} });
+    if(bd>0.9*spacing[k]) return;
+    cellSyms[r][k].push({t:s.t,u});
+  });
+  for(let r=0;r<18;r++)for(let k=0;k<6;k++){
+    if(k===0||k===3){ grid[r][k]=ALPHA[r]; continue; } // 번호는 줄 순서로 확정
+    grid[r][k]=cellSyms[r][k].sort((a,b)=>a.u-b.u).map(x=>x.t).join('');
+  }
+  const filled=grid.flat().filter(Boolean).length;
+  return {grid,diag:{headers:names.join('·'),letters:letters.length,pitch,filled,total:108,angle:phi*180/Math.PI}};
+}
+
+function levenshtein(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  }
+  return dp[m][n];
+}
+function bestNameMatch(text,names){
+  const t=(text||'').replace(/[^가-힣a-zA-Z]/g,'');
+  if(!t||t.length<2)return null;
+  let best=null,bestD=Infinity,second=Infinity;
+  for(const name of names){
+    const n=name.trim(); if(!n)continue;
+    const d=levenshtein(t,n);
+    if(d<bestD){second=bestD;bestD=d;best=n;}
+    else if(d<second){second=d;}
+  }
+  if(!best)return null;
+  const threshold=Math.max(1,Math.ceil(best.length*0.5)); // 이름 길이의 절반까지 차이는 허용
+  if(bestD>threshold)return null;
+  // 1등과 2등 차이가 뚜렷하면(헷갈릴 다른 이름이 없으면) '확실'로 판단
+  const confident=bestD<=1&&(second-bestD)>=2;
+  return {name:best,dist:bestD,confident};
+}
+const TIME_RE=/^\d{3,4}\s*[~\-]\s*\d{3,4}$/; // "0900~1000" 류
+const LABEL_RE=/(\d)\s*섹터|대기|휴게/;
+function parseSheet(ws){
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+  // 시간 라벨이 있는 "헤더 행" 찾기: 그 행에서 TIME_RE에 매칭되는 셀이 3개 이상인 행
+  let headerRow=-1, timeCols=[];
+  for(let r=0;r<aoa.length;r++){
+    const cols=[];
+    aoa[r].forEach((v,c)=>{ if(TIME_RE.test(String(v).replace(/\s/g,''))) cols.push(c); });
+    if(cols.length>=3){ headerRow=r; timeCols=cols; break; }
+  }
+  if(headerRow<0) return null;
+  const timeLabels=timeCols.map(c=>String(aoa[headerRow][c]).replace(/\s/g,''));
+  const rows=[];
+  let currentLabel=null, subIndex=1;
+  for(let r=headerRow+1;r<aoa.length;r++){
+    // 그 행에서 라벨(1섹터~9섹터/대기/휴게)을 찾되, 어느 열에 있든 상관없이 행 전체에서 탐색
+    const rowVals=aoa[r].map(v=>String(v));
+    const labelCell=rowVals.find(v=>LABEL_RE.test(v));
+    const cells=timeCols.map(c=>(aoa[r][c]||'').toString().trim());
+    const hasData=cells.some(v=>v!=='');
+    if(labelCell){
+      currentLabel=labelCell.trim(); subIndex=1;
+      if(hasData) rows.push({label:currentLabel,cells});
+    }else if(currentLabel && hasData){
+      // 대기/휴게처럼 같은 구간에 사람이 여러 줄로 이어지는 경우(병합 셀이라 라벨이 첫 줄에만 있음)
+      subIndex++;
+      rows.push({label:currentLabel+'-'+subIndex,cells});
+    }else if(!hasData){
+      currentLabel=null; // 완전히 빈 구분 줄을 만나면 그룹 종료(엉뚱한 다음 구간과 섞이지 않게)
+    }
+  }
+  if(rows.length===0) return null;
+  return {timeLabels,rows};
+}
+
+// 사진 글자가 패턴과 "진짜로 다른지" 판정: 구글이 헷갈리기 쉬운 글자(O/Q/D, I/L/J …)는 같은 것으로 보고, 확신이 낮으면(0.85 미만) 패턴을 믿는다
+const SIMILAR=[['O','Q','D'],['I','L','J'],['E','F'],['B','R'],['C','G']];
+const sameish=(a,b)=>a===b||SIMILAR.some(g=>g.includes(a)&&g.includes(b));
+const SURE=0.85;
+// 구글이 글자 대신 숫자·기호로 읽었다는 것은 글자 모양에 자신이 없다는 뜻 → 비슷하게 생긴 글자 모두를 후보로 인정
+const WILD={'0':'OQDCG','°':'OQDCG','º':'OQDCG','˚':'OQDCG','o':'OQDCG','8':'BER','1':'ILJ','|':'ILJ','l':'ILJ','!':'ILJ','ㅣ':'ILJ'};
+function cellVerdict(pat,alts,conf,raws){ // 반환: 'none'(사진에서 못 읽음) | 'ok' | 'unsure' | 'bad'
+  if(!alts||!alts.length) return 'none';
+  if(!pat.length) return 'bad';
+  if(alts.some(a=>sameish(a,pat[0]))) return 'ok';
+  if((raws||[]).some(r=>(WILD[r]||'').includes(pat[0]))) return 'ok';
+  return conf>=SURE?'bad':'unsure';
+}
+// ===== 화면 로직: 종일(24시간)·주간·야간 =====
+const $=id=>document.getElementById(id);
+const LS={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const HN={day:'주간',night:'야간'}, HCOL={day:2,night:5}, HSEL={day:'patDay',night:'patNight'};
+const newHalf=()=>({roster:{},grid:null,alts:null,raws:null,conf:null,choice:{},manual:{},warn:[]});
+let patterns={}, photoImg=null, gv=null, changeMode=null, S={day:newHalf(),night:newHalf()}, ran=false;
+
+// ---- 팀 선택: 패턴·직원 이름 목록은 팀마다 따로 저장 ----
+const team=()=>$('team').value;
+{ const t=LS.get('vts_s_team'); if(t&&['1','2','3'].includes(t)) $('team').value=t; }
+const pKey=()=>'vts_s_patterns_t'+team(), tabKey=h=>'vts_s_tab_t'+team()+'_'+h, nameKey=()=>'vts_known_names_t'+team();
+// 이전 버전(팀 구분 없음)에 저장해 둔 패턴·이름은 1팀으로 옮김
+try{ const old=LS.get('vts_s_patterns'); if(old&&!LS.get('vts_s_patterns_t1')) LS.set('vts_s_patterns_t1',old);
+     const on=LS.get('vts_known_names'); if(on&&!LS.get('vts_known_names_t1')) LS.set('vts_known_names_t1',on); }catch(e){}
+// ---- 설정(이 기기에만 저장) ----
+{ const v=LS.get('vts_gv_worker'); if(v) $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>LS.set('vts_gv_worker',e.target.value.trim())); }
+const adminKeyName=()=>'vts_team_code_t'+team();
+function loadAdminKey(){ $('gvAdmin').value=LS.get(adminKeyName())||''; } 
+$('gvAdmin').addEventListener('change',e=>LS.set(adminKeyName(),e.target.value.trim()));
+$('knownNames').addEventListener('change',e=>LS.set(nameKey(),e.target.value.trim()));
+const staff=()=>$('knownNames').value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+const shiftMode=()=>$('shift').value;                       // both | day | night
+const activeHalves=()=>shiftMode()==='both'?['day','night']:[shiftMode()];
+{ const v=LS.get('vts_s_shift'); if(v&&['both','day','night'].includes(v)) $('shift').value=v; }
+$('shift').addEventListener('change',()=>{ LS.set('vts_s_shift',$('shift').value); if(ran) start(changeMode); });
+
+// ---- ① 패턴 엑셀 ----
+function fillPatternSelects(){
+  const names=Object.keys(patterns);
+  ['day','night'].forEach(h=>{
+    const sel=$(HSEL[h]); const saved=LS.get(tabKey(h));
+    sel.innerHTML=names.map(n=>`<option>${esc(n)}</option>`).join('')||'<option value="">(패턴 없음)</option>';
+    let pick=(saved&&patterns[saved])?saved:names.find(n=>n.includes(HN[h]))||names[0]||'';
+    sel.value=pick;
+  });
+}
+function setPatterns(p,msg){
+  patterns=p; fillPatternSelects();
+  const n=Object.keys(p).length; $('patternMsg').textContent=msg||(n?`${team()}팀 패턴 ${n}개 준비됨`:'패턴 없음'); $('patternMsg').className='msg '+(n?'ok':'');
+}
+['patDay','patNight'].forEach(id=>$(id).addEventListener('change',()=>{ LS.set(tabKey(id==='patDay'?'day':'night'),$(id).value); if(ran) start(changeMode); }));
+$('patternFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const hidden=(wb.Workbook&&wb.Workbook.Sheets)||[]; const p={}; let skipped=0;
+      wb.SheetNames.forEach((name,i)=>{ if(hidden[i]&&hidden[i].Hidden) return; const parsed=parseSheet(wb.Sheets[name]); if(parsed) p[name]=parsed; else skipped++; });
+      LS.set(pKey(),JSON.stringify(p));
+      setPatterns(p,`${team()}팀 패턴 ${Object.keys(p).length}개 저장됨`+(skipped?` (읽지 못한 탭 ${skipped}개 제외)`:''));
+    }catch(err){ $('patternMsg').textContent='엑셀 읽기 실패: '+(err.message||err); $('patternMsg').className='msg bad'; }
+  };
+  rd.readAsArrayBuffer(f);
+});
+function loadTeam(){
+  $('teamTitle').textContent=team()+'팀';
+  $('knownNames').value=LS.get(nameKey())||''; loadAdminKey(); $('pubMsg').textContent=''; $('pubMsg').className='msg';
+  ran=false; changeMode=null; S={day:newHalf(),night:newHalf()}; $('result').innerHTML=''; say('','');
+  let loaded=false;
+  try{ const s=LS.get(pKey()); if(s){ setPatterns(JSON.parse(s),team()+'팀 저장된 패턴 불러옴'); loaded=true; } }catch(e){}
+  if(!loaded){ patterns={}; fillPatternSelects(); $('patternMsg').textContent=team()+'팀 패턴이 아직 없습니다 — 위에서 엑셀을 올려주세요'; $('patternMsg').className='msg'; }
+}
+$('team').addEventListener('change',()=>{ LS.set('vts_s_team',team()); loadTeam(); });
+loadTeam();
+
+// ---- ② 사진 ----
+$('photoFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const im=new Image();
+  im.onload=()=>{ photoImg=im; gv=null; ran=false; changeMode=null; S={day:newHalf(),night:newHalf()}; $('result').innerHTML='';
+    $('photoPrev').src=im.src; $('photoPrev').style.display='block'; $('photoMsg').textContent='사진 준비됨'; $('photoMsg').className='msg ok'; say('',''); };
+  im.onerror=()=>{ $('photoMsg').textContent='사진을 열 수 없습니다'; $('photoMsg').className='msg bad'; };
+  im.src=URL.createObjectURL(f);
+});
+async function callGoogle(){
+  if(gv) return gv;
+  const wUrl=$('gvWorker').value.trim().replace(/\/+$/,''), wKey=$('gvAdmin').value.trim();
+  if(!wUrl||!wKey) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
+  const sc=Math.min(1,2400/Math.max(photoImg.width,photoImg.height));
+  const cv=document.createElement('canvas'); cv.width=Math.round(photoImg.width*sc); cv.height=Math.round(photoImg.height*sc);
+  cv.getContext('2d').drawImage(photoImg,0,0,cv.width,cv.height);
+  const b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];
+  const res=await fetch(wUrl+'/vision',{method:'POST',headers:{'Content-Type':'application/json','X-Team-Code':wKey},body:JSON.stringify({image:b64})});
+  const json=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error('Worker 응답 '+res.status+': '+((json.error&&(json.error.message||json.error))||''));
+  gv={symbols:visionSymbols(json),words:visionWords(json),sentW:cv.width,sentH:cv.height};
+  return gv;
+}
+
+// ---- 패턴 보조 ----
+const patOf=h=>patterns[$(HSEL[h]).value]||null;
+const lettersOf=cell=>(String(cell).match(/[A-Za-z]/g)||[]).map(s=>s.toUpperCase());
+const patternLetters=p=>{ const s=new Set(); p.rows.forEach(r=>r.cells.forEach(c=>lettersOf(c).forEach(l=>s.add(l)))); return [...s].sort(); };
+const nameOf=(h,l)=>S[h].roster[l]||l;
+const sectorRowIndex=label=>{ const m=String(label).match(/^(\d)\s*섹터$/); return m?+m[1]-1:-1; };
+const placeOf=label=>String(label).replace(/-\d+$/,'').replace('대기근무','대기');
+const fmtT=t=>String(t).replace(/(\d{1,2})(\d{2})/g,'$1:$2').replace(/\b(\d):/g,'0$1:');
+function say(t,cls){ const e=$('runMsg'); e.textContent=t; e.className='msg '+(cls||''); }
+
+// ---- ③ 시작 ----
+async function start(m){
+  changeMode=m; ran=true;
+  const act=activeHalves();
+  for(const h of act) if(!patOf(h)){ say(`${HN[h]} 패턴 탭을 먼저 고르세요(① 단계).`,'bad'); return; }
+  if(!photoImg){ say('먼저 ② 사진을 선택하세요.','bad'); return; }
+  say('사진을 읽는 중… (10~20초)','');
+  S={day:newHalf(),night:newHalf()};
+  try{
+    const g=await callGoogle();
+    const rr=autoRoster(g.symbols,g.words), known=staff(), ALPHA='ABCDEFGHIJKLMNOPQR', globalWarn=[];
+    act.forEach(h=>{
+      const st=S[h];
+      if(rr.error){ st.warn.push('명단표를 못 읽었습니다('+rr.error+') — 이름을 직접 입력하세요.'); return; }
+      const bad=[];
+      rr.grid.forEach((row,i)=>{
+        const t=String(row[HCOL[h]]||'').replace(/\s+/g,'');
+        if(!/[가-힣]{2,}/.test(t)){ if(t) bad.push(ALPHA[i]); return; }
+        const mm=known.length?bestNameMatch(t,known):null; st.roster[ALPHA[i]]=(mm&&mm.confident)?mm.name:t;
+      });
+      if(bad.length) st.warn.push('이름을 읽지 못한 줄: '+bad.join(', ')+' — 직접 고치세요.');
+    });
+    if(m==='no'){
+      const probe=autoSectorGrid(g.symbols,g.words,0), tables=probe.error?0:probe.diag.tables;
+      if(probe.error) globalWarn.push('사진 속 시간표를 못 읽어 패턴 그대로 보여줍니다('+probe.error+')');
+      else if(act.length===2&&tables<2) globalWarn.push('사진에서 시간표를 1개만 찾아 주간·야간을 모두 비교하지 못했습니다. 패턴 그대로 보여줍니다.');
+      else act.forEach(h=>{
+        const sr=(act.length===2||tables>=2)?autoSectorGrid(g.symbols,g.words,h==='day'?0:1):probe;
+        const st=S[h], pat=patOf(h);
+        if(sr.error){ st.warn.push('시간표 인식 실패: '+sr.error); return; }
+        if(sr.grid[0].length!==pat.timeLabels.length){ st.warn.push(`시간 칸 수가 다릅니다(패턴 ${pat.timeLabels.length}칸 / 사진 ${sr.grid[0].length}칸) — 비교하지 않고 패턴 그대로 보여줍니다.`); return; }
+        st.grid=sr.grid; st.alts=sr.alts; st.raws=sr.raws; st.conf=sr.conf;
+      });
+    }
+    const warns=[...globalWarn,...act.flatMap(h=>S[h].warn.map(w=>`[${HN[h]}] ${w}`))];
+    say(warns.join('\n')||'읽기 완료','ok'+(warns.length?' warn':''));
+  }catch(err){ say('오류: '+(err.message||err),'bad'); return; }
+  renderAll();
+}
+$('btnNo').onclick=()=>start('no');
+$('btnYes').onclick=()=>start('yes');
+
+// ---- 결과 계산 ----
+function verdictAt(h,r,c){
+  const st=S[h], row=patOf(h).rows[r], si=sectorRowIndex(row.label);
+  if(changeMode!=='no'||!st.grid||si<0||!st.grid[si]) return null;
+  return cellVerdict(lettersOf(row.cells[c]),st.alts[si][c],st.conf[si][c],st.raws[si][c]);
+}
+function finalCell(h,r,c){
+  const st=S[h], row=patOf(h).rows[r], k=r+','+c, pat=lettersOf(row.cells[c]);
+  if(changeMode==='yes'&&st.manual[k]!=null) return lettersOf(st.manual[k]);
+  if(verdictAt(h,r,c)==='bad'&&st.choice[k]==='ocr') return lettersOf(st.grid[sectorRowIndex(row.label)][c]||'');
+  return pat;
+}
+// ---- 화면 그리기 ----
+function renderAll(){
+  const act=activeHalves();
+  let h='<details class="box" '+(act.some(x=>Object.keys(S[x].roster).length<patternLetters(patOf(x)).length-1)?'open':'')+'><summary>오늘 명단 확인·수정 (알파벳 → 이름)</summary>';
+  act.forEach(x=>{
+    h+=`<h3>${HN[x]} 명단</h3><div class="roster">`+patternLetters(patOf(x)).map(l=>`<label><b>${l}</b><input class="rosterin" data-h="${x}" data-l="${l}" value="${esc(S[x].roster[l]||'')}" placeholder="이름"></label>`).join('')+'</div>';
+  });
+  h+='</details><div id="tablesBox"></div><div id="peopleBox"></div>';
+  $('result').innerHTML=h; renderTables(); renderPeople();
+}
+function renderTables(){
+  const act=activeHalves(); let out='';
+  act.forEach(x=>{
+    const p=patOf(x), st=S[x]; let bad=0,unread=0,unsure=0,checked=0;
+    let t='<table><tr><th></th>'+p.timeLabels.map(l=>`<th>${esc(fmtT(l))}</th>`).join('')+'</tr>';
+    p.rows.forEach((row,r)=>{
+      t+=`<tr><th>${esc(row.label)}</th>`;
+      row.cells.forEach((cell,c)=>{
+        const k=r+','+c, pat=lettersOf(cell);
+        if(changeMode==='yes'){
+          const val=st.manual[k]!=null?st.manual[k]:pat.join(',');
+          const changed=st.manual[k]!=null&&lettersOf(st.manual[k]).join(',')!==pat.join(',');
+          t+=`<td class="${changed?'chg':''}"><input class="cellin" data-h="${x}" data-k="${k}" value="${esc(val)}"><small data-n="${x}:${k}">${esc(lettersOf(val).map(l=>nameOf(x,l)).join(', '))}</small></td>`; return;
+        }
+        const v=verdictAt(x,r,c);
+        if(v==='ok') checked++; if(v==='bad'){checked++;bad++;} if(v==='unsure') unsure++; if(v==='none') unread++;
+        if(v==='bad'){
+          const useO=st.choice[k]==='ocr', o=lettersOf(st.grid[sectorRowIndex(row.label)][c]||'');
+          t+=`<td class="bad" data-h="${x}" data-flip="${k}"><small>패턴</small> <span class="${useO?'dim':'pick'}">${esc(pat.map(l=>nameOf(x,l)).join(', '))}</span><br><small>사진</small> <span class="${useO?'pick':'dim'}">${esc(o.map(l=>nameOf(x,l)).join(', '))}</span></td>`;
+        }else{
+          const unv=(v==='none'||v==='unsure');
+          t+=`<td class="${unv?'unv':''}">${esc(pat.map(l=>nameOf(x,l)).join(', '))}</td>`;
+        }
+      });
+      t+='</tr>';
+    });
+    t+='</table>';
+    let sum;
+    if(changeMode==='yes') sum='패턴에서 바뀐 칸의 알파벳을 직접 고치세요(예: <b>C</b> 또는 <b>A,F</b>). 바뀐 칸은 노란색입니다.';
+    else if(st.grid) sum=`사진과 확실히 비교한 칸 ${checked}개 중 <b>${bad}개가 패턴과 다릅니다</b>. 확인하지 못한 칸 <b>${unread+unsure}개</b>(점선: 못 읽음 ${unread} · 흐림 ${unsure}, 패턴을 믿음). 빨간 칸을 누르면 패턴/사진 중 어느 쪽을 쓸지 바뀝니다(기본: 패턴).`;
+    else sum='사진과 비교하지 못해 패턴 그대로 보여줍니다.';
+    out+=`<details class="box" open><summary>${HN[x]} 시간표${st.grid&&changeMode==='no'?` — 다른 칸 ${bad}개 · 확인 못 한 칸 ${unread+unsure}개`:''}</summary><p class="hint">${sum}</p><div class="scroll">${t}</div></details>`;
+  });
+  $('tablesBox').innerHTML=out;
+}
+// 사람별 하루 일정: 주간·야간을 이름으로 합침
+function buildPeople(){
+  const people={}; const act=activeHalves();
+  act.forEach(x=>{
+    const p=patOf(x);
+    p.rows.forEach((row,r)=>row.cells.forEach((cell,c)=>{
+      finalCell(x,r,c).forEach(l=>{ const nm=nameOf(x,l); const P=people[nm]=people[nm]||{halves:{}}; (P.halves[x]=P.halves[x]||[]).push({c,place:placeOf(row.label)}); });
+    }));
+  });
+  const out=[];
+  Object.keys(people).sort((a,b)=>a.localeCompare(b,'ko')).forEach(nm=>{
+    const lines={}; Object.keys(people[nm].halves).forEach(x=>{
+      const p=patOf(x), s=people[nm].halves[x].slice().sort((a,b)=>a.c-b.c); const runs=[];
+      s.forEach(e=>{ const last=runs[runs.length-1]; if(last&&last.place===e.place&&e.c===last.c1+1) last.c1=e.c; else runs.push({place:e.place,c0:e.c,c1:e.c}); });
+      lines[x]=runs.map(r=>{ const a=fmtT(p.timeLabels[r.c0]).split('~')[0], b=fmtT(p.timeLabels[r.c1]).split('~')[1]||''; return {t:a+'~'+b,place:r.place}; });
+    });
+    out.push({name:nm,lines,both:!!(lines.day&&lines.night)});
+  });
+  return out;
+}
+function renderPeople(){
+  const list=buildPeople();
+  let h=`<details class="box" open><summary>사람별 하루 일정 (${list.length}명${activeHalves().length===2?' · 종일 '+list.filter(p=>p.both).length+'명':''})</summary><div class="people">`;
+  list.forEach(p=>{
+    h+=`<div class="person"><b>${esc(p.name)}</b>${p.both?' <span class="tag">종일</span>':''}`;
+    ['day','night'].forEach(x=>{ if(p.lines[x]) h+=`<div class="pl"><span class="pk">${HN[x]}</span> ${p.lines[x].map(r=>`<span class="chip c-${r.place.replace(/\d/g,'').replace('섹터','s')}">${esc(r.t)} ${esc(r.place)}</span>`).join(' ')}</div>`; });
+    h+='</div>';
+  });
+  h+='</div><div class="row"><button id="doneBtn">확정 — 사람별 일정 복사</button></div><div id="copyBox"></div></details>';
+  $('peopleBox').innerHTML=h; $('doneBtn').onclick=()=>done(list);
+}
+function done(list){
+  const txt=list.map(p=>p.name+(p.both?' (종일)':'')+'\n'+['day','night'].filter(x=>p.lines[x]).map(x=>`  ${HN[x]}: `+p.lines[x].map(r=>r.t+' '+r.place).join(', ')).join('\n')).join('\n');
+  const box=$('copyBox');
+  (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(txt):Promise.reject()).then(
+    ()=>{ box.innerHTML='<p class="msg ok">복사했습니다.</p>'; },
+    ()=>{ box.innerHTML='<p class="hint">자동 복사가 막혔습니다. 아래 내용을 길게 눌러 복사하세요.</p><textarea rows="10" readonly style="width:100%">'+esc(txt)+'</textarea>'; });
+}
+// ---- 입력 이벤트(한 번만 연결) ----
+$('result').addEventListener('input',e=>{
+  const t=e.target;
+  if(t.classList.contains('rosterin')){ const v=t.value.trim(); if(v) S[t.dataset.h].roster[t.dataset.l]=v; else delete S[t.dataset.h].roster[t.dataset.l]; renderTables(); renderPeople(); }
+  else if(t.classList.contains('cellin')){ const h=t.dataset.h; S[h].manual[t.dataset.k]=t.value; const s=document.querySelector(`[data-n="${h}:${t.dataset.k}"]`); if(s) s.textContent=lettersOf(t.value).map(l=>nameOf(h,l)).join(', '); t.parentElement.classList.add('chg'); renderPeople(); }
+});
+$('result').addEventListener('click',e=>{
+  const td=e.target.closest('[data-flip]'); if(!td) return;
+  const h=td.dataset.h, k=td.dataset.flip; S[h].choice[k]=S[h].choice[k]==='ocr'?'pat':'ocr'; renderTables(); renderPeople();
+});
+// ---- 문제 분석용: 구글 원본 저장 ----
+$('rawBtn').onclick=()=>{
+  if(!gv){ alert('먼저 ③에서 한 번 읽기를 실행하세요.'); return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(gv)],{type:'application/json'})); a.download='vts-google-raw.json';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+// ---- ④ 알림 발행 (팀별) ----
+const toMin=t=>{ const m=/(\d{1,2}):(\d{2})/.exec(t||''); return m?(+m[1])*60+(+m[2]):null; };
+const kstToday=()=>new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+$('pubDate').value=kstToday();
+// 사람별 일정 → 알림 목록. 장소가 바뀌는 시각(연속된 같은 장소는 한 칸)의 N분 전. 자정을 넘으면 다음 날로 계산.
+function buildAlerts(list,date,lead){
+  const base=Date.parse(date+'T00:00:00+09:00'), alerts=[];
+  list.forEach(p=>{
+    let prev=-1, day=0;
+    ['day','night'].forEach(x=>(p.lines[x]||[]).forEach(r=>{
+      const m=toMin(r.t.split('~')[0]); if(m==null) return;
+      if(prev>=0&&m<prev) day++; prev=m;
+      const at=base+day*86400000+m*60000-lead*60000;
+      const hhmm=r.t.split('~')[0];
+      alerts.push({name:p.name,at,title:'VTS 근무 알림',body:`${lead}분 뒤 ${hhmm} ${r.place}`});
+    }));
+  });
+  return alerts;
+}
+async function adminCall(path,method,body){
+  const wUrl=$('gvWorker').value.trim().replace(/\/+$/,''), wKey=$('gvAdmin').value.trim();
+  if(!wUrl||!wKey) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
+  const res=await fetch(wUrl+path,{method,headers:{'Content-Type':'application/json','X-Team-Code':wKey},body:body?JSON.stringify(body):undefined});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((j.error&&(j.error.message||j.error))||('서버 응답 '+res.status));
+  return j;
+}
+const pubSay=(t,c)=>{ $('pubMsg').textContent=t; $('pubMsg').className='msg '+(c||''); };
+$('staffBtn').onclick=async()=>{
+  try{ const s=await adminCall('/team/status?team='+team(),'GET');
+    pubSay(`${team()}팀 알림 등록 ${s.registered.length}명 / 명단 ${s.names.length}명`+(s.registered.length<s.names.length?`\n아직 미등록: ${s.names.filter(n=>!s.registered.includes(n)).join(', ')}`:''),'ok');
+  }catch(e){ pubSay('실패: '+e.message,'bad'); }
+};
+$('pubBtn').onclick=async()=>{
+  try{
+    if(!ran) return pubSay('먼저 ③에서 오늘 근무표를 만들어 확인하세요.','bad');
+    const date=$('pubDate').value, lead=Math.max(1,Math.min(60,+$('pubLead').value||15));
+    const list=buildPeople(); const alerts=buildAlerts(list,date,lead);
+    if(!alerts.length) return pubSay('보낼 알림이 없습니다.','bad');
+        const r=await adminCall('/publish','POST',{team:team(),date,alerts});
+    pubSay(`알림 예약 완료 — ${r.scheduled}건`+(r.skipped?`, 이미 지난 시각 ${r.skipped}건 건너뜀`:'')+(r.unregistered.length?`\n알림 미등록(받지 못함): ${r.unregistered.join(', ')}`:'\n전원 등록됨'),'ok');
+  }catch(e){ pubSay('실패: '+e.message,'bad'); }
+};
+
+</script>
+</body></html>
