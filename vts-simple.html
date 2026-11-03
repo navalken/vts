@@ -60,7 +60,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
   <b>④ 알림 예약</b>
   <p class="hint">③이 맞으면 누르세요. 이 팀 사람들에게 장소 바뀌기 전 알림이 예약됩니다. 같은 날 다시 누르면 새 내용으로 교체됩니다. 누구든(휴가 대체자도) 할 수 있습니다.</p>
   <div class="row"><label>날짜</label> <input id="pubDate" type="date"> <label>몇 분 전</label> <input id="pubLead" type="number" value="15" min="1" max="60" style="width:70px"></div>
-  <div class="row"><button id="pubBtn">확정 — 알림 예약</button> <button id="staffBtn" style="background:#6b7280">알림 등록 현황</button></div>
+  <div class="row"><button id="pubBtn">확정 — 알림 예약</button> <button id="staffBtn" style="background:#6b7280">알림 등록 현황</button> <button id="logBtn" style="background:#6b7280">발송 기록</button></div>
   <div id="pubMsg" class="msg"></div>
 </div>
 <details><summary>설정 (처음 한 번만)</summary>
@@ -607,6 +607,14 @@ $('pubBtn').onclick=async()=>{
     if(!alerts.length) return pubSay('보낼 알림이 없습니다.','bad');
         const r=await adminCall('/publish','POST',{team:team(),date,alerts});
     pubSay(`알림 예약 완료 — ${r.scheduled}건`+(r.skipped?`, 이미 지난 시각 ${r.skipped}건 건너뜀`:'')+(r.unregistered.length?`\n알림 미등록(받지 못함): ${r.unregistered.join(', ')}`:'\n전원 등록됨'),'ok');
+  }catch(e){ pubSay('실패: '+e.message,'bad'); }
+};
+
+$('logBtn').onclick=async()=>{
+  try{ const r=await adminCall('/team/log?team='+team(),'GET'); const f=ms=>new Date(ms+9*3600e3).toISOString().slice(5,16).replace('T',' ');
+    let t=`현재 ${f(r.now)} (한국시간)\n대기 중 ${r.pending}건`+r.queue.map(x=>`\n · ${f(x.due)} ${x.name} ${x.body||''}`).join('');
+    t+='\n\n최근 발송 기록'+(r.log.length?'':' 없음')+r.log.map(x=>`\n · ${(x.at||'').slice(5,16).replace('T',' ')} ${x.name||''} → ${x.error?('오류 '+x.error):('응답 '+x.status+(x.detail?(' '+x.detail.slice(0,60)):''))}`).join('');
+    pubSay(t,'ok');
   }catch(e){ pubSay('실패: '+e.message,'bad'); }
 };
 
