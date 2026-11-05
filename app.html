@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeju VTS</title>
+<link rel="manifest" href="manifest-app.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jeju VTS">
+<meta name="theme-color" content="#1a7be0">
+<style>
+:root{--bg:#f5f8fc;--card:#fff;--tx:#12284a;--mut:#667085;--pri:#1a7be0;--bd:#dbe4f0;--ok:#12803c;--bad:#c0392b;--chip:#e8f1fd;--warn:#fff1d6}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1720;--card:#18212d;--tx:#e8edf5;--mut:#9aa7ba;--pri:#4da3ff;--bd:#2b3646;--ok:#4cc27a;--bad:#ff7b6b;--chip:#1f3350;--warn:#4a3a17}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 -apple-system,"Noto Sans KR",sans-serif}
+header{background:#1a7be0;color:#fff;padding:14px 18px 12px;padding-top:calc(14px + env(safe-area-inset-top))}
+header h1{margin:0;font-size:26px;letter-spacing:.2px}
+header .sub{font-size:14px;opacity:.92;display:flex;gap:16px;flex-wrap:wrap}
+main{padding:14px 16px 100px;max-width:560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+h2{font-size:20px;margin:6px 0 12px}
+h3{font-size:16px;margin:0 0 8px}
+label{display:block;font-weight:600;margin:12px 0 6px}
+input,select{width:100%;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+input[readonly]{opacity:.7}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:13px 16px;background:var(--pri);color:#fff;width:100%;margin-top:10px}
+button.sec{background:var(--chip);color:var(--pri)}
+button.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+button:disabled{opacity:.5}
+.menu button{display:flex;justify-content:space-between;align-items:center;text-align:left;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:18px;padding:18px 16px;margin-top:10px}
+.menu button span.arr{color:var(--mut)}
+.msg{margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);white-space:pre-wrap;font-size:15px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.mut{color:var(--mut);font-size:14px}
+.top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.top button{width:auto;margin:0;padding:8px 12px;background:var(--chip);color:var(--pri)}
+.team h3{display:flex;justify-content:space-between;align-items:center}
+.team h3 small{color:var(--mut);font-weight:400}
+.person{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;background:var(--card)}
+.person .nm{flex:1;min-width:0}
+.person .nm b{font-size:17px}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--pri);margin-left:4px;font-weight:600;vertical-align:middle}
+.badge.leave{background:var(--warn);color:var(--tx)}
+.badge.off{background:transparent;border:1px solid var(--bd);color:var(--mut)}
+.ic{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--chip);color:var(--pri);text-decoration:none;font-size:20px;border:0;margin:0;padding:0}
+.ic.dis{opacity:.35;pointer-events:none}
+.add{background:transparent;color:var(--pri);border:1px dashed var(--pri);margin-top:0}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;background:none;color:var(--mut);margin:0;border-radius:0;padding:8px 2px 6px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;width:auto}
+nav button i{font-style:normal;font-size:22px}
+nav button.on{color:var(--pri)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.modal[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>〰 Jeju VTS</h1>
+  <div class="sub"><span>Safe Sea, Better Tomorrow</span><span id="clock"></span></div>
+</header>
+<main>
+  <section id="tab-my" class="hide"><h2>내 근무</h2><div class="card"><p class="mut">오늘 내 근무와 다음 장소 이동이 여기에 표시됩니다. (준비 중)</p><button class="sec" onclick="location.href='vts-simple.html'">근무표 올리고 알림 예약하기</button></div></section>
+  <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div class="card"><p class="mut">지금 누가 어느 섹터인지 표시됩니다. (준비 중)</p></div></section>
+  <section id="tab-wx" class="hide"><h2>기상정보</h2><div class="card"><p class="mut">제주 해상 기상(파고·풍속·시정)이 표시됩니다. (준비 중)</p></div></section>
+  <section id="tab-lib" class="hide"><h2>라이브러리</h2><div class="card"><p class="mut">업무 자료와 링크가 표시됩니다. (준비 중)</p></div></section>
+  <section id="tab-set"><div id="setBody"></div></section>
+</main>
+<nav>
+  <button data-t="my"><i>🏠</i>내 근무</button>
+  <button data-t="live"><i>👥</i>실시간</button>
+  <button data-t="wx"><i>🌊</i>기상</button>
+  <button data-t="lib"><i>📚</i>라이브러리</button>
+  <button data-t="set" class="on"><i>⚙️</i>설정</button>
+</nav>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+
+<script>
+// 관리자가 한 번만 채워 넣으세요. 비워두면 이 기기 저장값(vts_app_worker)을 씁니다.
+const WORKER_URL = 'https://vts-push.navalken100.workers.dev';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ls = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
+const base = () => (WORKER_URL || ls.get('vts_app_worker')).replace(/\/+$/, '');
+const ua = navigator.userAgent;
+const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const ROLE = { chief: '총괄관리자', teamadmin: '팀관리자' };
+const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: null, people: null, view: 'home', msg: '' };
+
+// ---- 시계 ----
+(function tick() { const d = new Date(); const p = n => String(n).padStart(2, '0'); $('clock').textContent = `${p(d.getMonth() + 1)}.${p(d.getDate())}  ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; setTimeout(tick, 1000); })();
+
+// ---- 탭 ----
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  ['my', 'live', 'wx', 'lib', 'set'].forEach(t => $('tab-' + t).classList.toggle('hide', t !== b.dataset.t));
+  if (b.dataset.t === 'set') renderSet();
+});
+
+// ---- 서버 호출 ----
+async function api(path, method = 'GET', body) {
+  if (!base()) throw new Error('서버 주소가 설정되지 않았습니다');
+  const res = await fetch(base() + path, { method, headers: { 'Content-Type': 'application/json', ...(S.token ? { 'X-Token': S.token } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(j.error || ('서버 오류 ' + res.status)); e.status = res.status; throw e; }
+  return j;
+}
+async function loadMe() {
+  if (!S.token) { S.me = null; return; }
+  try { S.me = (await api('/me')).person; }
+  catch (e) { if (e.status === 401) { S.me = null; S.msg = '이 기기의 등록이 만료되었습니다. 다시 등록해 주세요.'; S.token = ''; ls.del('vts_app_token'); } else throw e; }
+}
+async function loadPeople() { const j = await api('/people'); S.people = j.people; S.me = j.me; }
+const isAdmin = () => S.me && (S.me.role === 'chief' || S.me.role === 'teamadmin');
+const canEditP = p => S.me && (S.me.role === 'chief' || (S.me.role === 'teamadmin' && S.me.team === p.team));
+const canAddTeam = t => S.me && (S.me.role === 'chief' || (S.me.role === 'teamadmin' && S.me.team === t));
+const say = (el, t, cls) => { el.hidden = false; el.className = 'msg ' + (cls || ''); el.textContent = t; };
+
+// ---- 푸시 등록 ----
+function u8ToB64u(buf) { let s = ''; new Uint8Array(buf).forEach(c => s += String.fromCharCode(c)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64uToU8(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+let swReg = null;
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+async function subscribeAndRegister(team, name, code) {
+  if (!('PushManager' in window) || !('Notification' in window)) throw new Error(isIOS ? '이 화면에서는 알림을 쓸 수 없습니다. 홈 화면에 추가한 아이콘으로 다시 여세요.' : '이 브라우저는 푸시 알림을 지원하지 않습니다.');
+  const perm = await Notification.requestPermission(); // 버튼을 누른 직접 동작 안에서 호출(iOS 필수)
+  if (perm !== 'granted') throw new Error('알림이 허용되지 않았습니다. 기기 설정 → 알림에서 허용으로 바꾼 뒤 다시 시도하세요.');
+  const { publicKey } = await (await fetch(base() + '/vapid-public')).json();
+  const reg = swReg || await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && sub.options && sub.options.applicationServerKey && u8ToB64u(sub.options.applicationServerKey) !== publicKey) { await sub.unsubscribe(); sub = null; }
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64uToU8(publicKey) });
+  const res = await fetch(base() + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team, name, code, sub: sub.toJSON() }) });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error || ('등록 실패 ' + res.status));
+  S.token = j.token; S.code = code; ls.set('vts_app_token', j.token); ls.set('vts_app_code', code); S.me = j.person;
+}
+
+// ---- 설정 화면 ----
+async function renderSet() {
+  const el = $('setBody');
+  try { await loadMe(); } catch (e) { el.innerHTML = `<div class="card"><div class="msg bad">${esc(e.message)}</div></div>`; return; }
+  if (!S.me) return renderOnboard();
+  if (S.view === 'info') return renderInfo();
+  if (S.view === 'admin') return renderAdmin();
+  const roleTxt = S.me.role ? ROLE[S.me.role] : '일반';
+  el.innerHTML = `<h2>설정</h2>
+  <div class="card"><h3>👤 ${esc(S.me.name)} 님</h3><div class="mut">${esc(S.me.team)}팀 · ${esc(S.me.status)} · ${roleTxt}</div></div>
+  <div class="menu">
+    <button id="mInfo">내 정보 <span class="arr">›</span></button>
+    <button id="mAdmin">관리자 관리 <span class="arr">›</span></button>
+  </div>${S.msg ? `<div class="msg bad">${esc(S.msg)}</div>` : ''}`;
+  $('mInfo').onclick = () => { S.view = 'info'; renderSet(); };
+  $('mAdmin').onclick = () => { S.view = 'admin'; renderSet(); };
+}
+
+function renderOnboard() {
+  $('setBody').innerHTML = `<h2>설정</h2>
+  ${S.msg ? `<div class="msg bad">${esc(S.msg)}</div>` : ''}
+  <div class="card">
+    ${isIOS && !standalone ? `<div class="msg" style="margin:0 0 10px"><b>아이폰은 먼저 홈 화면에 추가하세요</b><br>Safari 공유 버튼(□↑) → 홈 화면에 추가 → 생긴 아이콘으로 다시 열어 등록합니다.</div>` : ''}
+    <h3>처음 시작</h3>
+    <label for="oTeam">팀</label>
+    <select id="oTeam"><option value="">선택</option><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select>
+    <label for="oCode">우리 팀 코드</label>
+    <input id="oCode" autocomplete="off" autocapitalize="off" placeholder="팀 코드" value="${esc(S.code)}">
+    <button id="oLoad" class="sec">명단 불러오기</button>
+    <div id="oNameBox" class="hide">
+      <label for="oName">내 이름</label>
+      <select id="oName"></select>
+      <input id="oNew" placeholder="목록에 없으면 이름 직접 입력" maxlength="20" style="margin-top:8px">
+      <button id="oReg">알림 허용하고 시작</button>
+    </div>
+    <div class="msg" id="oMsg" hidden></div>
+  </div>`;
+  $('oLoad').onclick = async () => {
+    const team = $('oTeam').value, code = $('oCode').value.trim();
+    if (!team || !code) return say($('oMsg'), '팀과 팀 코드를 입력하세요.', 'bad');
+    say($('oMsg'), '명단 불러오는 중…');
+    try {
+      const res = await fetch(base() + '/names?team=' + team + '&code=' + encodeURIComponent(code)); const j = await res.json();
+      if (!res.ok) return say($('oMsg'), j.error || ('오류 ' + res.status), 'bad');
+      $('oName').innerHTML = '<option value="">내 이름 선택(없으면 아래에 입력)</option>' + j.names.map(n => `<option value="${esc(n.name)}">${esc(n.name)}${n.registered ? ' (등록됨)' : ''}</option>`).join('');
+      $('oNameBox').classList.remove('hide'); $('oMsg').hidden = true;
+    } catch (e) { say($('oMsg'), '연결 실패: ' + e.message, 'bad'); }
+  };
+  $('oReg').onclick = async () => {
+    const name = $('oNew').value.trim() || $('oName').value;
+    if (!name) return say($('oMsg'), '이름을 선택하거나 입력하세요.', 'bad');
+    $('oReg').disabled = true;
+    try { await subscribeAndRegister($('oTeam').value, name, $('oCode').value.trim()); S.msg = ''; S.view = 'home'; renderSet(); }
+    catch (e) { say($('oMsg'), e.message, 'bad'); } finally { $('oReg').disabled = false; }
+  };
+}
+
+function backBar(title) { return `<div class="top"><button id="back">‹ 설정</button><h2 style="margin:0">${title}</h2></div>`; }
+function wireBack() { $('back').onclick = () => { S.view = 'home'; renderSet(); }; }
+
+function renderInfo() {
+  const m = S.me;
+  $('setBody').innerHTML = backBar('내 정보') + `
+  <div class="card">
+    <label>이름</label><input value="${esc(m.name)}" readonly>
+    <label for="iTeam">팀</label>
+    <select id="iTeam">${['1', '2', '3'].map(t => `<option value="${t}" ${m.team === t ? 'selected' : ''}>${t}팀</option>`).join('')}</select>
+    <label for="iPhone">전화번호</label>
+    <input id="iPhone" type="tel" inputmode="tel" placeholder="010-0000-0000" value="${esc(m.phone)}">
+    <label for="iStatus">상태</label>
+    <select id="iStatus"><option ${m.status === '재직' ? 'selected' : ''}>재직</option><option ${m.status === '휴직' ? 'selected' : ''}>휴직</option></select>
+    <div class="mut" style="margin-top:6px">휴직으로 바꾸면 근무 알림이 가지 않습니다.</div>
+    <button id="iSave">저장</button>
+    <div class="msg" id="iMsg" hidden></div>
+  </div>
+  <div class="card">
+    <h3>🔔 알림</h3>
+    <div class="mut" id="iPerm"></div>
+    <button id="iTest" class="sec">시험 알림 보내기</button>
+    <button id="iRe" class="sec">이 기기 알림 다시 등록</button>
+    <div class="msg" id="iMsg2" hidden></div>
+  </div>
+  <details class="card"><summary><b>총괄관리자 설정</b> <span class="mut">(관리 키 필요)</span></summary>
+    <div class="mut" style="margin-top:8px">최초 지정이나 복구용입니다. Cloudflare에 넣은 관리 키(ADMIN_KEY)를 아는 사람만 총괄관리자가 될 수 있습니다. 이미 총괄관리자가 있으면 이 사람으로 바뀝니다.</div>
+    <input id="iKey" type="password" placeholder="관리 키" style="margin-top:8px" autocomplete="off">
+    <button id="iClaim" class="sec">총괄관리자로 지정</button>
+    <div class="msg" id="iMsg3" hidden></div>
+  </details>`;
+  wireBack();
+  $('iPerm').textContent = ('Notification' in window ? '알림 권한: ' + ({ granted: '허용됨', denied: '차단됨(기기 설정에서 허용으로 바꾸세요)', default: '아직 안 물어봄' }[Notification.permission] || Notification.permission) : '이 화면에서는 알림 기능이 없습니다') + (isIOS && !standalone ? '\n아이폰은 홈 화면에 추가한 아이콘으로 열어야 알림이 옵니다.' : '');
+  $('iSave').onclick = async () => {
+    try { const j = await api('/me', 'POST', { team: $('iTeam').value, phone: $('iPhone').value.trim(), status: $('iStatus').value }); S.me = j.person; say($('iMsg'), '저장했습니다.', 'ok'); }
+    catch (e) { say($('iMsg'), e.message, 'bad'); }
+  };
+  $('iTest').onclick = async () => {
+    say($('iMsg2'), '보내는 중…');
+    try { const j = await api('/me/test-push', 'POST', {}); say($('iMsg2'), j.status === 201 ? '✅ 보냈습니다. 몇 초 안에 알림이 와야 합니다. 안 오면 기기 알림 설정·절전 모드를 확인하세요.' : ('푸시 서비스 응답 ' + j.status + (j.status === 404 || j.status === 410 ? ' — 등록이 만료됐습니다. "다시 등록"을 누르세요.' : '')), j.status === 201 ? 'ok' : 'bad'); }
+    catch (e) { say($('iMsg2'), e.message, 'bad'); }
+  };
+  $('iRe').onclick = async () => {
+    try { await subscribeAndRegister(S.me.team, S.me.name, S.code); say($('iMsg2'), '다시 등록했습니다.', 'ok'); } catch (e) { say($('iMsg2'), e.message, 'bad'); }
+  };
+  $('iClaim').onclick = async () => {
+    try { const j = await api('/claim', 'POST', { key: $('iKey').value.trim() }); S.me = j.person; $('iKey').value = ''; say($('iMsg3'), '총괄관리자로 지정했습니다.', 'ok'); }
+    catch (e) { say($('iMsg3'), e.message, 'bad'); }
+  };
+}
+
+async function renderAdmin() {
+  $('setBody').innerHTML = backBar('관리자 관리') + '<div class="mut">불러오는 중…</div>'; wireBack();
+  try { await loadPeople(); } catch (e) { $('setBody').innerHTML = backBar('관리자 관리') + `<div class="msg bad">${esc(e.message)}</div>`; wireBack(); return; }
+  const me = S.me; const roleTxt = me.role ? ROLE[me.role] + (me.role === 'teamadmin' ? ` (${me.team}팀)` : '') : '일반 (보기만 가능)';
+  let h = backBar('관리자 관리') + `<div class="card" style="padding:12px"><div class="mut">내 권한: <b>${roleTxt}</b></div></div>`;
+  ['1', '2', '3'].forEach(t => {
+    const list = S.people.filter(p => p.team === t);
+    h += `<div class="team"><h3>【${t}팀】 <small>${list.length}명</small></h3>`;
+    list.forEach(p => {
+      const badges = (p.role ? `<span class="badge">${ROLE[p.role]}</span>` : '') + (p.status === '휴직' ? '<span class="badge leave">휴직</span>' : '') + (!p.registered ? '<span class="badge off">앱 미등록</span>' : '');
+      h += `<div class="person"><div class="nm"><b>${esc(p.name)}</b>${badges}${p.phone ? `<div class="mut">${esc(p.phone)}</div>` : ''}</div>
+        ${p.phone ? `<a class="ic" href="tel:${esc(p.phone.replace(/[^0-9+]/g, ''))}" aria-label="${esc(p.name)} 전화">📞</a>` : '<span class="ic dis">📞</span>'}
+        ${canEditP(p) ? `<button class="ic" data-edit="${esc(p.name)}" aria-label="수정">✎</button>` : ''}</div>`;
+    });
+    if (canAddTeam(t)) h += `<button class="add" data-add="${t}">＋ ${t}팀 직원 추가</button>`;
+    h += '</div>';
+  });
+  $('setBody').innerHTML = h; wireBack();
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEdit(S.people.find(p => p.name === b.dataset.edit)));
+  document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => openAdd(b.dataset.add));
+}
+
+function openModal(html) { $('sheet').innerHTML = html; $('modal').hidden = false; }
+function closeModal() { $('modal').hidden = true; }
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
+
+function openAdd(team) {
+  openModal(`<h3>${team}팀 직원 추가</h3>
+    <label>이름</label><input id="aName" maxlength="20">
+    <label>전화번호 (선택)</label><input id="aPhone" type="tel" inputmode="tel" placeholder="010-0000-0000">
+    <button id="aSave">추가</button><button class="sec" id="aCancel">닫기</button><div class="msg" id="aMsg" hidden></div>`);
+  $('aCancel').onclick = closeModal;
+  $('aSave').onclick = async () => {
+    try { await api('/admin/person', 'POST', { action: 'add', name: $('aName').value.trim(), team, phone: $('aPhone').value.trim() }); closeModal(); renderAdmin(); }
+    catch (e) { say($('aMsg'), e.message, 'bad'); }
+  };
+}
+
+function openEdit(p) {
+  const chief = S.me.role === 'chief';
+  openModal(`<h3>${esc(p.name)} 수정</h3>
+    <label>이름</label><input id="eName" value="${esc(p.name)}" maxlength="20">
+    <label>팀</label><select id="eTeam">${['1', '2', '3'].map(t => `<option value="${t}" ${p.team === t ? 'selected' : ''}>${t}팀</option>`).join('')}</select>
+    <label>상태</label><select id="eStatus"><option ${p.status === '재직' ? 'selected' : ''}>재직</option><option ${p.status === '휴직' ? 'selected' : ''}>휴직</option></select>
+    <label>전화번호</label><input id="ePhone" type="tel" inputmode="tel" value="${esc(p.phone)}">
+    <button id="eSave">저장</button>
+    ${chief && p.role !== 'chief' ? `<button class="sec" id="eRole">${p.role === 'teamadmin' ? '팀관리자 해제' : '이 팀의 팀관리자로 지정'}</button>` : ''}
+    ${chief && p.role !== 'chief' ? `<button class="sec" id="eXfer">총괄관리자를 이 사람에게 인계</button>` : ''}
+    ${p.role !== 'chief' ? '<button class="danger" id="eDel">명단에서 삭제</button>' : ''}
+    <button class="sec" id="eCancel">닫기</button><div class="msg" id="eMsg" hidden></div>`);
+  const done = () => { closeModal(); renderAdmin(); };
+  const run = async fn => { try { await fn(); done(); } catch (e) { say($('eMsg'), e.message, 'bad'); } };
+  $('eCancel').onclick = closeModal;
+  $('eSave').onclick = () => run(() => api('/admin/person', 'POST', { action: 'update', name: p.name, newName: $('eName').value.trim(), team: $('eTeam').value, status: $('eStatus').value, phone: $('ePhone').value.trim() }));
+  if ($('eRole')) $('eRole').onclick = () => run(() => api('/admin/role', 'POST', { name: p.name, role: p.role === 'teamadmin' ? '' : 'teamadmin' }));
+  if ($('eXfer')) $('eXfer').onclick = () => { if (confirm(`총괄관리자를 ${p.name}님에게 인계합니다. 나는 일반 권한이 됩니다. 계속할까요?`)) run(async () => { await api('/admin/transfer', 'POST', { name: p.name }); }); };
+  if ($('eDel')) $('eDel').onclick = () => { if (confirm(`${p.name}님을 명단에서 삭제할까요?`)) run(() => api('/admin/person', 'POST', { action: 'delete', name: p.name })); };
+}
+
+renderSet();
+</script>
+</body>
+</html>

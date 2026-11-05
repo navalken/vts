@@ -614,7 +614,7 @@ $('pubBtn').onclick=async()=>{
 $('logBtn').onclick=async()=>{
   try{ const r=await adminCall('/team/log?team='+team(),'GET'); const f=ms=>new Date(ms+9*3600e3).toISOString().slice(5,16).replace('T',' ');
     let t=`현재 ${f(r.now)} (한국시간)\n대기 중 ${r.pending}건`+r.queue.map(x=>`\n · ${f(x.due)} ${x.name} ${x.body||''}`).join('');
-    t+='\n\n최근 발송 기록'+(r.log.length?'':' 없음')+r.log.map(x=>`\n · ${(x.at||'').slice(5,16).replace('T',' ')} ${x.name||''} → ${x.error?('오류 '+x.error):('응답 '+x.status+(x.detail?(' '+x.detail.slice(0,60)):''))}`).join('');
+    t+='\n\n최근 발송 기록 (한국시간, 최대 20건)'+(r.log.length?'':' 없음')+r.log.map(x=>{ const at=x.at?f(Date.parse(x.at)):''; return `\n · ${at} 발송 ${x.name||''} → ${x.error?('오류 '+x.error):('응답 '+x.status+(x.status===201?' (정상)':(x.detail?(' '+x.detail.slice(0,60)):'')))}`; }).join('');
     pubSay(t,'ok');
   }catch(e){ pubSay('실패: '+e.message,'bad'); }
 };
