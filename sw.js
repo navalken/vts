@@ -2,9 +2,12 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
+// 카드 화면·그림을 바꿨을 때 이 숫자를 올리면 폰에 남은 예전 화면 대신 새 화면이 열린다
+const CARD_VER = '5';
+
 // 카드 화면 주소: 알림에 실린 카드 데이터를 주소 뒤(#c=...)에 담아 card.html로 연다
 function cardUrl(card) {
-  try { return new URL('card.html#c=' + encodeURIComponent(JSON.stringify(card)), self.registration.scope).href; }
+  try { return new URL('card.html?v=' + CARD_VER + '#c=' + encodeURIComponent(JSON.stringify(card)), self.registration.scope).href; }
   catch (_) { return new URL('app.html', self.registration.scope).href; }
 }
 

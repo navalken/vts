@@ -69,6 +69,7 @@ body.night button.ok{color:#0b1b3a}
 <script>
 (function(){
   var $app=document.getElementById('app');
+  var VER=(new URLSearchParams(location.search)).get('v')||'5';   // 그림도 같은 번호로 새로 받음
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var t4=function(s){s=String(s||'');return /^\d{4}$/.test(s)?s.slice(0,2)+':'+s.slice(2):s;};              // 1500 → 15:00
   var rgf=function(r){var m=/^(\d{4})~(\d{4})$/.exec(r||'');return m?t4(m[1])+' ~ '+t4(m[2]):(r||'');};   // 1500~1600 → 15:00 ~ 16:00
@@ -92,8 +93,8 @@ body.night button.ok{color:#0b1b3a}
     var title=k==='w'?'<em>'+esc(c.p)+'</em> 근무가 시작됩니다':k==='q'?'<em>대기근무</em>입니다!':'다음 시간은 <em>휴게</em>입니다!';
     var sub=k==='w'?'근무 시작 '+(c.l||15)+'분 전입니다':k==='q'?'대기 시간 안내':'잠시 쉬어 가세요';
     var h='';
-    h+='<div class="top"><div class="logo"><img src="img/16_jeju_vts_logo.png" alt="Jeju VTS"></div><div class="lead">'+(c.l||15)+'분 전 알림</div></div>';
-    h+='<div class="hero"><img class="scene" src="img/'+hero+'" alt=""></div>';
+    h+='<div class="top"><div class="logo"><img src="img/16_jeju_vts_logo.png?v='+VER+'" alt="Jeju VTS"></div><div class="lead">'+(c.l||15)+'분 전 알림</div></div>';
+    h+='<div class="hero"><img class="scene" src="img/'+hero+'?v='+VER+'" alt=""></div>';
     h+='<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
     if(k==='w') h+='<div class="time"><div class="tbox"><small>시작 시각</small><b>'+t4(c.s)+'</b></div><div class="tbox"><small>근무 섹터</small><b>'+esc(c.p)+'</b></div></div>'
       +'<div class="time"><div class="tbox"><small>근무 시간</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';
