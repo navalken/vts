@@ -10,7 +10,7 @@ self.addEventListener('push', event => {
   }
   const title = d.title || 'VTS 근무 알림';
   const opts = {
-    body: d.body || '알림이 도착했습니다.',
+    body: (d.body != null ? d.body : '알림이 도착했습니다.'),
     icon: 'icon-192.png',
     badge: 'icon-192.png',
     tag: d.tag || ('vts-' + Date.now()),
