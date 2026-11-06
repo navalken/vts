@@ -69,8 +69,9 @@ body.islive .lvpad{padding:0 16px}
 .cv .fl{position:absolute;overflow:hidden}
 .cv .fl .flx{position:absolute;left:0;right:0;bottom:0;height:calc(var(--u)*70);background-size:100% 3500%;background-position:0 100%}
 .cv .fl img{position:absolute;left:0;width:100%;display:block}
+.cv .fl .flt{position:absolute;left:0;right:0;top:0;background-size:100% 8000%;background-position:0 0}
 .cv .bg{left:0;width:100%;display:block;object-fit:cover}
-.cv .hd{left:0;top:0;width:100%;height:9.4%;background:linear-gradient(#e6f0fb,#d6e5f6)}
+.cv .hd{left:0;top:0;width:100%;background:linear-gradient(#e6f0fb,#d6e5f6)}
 .cv .logo{object-fit:contain;object-position:left center}
 .cv .gear{background:none;border:0;padding:0;margin:0;width:auto;font-size:calc(var(--u)*26);color:#12284a;opacity:.6;line-height:1}
 .wx{background:rgba(255,255,255,.9);border-radius:calc(var(--u)*10);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12284a;line-height:1.1}
@@ -349,7 +350,17 @@ async function renderAdmin() {
 
 // ---- 실시간 근무현황 (시안 좌표 그대로: 가로 1214 × 세로 1148 기준 비율) ----
 const CW = 1214, CH = 1148;
-const P = (x0, y0, x1, y1) => `left:${x0 / CW * 100}%;top:${y0 / CH * 100}%;width:${(x1 - x0) / CW * 100}%;height:${(y1 - y0) / CH * 100}%`;
+const P = (x0, y0, x1, y1, off = 0, grow = 0) => `left:${x0 / CW * 100}%;top:calc(var(--u)*${y0 + off});width:${(x1 - x0) / CW * 100}%;height:calc(var(--u)*${y1 - y0 + grow})`;
+// 화면 높이에 맞춰 남는 세로 공간을 날씨줄·10층·9층에 나눠 준다(단위 u = 시안 1px). 가로 크기는 그대로.
+let LX = { eh: 0, e1: 0, e2: 0 };
+function lvFit() {
+  const el = $('liveBody'); if (!el) return;
+  const w = el.clientWidth || innerWidth, sc = w / CW, nav = document.querySelector('nav'), nh = nav ? nav.offsetHeight : 70;
+  const used = CH * sc + w * 941 / 1672 + 2, top = el.getBoundingClientRect().top + scrollY;
+  const E = Math.max(0, Math.min(300, (innerHeight - nh - top - 72 - used) / sc));
+  const eh = Math.round(Math.min(34, E * 0.14)), r = E - eh;
+  LX = { eh, e1: Math.round(r * 0.5), e2: Math.round(r * 0.5) };
+}
 const LV_TEL = { '1섹터': '2160', '2섹터': '2260', '3섹터': '2360', '4섹터': '2460', '5섹터': '2560', '6섹터': '2660', '7섹터': '2760', '8섹터': '2860', '9섹터': '2960', '팀장석10': '2550', '팀장석9': '2750' }; // 앞에 064801을 붙여 건다
 const LV_PREFIX = '064801';
 const LV_COL = { '1': '#2f7df0', '2': '#17b34a', '3': '#f58a14', '4': '#8e5cf0', '5': '#ee4141', '6': '#f0b90b', '7': '#ef4f9c', '8': '#14b4cf', '9': '#8e5cf0', '팀장': '#12409a' };
@@ -379,11 +390,11 @@ function lvNames(b, sec) { return (!b || isLead(sec)) ? [] : (b.sectors[sec] || 
 const ICON_TEL = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.6a1 1 0 01-.25 1z"/></svg>';
 const ICON_DOC = '<svg viewBox="0 0 24 24" fill="#fff"><path fill-rule="evenodd" d="M6 2h8l5 5v15H6V2zm2 9.5v1.6h8v-1.6H8zm0 3.4v1.6h8v-1.6H8zM8 8v1.6h4V8H8z"/></svg>';
 const CKEY = k => k === '팀장' ? 't' : k;
-function lvCard(b, sec, box, f) {
+function lvCard(b, sec, box, f, off) {
   const lead = isLead(sec), names = lvNames(b, sec), k = lvKey(sec), tel = LV_TEL[sec], cl = f.big ? 'c9' : 'c10';
   const two = names.length > 1 ? ' two' : '';
   const nm = lead ? '<div class="nm">팀장</div>' : (names.length ? names.slice(0, 3).map(n => `<div class="nm${two}">${esc(n)}</div>`).join('') : '<div class="nm none">—</div>');
-  return `<div class="sc ${cl}" data-sec="${esc(sec)}" style="${P(...box)};background-image:url(img/${cl}-${CKEY(k)}.png)"><div class="sh">${lead ? '팀장석' : esc(sec)}</div>
+  return `<div class="sc ${cl}" data-sec="${esc(sec)}" style="${P(...box, off)};background-image:url(img/${cl}-${CKEY(k)}.png)"><div class="sh">${lead ? '팀장석' : esc(sec)}</div>
     <img class="fc" src="img/${FACEFILE[k]}.png" alt=""><div class="tx">${nm}<div class="ph">${tel}</div></div>
     <div class="bt"><a class="call" href="tel:${LV_PREFIX}${tel}">${ICON_TEL}<span>통화</span></a><button class="dir" data-dir="${esc(sec)}">${ICON_DOC}<span>지령입력</span></button></div></div>`;
 }
@@ -404,11 +415,11 @@ function lvHeader() {
   const wxBox = [[320, 481], [483, 644], [646, 807], [808, 967]];
   const wx = WXC.map((c, i) => {
     const d = LV.wx && LV.wx[i], [ic, tx] = d ? wxText(d.c) : ['', ''];
-    return `<div class="wx" style="${P(wxBox[i][0], 12, wxBox[i][1], 100)}"><div class="c">${c[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`;
+    return `<div class="wx" style="${P(wxBox[i][0], 12, wxBox[i][1], 100, 0, LX.eh)}"><div class="c">${c[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`;
   }).join('');
   const cp = clkParts();
-  return `<div class="hd"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100)}">${wx}
-    <div class="clk" style="${P(985, 8, 1180, 104)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>
+  return `<div class="hd" style="height:calc(var(--u)*${108 + LX.eh})"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100, LX.eh / 2)}">${wx}
+    <div class="clk" style="${P(985, 8, 1180, 104, LX.eh / 2)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>
     <button class="gear" onclick="goTab('set')" aria-label="설정" style="${P(1182, 4, 1212, 34)}">⚙️</button>`;
 }
 const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
@@ -417,15 +428,19 @@ function renderLive() {
   const el = $('liveBody'); if (!el) return;
   const b = lvBoard();
   const night = b ? b.shift === 'night' : lvIsNightClock();
-  let h = `<div class="cv">${lvHeader()}`, cardsHtml = '';
-  LV_FLOORS.forEach(f => {
-    const src = night ? f.imgN : f.img;
-    h += `<div class="fl" style="${P(0, f.y, CW, f.y + f.ih)}"><div class="flx" style="background-image:url(${src})"></div><img src="${src}" alt="${f.n} 관제실" style="top:calc(var(--u)*-${f.up})"></div>`;
-    h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span></div>`;
-    Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s])};background-image:url(img/t-${lvKey(s)}.png)">${esc(s)}</div>`; });
+  lvFit();
+  const EX = LX.eh + LX.e1 + LX.e2;
+  let h = `<div class="cv" style="aspect-ratio:${CW}/${CH + EX}">${lvHeader()}`, cardsHtml = '', below = LX.eh;
+  LV_FLOORS.forEach((f, i) => {
+    const E = i ? LX.e2 : LX.e1, src = night ? f.imgN : f.img, top = f.y + below, bot = below + E; // bot: 바닥에 붙은 것들(카드·태그·팀장석)이 내려가는 양
+    const sh = E - f.up; // 위쪽 그림이 모자라면 맨 윗줄을 세로로 늘려 채움
+    h += `<div class="fl" style="${P(0, f.y, CW, f.y + f.ih, below, E)}"><div class="flx" style="background-image:url(${src})"></div>${sh > 0 ? `<div class="flt" style="height:calc(var(--u)*${sh});background-image:url(${src})"></div>` : ''}<img src="${src}" alt="${f.n} 관제실" style="top:calc(var(--u)*${Math.max(sh, 0) - Math.max(f.up - E, 0)})"></div>`;
+    h += `<div class="bdg" style="${P(...f.badge, below)}"><b>${f.n}</b><span>${f.t}</span></div>`;
+    Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s], bot)};background-image:url(img/t-${lvKey(s)}.png)">${esc(s)}</div>`; });
     const L = f.lead;
-    h += `<div class="stag lead" data-sec="${esc(L.sec)}" data-tagonly="1" style="${P(...L.tag)};background-image:url(img/t-lead.png)">팀장석</div>`;
-    cardsHtml += Object.keys(f.cards).map(s => lvCard(b, s, f.cards[s], f)).join('');
+    h += `<div class="stag lead" data-sec="${esc(L.sec)}" data-tagonly="1" style="${P(...L.tag, bot)};background-image:url(img/t-lead.png)">팀장석</div>`;
+    cardsHtml += Object.keys(f.cards).map(s => lvCard(b, s, f.cards[s], f, bot)).join('');
+    below += E;
   });
   h += cardsHtml + '</div>';
   const AD = [['교육팀', '0648012770', 17.6], ['기획팀', '0648012450', 50], ['시설팀', '0648012270', 82]];
@@ -451,6 +466,7 @@ function startLive() {
 }
 function stopLive() { if (LV.timer) { clearInterval(LV.timer); LV.timer = null; } if (LV.clk) { clearInterval(LV.clk); LV.clk = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && LV.timer) loadLive(); });
+let lvRz; addEventListener('resize', () => { clearTimeout(lvRz); lvRz = setTimeout(() => { if (LV.timer) renderLive(); }, 200); });
 function lvDirSheet(sec) {
   const b = lvBoard(); if (!b) return;
   const all = isLead(sec), label = all ? '전체' : sec;
