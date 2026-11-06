@@ -109,9 +109,9 @@ body.islive .lvpad{padding:0 16px}
 .sc.c10 .bt .call{left:6.4%;width:41.6%;top:69%;height:24.5%}.sc.c10 .bt .dir{left:50%;width:44.6%;top:69%;height:24.5%}
 .sc.c9 .bt .call{left:5.2%;width:41.8%;top:67.8%;height:24.1%}.sc.c9 .bt .dir{left:48.8%;width:46.7%;top:67.8%;height:24.1%}
 .sc .bt svg{width:1.1em;height:1.1em;flex:none}
-.adm{position:relative;width:100%;aspect-ratio:1672/760;margin:2px 0 0;overflow:hidden}
-.adm img{position:absolute;left:0;bottom:0;width:100%;display:block}
-.adm .ab{position:absolute;top:77.8%;height:13.6%;width:27%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(#22b455,#0e9a3c);color:#fff;font-weight:800;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);text-decoration:none;font-size:clamp(11px,3.7vw,19px)}
+.adm{position:relative;width:100%;aspect-ratio:1672/941;margin:2px 0 0;overflow:hidden}
+.adm img{width:100%;display:block}
+.adm .ab{position:absolute;top:82%;height:11%;width:27%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(#22b455,#0e9a3c);color:#fff;font-weight:800;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);text-decoration:none;font-size:clamp(11px,3.7vw,19px)}
 .adm .ab svg{width:1.1em;height:1.1em}
 .sheetbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;margin-top:10px;border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;color:#fff;border:0}
 nav button{font-size:11px;line-height:1.15;text-align:center}
@@ -356,9 +356,9 @@ let LX = { eh: 0, e1: 0, e2: 0 };
 function lvFit() {
   const el = $('liveBody'); if (!el) return;
   const w = el.clientWidth || innerWidth, sc = w / CW, nav = document.querySelector('nav'), nh = nav ? nav.offsetHeight : 70;
-  const used = CH * sc + w * 760 / 1672 + 2, top = el.getBoundingClientRect().top + scrollY;
-  const E = Math.max(0, Math.min(560, (innerHeight - nh - top - 64 - used) / sc));
-  const eh = Math.round(Math.min(64, E * 0.2)), r = E - eh;
+  const used = CH * sc + w * 941 / 1672 + 2, top = el.getBoundingClientRect().top + scrollY;
+  const E = Math.max(0, Math.min(420, (innerHeight - nh - top - 64 - used) / sc));
+  const eh = Math.round(Math.min(46, E * 0.16)), r = E - eh;
   LX = { eh, e1: Math.round(r * 0.5), e2: Math.round(r * 0.5) };
 }
 const LV_TEL = { '1섹터': '2160', '2섹터': '2260', '3섹터': '2360', '4섹터': '2460', '5섹터': '2560', '6섹터': '2660', '7섹터': '2760', '8섹터': '2860', '9섹터': '2960', '팀장석10': '2550', '팀장석9': '2750' }; // 앞에 064801을 붙여 건다
