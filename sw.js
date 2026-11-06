@@ -38,11 +38,17 @@ self.addEventListener('notificationclick', event => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || new URL('app.html', self.registration.scope).href;
   event.waitUntil((async () => {
+    // 아이폰은 꺼져 있던 홈 화면 앱을 알림으로 열면 지정한 주소 대신 시작 화면을 열기도 한다.
+    // 그래서 "누른 알림의 주소"를 적어 두고, 앱이 열리면 스스로 그 주소로 이동한다(2분 안에만 유효).
+    try { if (typeof caches !== 'undefined') { const cc = await caches.open('vts-click'); await cc.put(new URL('__click', self.registration.scope).href, new Response(JSON.stringify({ url, t: Date.now() }))); } } catch (_) { /* 없어도 아래 방식으로 동작 */ }
     const all = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of all) {
-      if ('focus' in c) {
-        try { await c.focus(); if ('navigate' in c) { await c.navigate(url); return; } } catch (_) { /* 아래에서 새 창으로 */ }
-      }
+      if (!('focus' in c)) continue;
+      try { await c.focus(); } catch (_) { /* 계속 */ }
+      // 아이폰 홈 화면 앱은 navigate()가 조용히 실패하는 경우가 있어, 앱 화면에도 직접 "이 주소로 가라"고 알려 준다
+      try { c.postMessage({ type: 'vts-open', url }); } catch (_) { /* 계속 */ }
+      try { if ('navigate' in c) { await c.navigate(url); return; } } catch (_) { continue; /* 이 창은 이동 불가 → 아래에서 새 창으로 */ }
+      return;
     }
     await clients.openWindow(url);
   })());

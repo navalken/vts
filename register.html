@@ -69,6 +69,16 @@ function say(t, cls) { const m = $('msg'); m.hidden = false; m.className = 'msg 
 function u8ToB64u(buf) { let s = ''; new Uint8Array(buf).forEach(c => s += String.fromCharCode(c)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function b64uToU8(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
 let swReg = null;
+async function vtsPendingOpen() { // 누른 알림의 카드 주소가 남아 있으면 그리로 이동
+  try {
+    const c = await caches.open('vts-click'), k = new URL('__click', location.href).href, r = await c.match(k);
+    if (!r) return;
+    const d = await r.json(); await c.delete(k);
+    if (d && d.url && Date.now() - d.t < 120000 && d.url !== location.href) location.href = d.url;
+  } catch (_) { /* 구형 브라우저 */ }
+}
+vtsPendingOpen(); document.addEventListener('visibilitychange', () => { if (!document.hidden) vtsPendingOpen(); });
+try { navigator.serviceWorker.addEventListener('message', e => { const d = e.data; if (d && d.type === 'vts-open' && typeof d.url === 'string' && d.url !== location.href) location.href = d.url; }); } catch (_) { /* 구형 브라우저 */ } // 알림을 누르면 카드 화면으로 이동
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 
 $('load').onclick = async () => {

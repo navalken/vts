@@ -65,6 +65,9 @@ body.islive .lvpad{padding:0 16px}
 /* 시안(가로 1214 기준)의 픽셀을 화면 폭에 비례해 그대로 줄여 쓴다: 1u = 시안의 1px */
 .cv{--u:calc(100cqw / 1214);position:relative;width:100%;aspect-ratio:1214/1148;container-type:inline-size;background:#dbe8f7;overflow:visible;margin-bottom:2px;font-family:-apple-system,"Noto Sans KR",sans-serif}
 .cv>*{position:absolute}
+.cv .fl{position:absolute;overflow:hidden}
+.cv .fl .flx{position:absolute;left:0;right:0;bottom:0;height:calc(var(--u)*70);background-size:100% 3500%;background-position:0 100%}
+.cv .fl img{position:absolute;left:0;width:100%;display:block}
 .cv .bg{left:0;width:100%;display:block;object-fit:cover}
 .cv .hd{left:0;top:0;width:100%;height:9.4%;background:linear-gradient(#e6f0fb,#d6e5f6)}
 .cv .logo{object-fit:contain;object-position:left center}
@@ -176,6 +179,16 @@ const say = (el, t, cls) => { el.hidden = false; el.className = 'msg ' + (cls ||
 function u8ToB64u(buf) { let s = ''; new Uint8Array(buf).forEach(c => s += String.fromCharCode(c)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function b64uToU8(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const r = atob(s); const o = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
 let swReg = null;
+async function vtsPendingOpen() { // 누른 알림의 카드 주소가 남아 있으면 그리로 이동
+  try {
+    const c = await caches.open('vts-click'), k = new URL('__click', location.href).href, r = await c.match(k);
+    if (!r) return;
+    const d = await r.json(); await c.delete(k);
+    if (d && d.url && Date.now() - d.t < 120000 && d.url !== location.href) location.href = d.url;
+  } catch (_) { /* 구형 브라우저 */ }
+}
+vtsPendingOpen(); document.addEventListener('visibilitychange', () => { if (!document.hidden) vtsPendingOpen(); });
+try { navigator.serviceWorker.addEventListener('message', e => { const d = e.data; if (d && d.type === 'vts-open' && typeof d.url === 'string' && d.url !== location.href) location.href = d.url; }); } catch (_) { /* 구형 브라우저 */ } // 알림을 누르면 카드 화면으로 이동
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 async function subscribeAndRegister(team, name, code) {
   if (!('PushManager' in window) || !('Notification' in window)) throw new Error(isIOS ? '이 화면에서는 알림을 쓸 수 없습니다. 홈 화면에 추가한 아이콘으로 다시 여세요.' : '이 브라우저는 푸시 알림을 지원하지 않습니다.');
@@ -331,14 +344,14 @@ const LV_PREFIX = '064801';
 const LV_COL = { '1': '#2f7df0', '2': '#17b34a', '3': '#f58a14', '4': '#8e5cf0', '5': '#ee4141', '6': '#f0b90b', '7': '#ef4f9c', '8': '#14b4cf', '9': '#8e5cf0', '팀장': '#12409a' };
 const FACEFILE = { '3': 'face-3', '9': 'face-9', '4': 'face-4', '1': 'face-1', '5': 'face-5', '2': 'face-2', '6': 'face-6', '7': 'face-7', '8': 'face-8', '팀장': 'face-t' };
 const LV_FLOORS = [
-  { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', y: 108, ih: 552, badge: [12, 120, 188, 270],
+  { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', imgN: 'img/live-10n.jpg', y: 108, ih: 552, up: 60, badge: [12, 120, 188, 270],
     cards: { '3섹터': [20, 500, 205, 648], '9섹터': [212, 500, 397, 648], '4섹터': [408, 500, 593, 648], '1섹터': [621, 500, 806, 648], '5섹터': [818, 500, 1003, 648], '2섹터': [1014, 500, 1198, 648] },
-    tags: { '3섹터': [56, 372, 146, 403], '9섹터': [251, 372, 341, 403], '4섹터': [453, 372, 543, 403], '1섹터': [672, 372, 762, 403], '5섹터': [868, 372, 958, 403], '2섹터': [1081, 372, 1171, 403] },
-    lead: { sec: '팀장석10', tag: [568, 180, 688, 213] } },
-  { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', y: 662, ih: 486, badge: [12, 680, 188, 830], big: true,
+    tags: { '3섹터': [53, 358, 143, 389], '9섹터': [234, 358, 324, 389], '4섹터': [428, 358, 518, 389], '1섹터': [688, 358, 778, 389], '5섹터': [880, 358, 970, 389], '2섹터': [1069, 358, 1159, 389] },
+    lead: { sec: '팀장석10', tag: [540, 202, 660, 235] } },
+  { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', imgN: 'img/live-9n.jpg', y: 662, ih: 486, up: 60, badge: [12, 680, 188, 830], big: true,
     cards: { '팀장석9': [63, 982, 325, 1128], '6섹터': [372, 982, 592, 1128], '7섹터': [631, 982, 856, 1128], '8섹터': [902, 982, 1128, 1128] },
-    tags: { '6섹터': [420, 874, 517, 905], '7섹터': [634, 874, 731, 905], '8섹터': [900, 874, 997, 905] },
-    lead: { sec: '팀장석9', tag: [148, 824, 278, 857], noTagCall: true } }
+    tags: { '6섹터': [406, 845, 503, 876], '7섹터': [674, 849, 771, 880], '8섹터': [911, 851, 1008, 882] },
+    lead: { sec: '팀장석9', tag: [132, 829, 262, 862], noTagCall: true } }
 ];
 const SHN = { day: '주간', night: '야간' };
 let LV = { data: null, timer: null, clk: null, err: '', wx: null, wxAt: 0 };
@@ -384,12 +397,15 @@ function lvHeader() {
     <button class="gear" onclick="goTab('set')" aria-label="설정" style="${P(1182, 4, 1212, 34)}">⚙️</button>`;
 }
 const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
+function lvIsNightClock() { const m = parseInt(clkParts().t.slice(0, 2)) * 60 + parseInt(clkParts().t.slice(3)); return m >= 18 * 60 + 30 || m < 9 * 60 + 30; } // 근무표가 없을 때는 시계로 낮/밤 구분
 function renderLive() {
   const el = $('liveBody'); if (!el) return;
   const b = lvBoard();
+  const night = b ? b.shift === 'night' : lvIsNightClock();
   let h = `<div class="cv">${lvHeader()}`, cardsHtml = '';
   LV_FLOORS.forEach(f => {
-    h += `<img class="bg" src="${f.img}" alt="${f.n} 관제실" style="top:${f.y / CH * 100}%;height:${f.ih / CH * 100}%">`;
+    const src = night ? f.imgN : f.img;
+    h += `<div class="fl" style="${P(0, f.y, CW, f.y + f.ih)}"><div class="flx" style="background-image:url(${src})"></div><img src="${src}" alt="${f.n} 관제실" style="top:calc(var(--u)*-${f.up})"></div>`;
     h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span>${WAVE}</div>`;
     Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s])};background:${LV_COL[lvKey(s)]}">${esc(s)}</div>`; });
     const L = f.lead, lk = LV_COL['팀장'];
