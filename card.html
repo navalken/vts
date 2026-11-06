@@ -49,6 +49,13 @@ h1{font-size:25px;line-height:1.3;margin:18px 2px 4px;letter-spacing:-.4px}
 .name{background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:15px;font-weight:600}
 .name.me{background:var(--accent);color:#fff}
 body.night .name.me{color:#0b1b3a}
+.dr{background:#fff4e0;border:1.5px solid #f0b45a;border-radius:18px;padding:13px 14px;margin:0 0 12px}
+.dr h4{margin:0 0 6px;font-size:14px;color:#a35d00}
+.dr p{margin:0;font-size:16.5px;line-height:1.5;white-space:pre-wrap;word-break:keep-all;color:#3a2600}
+.dr p+p{margin-top:9px;padding-top:9px;border-top:1px dashed #f0b45a}
+body.night .dr{background:#4a3414;border-color:#b98322}
+body.night .dr h4{color:#ffc86b}
+body.night .dr p{color:#ffe8c2}
 .checks{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:6px 14px;margin-bottom:10px}
 .checks h3{margin:10px 0 4px;font-size:14px;color:var(--sub);font-weight:700}
 .checks label{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:15.5px;line-height:1.45}
@@ -69,12 +76,12 @@ body.night button.ok{color:#0b1b3a}
 <script>
 (function(){
   var $app=document.getElementById('app');
-  var VER=(new URLSearchParams(location.search)).get('v')||'5';   // 그림도 같은 번호로 새로 받음
+  var VER=(new URLSearchParams(location.search)).get('v')||'6';   // 그림도 같은 번호로 새로 받음
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var t4=function(s){s=String(s||'');return /^\d{4}$/.test(s)?s.slice(0,2)+':'+s.slice(2):s;};              // 1500 → 15:00
   var rgf=function(r){var m=/^(\d{4})~(\d{4})$/.exec(r||'');return m?t4(m[1])+' ~ '+t4(m[2]):(r||'');};   // 1500~1600 → 15:00 ~ 16:00
   var SAMPLES={
-    w:{me:'김정민',k:'w',p:'4섹터',s:'1500',rg:'1500~1600',l:15,sh:'day',cur:['박현우'],rv:{p:'3섹터',n:['서현욱']},nx:{k:'r',p:'휴게',s:'1600',rg:'1600~1800'}},
+    w:{me:'김정민',k:'w',p:'4섹터',s:'1500',rg:'1500~1600',l:15,sh:'day',cur:['박현우'],rv:{p:'3섹터',n:['서현욱']},nx:{k:'r',p:'휴게',s:'1600',rg:'1600~1800'},dr:['오늘 입출항 선박이 많습니다.\n4섹터는 어선 집중 감시 바랍니다.']},
     q:{me:'김정민',k:'q',p:'대기',s:'2100',rg:'2100~0000',l:15,sh:'night',m:['이도윤','최민서'],nx:{k:'w',p:'3섹터',s:'0000',rg:'0000~0300'}},
     r:{me:'김정민',k:'r',p:'휴게',s:'1300',rg:'1300~1500',l:15,sh:'day',rv:{p:'2섹터',n:['서현욱']},nx:{k:'w',p:'1섹터',s:'1500',rg:'1500~1800'}}
   };
@@ -96,6 +103,7 @@ body.night button.ok{color:#0b1b3a}
     h+='<div class="top"><div class="logo"><img src="img/16_jeju_vts_logo.png?v='+VER+'" alt="Jeju VTS"></div><div class="lead">'+(c.l||15)+'분 전 알림</div></div>';
     h+='<div class="hero"><img class="scene" src="img/'+hero+'?v='+VER+'" alt=""></div>';
     h+='<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
+    if(c.dr && c.dr.length) h+='<div class="dr"><h4>📢 팀장 지령</h4>'+c.dr.map(function(t){return '<p>'+esc(t)+'</p>';}).join('')+'</div>';   // 지령이 있을 때만 표시
     if(k==='w') h+='<div class="time"><div class="tbox"><small>시작 시각</small><b>'+t4(c.s)+'</b></div><div class="tbox"><small>근무 섹터</small><b>'+esc(c.p)+'</b></div></div>'
       +'<div class="time"><div class="tbox"><small>근무 시간</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';
     else h+='<div class="time"><div class="tbox"><small>'+(k==='q'?'대기 시간':'휴게 시간')+'</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';

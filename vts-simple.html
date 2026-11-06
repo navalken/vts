@@ -28,6 +28,8 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 .tag{background:#3b9eff;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;}
 .pl{margin-top:4px;line-height:1.9;} .pk{display:inline-block;min-width:30px;color:var(--muted);font-size:11px;}
 .chip{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11.5px;background:#22364d;} .chip.c-s{background:#1f5a3a;} .chip.c-대기{background:#5a4a1f;} .chip.c-휴게{background:#33384a;color:#b9c3d3;}
+.tbtns{display:flex;gap:8px;flex:1 1 auto}.tbtns button{flex:1;background:#2b3a4f;color:#cfd9e8;font-size:18px;font-weight:700;padding:14px 0;border-radius:12px}.tbtns button.on{background:var(--accent);color:#fff;box-shadow:0 0 0 2px #ffffff55 inset}
+.dl{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid #2b3a4f;border-radius:10px;margin:6px 0;font-size:14px}.dl .dt{flex:1;white-space:pre-wrap;word-break:keep-all}.dl small{opacity:.7;display:block;margin-bottom:2px}.dl button{background:#7a2e2e;padding:6px 10px;font-size:13px;border-radius:8px}
 .prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border:1px solid #2b3a4f;border-radius:10px;margin:6px 0}
 .prow.cur{border-color:#3b9eff;background:#162338}
 .prow .pn{flex:1 1 100%;font-size:14px}.prow .pn small{opacity:.7}
@@ -36,7 +38,8 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 </style></head>
 <body>
 <h1>VTS 근무표 — <span id="teamTitle">1팀</span></h1>
-<div class="row" style="margin:0 0 10px;"><label>팀</label><select id="team"><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select><span class="hint">패턴·직원 이름은 팀마다 따로 저장됩니다</span></div>
+<div class="row" style="margin:0 0 6px;"><label>팀</label><div id="teamBtns" class="tbtns"><button type="button" data-t="1">1팀</button><button type="button" data-t="2">2팀</button><button type="button" data-t="3">3팀</button></div><select id="team" style="display:none"><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select></div>
+<p class="hint" style="margin:0 0 10px">패턴·직원 이름은 팀마다 따로 저장됩니다</p>
 
 <div class="step">
   <h2><span>1</span>날짜 · 근무</h2>
@@ -73,8 +76,18 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
   <p class="hint">③이 맞으면 누르세요. 위에서 고른 <b>팀 · 날짜 · 근무</b>의 예약만 새 내용으로 바뀌고, 다른 팀·다른 근무(주간/야간)·다른 날짜 예약은 그대로입니다. 종일을 고르면 주간·야간 예약이 둘 다 바뀝니다. 누구든(휴가 대체자도) 할 수 있습니다.</p>
   <div class="row"><label>몇 분 전</label> <input id="pubLead" type="number" value="15" min="1" max="60" style="width:70px"></div>
   <div class="row"><button id="pubBtn">확정 — 알림 예약</button> <button id="resBtn" style="background:#6b7280">예약 현황</button> <button id="staffBtn" style="background:#6b7280">알림 등록 현황</button> <button id="logBtn" style="background:#6b7280">발송 기록</button></div>
-  <p class="hint"><a href="card.html?v=5" target="_blank" style="color:#8ab4ff">알림 카드 미리보기</a> — 알림을 눌렀을 때 열리는 화면 예시</p>
+  <p class="hint"><a href="card.html?v=6" target="_blank" style="color:#8ab4ff">알림 카드 미리보기</a> — 알림을 눌렀을 때 열리는 화면 예시</p>
   <div id="pubMsg" class="msg"></div>
+</div>
+<div class="box" id="dirBox" style="margin:14px 0;padding:12px;border:1px solid #d9dfe9;border-radius:12px">
+  <b>⑤ 팀장 지령 (필요할 때만)</b>
+  <p class="hint">위에서 고른 <b>팀 · 날짜</b>에 지령을 올립니다. 전체 또는 섹터를 골라 보낼 수 있습니다. 알림이 나가는 순간에 붙기 때문에 <b>이미 예약해 둔 알림에도 적용</b>되고, 이미 나간 알림에는 안 붙습니다. 알림에는 첫 줄, 카드 화면에는 전문이 나옵니다. 팀 코드를 아는 사람이면 누구나 올리고 지울 수 있고, 근무일이 지나면 자동으로 사라집니다.</p>
+  <div class="row"><label>근무</label><select id="dirShift"><option value="day">주간</option><option value="night">야간</option><option value="both">종일 (주간+야간)</option></select></div>
+  <div class="row"><label>대상</label><label style="display:inline"><input type="checkbox" id="dirAll" checked> 전체</label> <span id="dirSecs"></span></div>
+  <div class="row"><textarea id="dirText" rows="3" maxlength="300" style="width:100%" placeholder="예: 오늘 입출항 선박이 많으니 어선 집중 감시 바랍니다. (300자까지)"></textarea></div>
+  <div class="row"><button id="dirBtn">지령 올리기</button> <button id="dirRef" style="background:#6b7280">올린 지령 보기</button></div>
+  <div id="dirList"></div>
+  <div id="dirMsg" class="msg"></div>
 </div>
 <details><summary>설정 (처음 한 번만)</summary>
   <div class="row"><label>Worker 주소</label><input id="gvWorker" style="width:100%" placeholder="https://vts-push.내계정.workers.dev"></div>
@@ -819,5 +832,46 @@ $('logBtn').onclick=async()=>{
     pubSay(t,'ok');
   }catch(e){ pubSay('실패: '+e.message,'bad'); }
 };
+
+// ===== 팀 선택 버튼(펼침) =====
+function syncTeamBtns(){ document.querySelectorAll('#teamBtns button').forEach(b=>b.classList.toggle('on',b.dataset.t===team())); }
+document.querySelectorAll('#teamBtns button').forEach(b=>b.onclick=()=>{ if($('team').value===b.dataset.t) return; $('team').value=b.dataset.t; $('team').dispatchEvent(new Event('change')); });
+$('team').addEventListener('change',()=>{ syncTeamBtns(); refreshDirs(true); });
+syncTeamBtns();
+
+// ===== 팀장 지령 =====
+const DIRSEC=['1섹터','2섹터','3섹터','4섹터','5섹터','6섹터'];
+$('dirSecs').innerHTML=DIRSEC.map(x=>`<label style="display:inline;margin-right:8px;white-space:nowrap"><input type="checkbox" class="dirSec" value="${x}" disabled> ${x.replace('섹터','')}</label>`).join('')+'<span class="hint"> 섹터</span>';
+$('dirShift').value=shiftMode();
+$('shift').addEventListener('change',()=>{ $('dirShift').value=shiftMode(); refreshDirs(true); });
+$('dirAll').onchange=()=>{ document.querySelectorAll('.dirSec').forEach(c=>{ c.disabled=$('dirAll').checked; if($('dirAll').checked) c.checked=false; }); };
+const dirSay=(t,c)=>{ $('dirMsg').textContent=t; $('dirMsg').className='msg '+(c||''); };
+function renderDirs(list){
+  const box=$('dirList');
+  if(!list||!list.length){ box.innerHTML='<p class="hint">이 날짜에 올린 지령이 없습니다.</p>'; return; }
+  box.innerHTML=list.map(d=>`<div class="dl"><div class="dt"><small>${esc(SHL[d.shift]||d.shift)} · ${d.sectors&&d.sectors.length?esc(d.sectors.join(', ')):'전체'}</small>${esc(d.text)}</div><button data-id="${esc(d.id)}">✕ 삭제</button></div>`).join('');
+}
+async function refreshDirs(silent){
+  try{ const date=$('pubDate').value; if(!date) return;
+    const r=await adminCall('/directives?team='+team()+'&date='+date,'GET'); renderDirs(r.directives); if(!silent) dirSay('불러왔습니다','ok');
+  }catch(e){ if(!silent) dirSay('실패: '+e.message,'bad'); }
+}
+$('pubDate').addEventListener('change',()=>refreshDirs(true));
+$('dirRef').onclick=()=>refreshDirs(false);
+$('dirBtn').onclick=async()=>{
+  const text=$('dirText').value.trim(), date=$('pubDate').value, shift=$('dirShift').value;
+  const sectors=$('dirAll').checked?[]:[...document.querySelectorAll('.dirSec:checked')].map(c=>c.value);
+  if(!text) return dirSay('지령 내용을 입력하세요.','bad');
+  if(!$('dirAll').checked&&!sectors.length) return dirSay('섹터를 고르거나 "전체"를 체크하세요.','bad');
+  if(!confirm(`${team()}팀 ${mdOf(date)} ${SHL[shift]} ${sectors.length?sectors.join(', '):'전체'}에 지령을 올릴까요?\n\n${text}`)) return;
+  try{ const r=await adminCall('/directives','POST',{team:team(),date,shift,sectors,text}); renderDirs(r.directives); $('dirText').value=''; dirSay('지령을 올렸습니다. 아직 나가지 않은 알림부터 붙습니다.','ok'); }
+  catch(e){ dirSay('실패: '+e.message,'bad'); }
+};
+$('dirList').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-id]'); if(!b) return;
+  if(!confirm('이 지령을 지울까요? (아직 나가지 않은 알림에는 붙지 않게 됩니다)')) return;
+  try{ const r=await adminCall('/directives/delete','POST',{team:team(),date:$('pubDate').value,id:b.dataset.id}); renderDirs(r.directives); dirSay('지웠습니다.','ok'); }
+  catch(err){ dirSay('실패: '+err.message,'bad'); }
+});
 </script>
 </body></html>
