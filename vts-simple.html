@@ -28,6 +28,11 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 .tag{background:#3b9eff;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;}
 .pl{margin-top:4px;line-height:1.9;} .pk{display:inline-block;min-width:30px;color:var(--muted);font-size:11px;}
 .chip{display:inline-block;border-radius:6px;padding:1px 6px;font-size:11.5px;background:#22364d;} .chip.c-s{background:#1f5a3a;} .chip.c-대기{background:#5a4a1f;} .chip.c-휴게{background:#33384a;color:#b9c3d3;}
+.prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;border:1px solid #2b3a4f;border-radius:10px;margin:6px 0}
+.prow.cur{border-color:#3b9eff;background:#162338}
+.prow .pn{flex:1 1 100%;font-size:14px}.prow .pn small{opacity:.7}
+.prow button{padding:6px 10px;font-size:13px;border-radius:8px}
+.prow button.x{background:#7a2e2e}.prow button.sub{background:#6b7280}
 </style></head>
 <body>
 <h1>VTS 근무표 — <span id="teamTitle">1팀</span></h1>
@@ -40,9 +45,11 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
   <div class="row"><label>근무</label><select id="shift"><option value="day">주간</option><option value="night">야간</option><option value="both">종일 (주간+야간)</option></select></div>
 </div>
 
-<details id="patBox" class="step" style="margin:10px 0"><summary><b>기본 패턴 (엑셀)</b> — 한 번만 올리면 이 폰에 저장됩니다</summary>
-  <input type="file" id="patternFile" accept=".xlsx,.xls">
-  <div id="patternMsg" class="msg">아직 올리지 않음 (한 번 올리면 이 폰에 저장됩니다)</div>
+<details id="patBox" class="step" style="margin:10px 0"><summary><b>기본 패턴 (엑셀)</b> — 팀별로 서버에 저장되어 누구나 쓸 수 있습니다</summary>
+  <div id="patList"></div>
+  <input type="file" id="patternFile" accept=".xlsx,.xls" style="display:none">
+  <div id="patternMsg" class="msg">패턴 정보를 불러오는 중…</div>
+  <div id="migrateBox"></div>
   <div class="row"><label>주간 패턴</label><select id="patDay"></select></div>
   <div class="row"><label>야간 패턴</label><select id="patNight"></select></div>
 </details>
@@ -322,7 +329,7 @@ const LS={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const HN={day:'주간',night:'야간'}, HCOL={day:2,night:5}, HSEL={day:'patDay',night:'patNight'};
 const newHalf=()=>({roster:{},grid:null,alts:null,raws:null,conf:null,choice:{},manual:{},warn:[]});
-let patterns={}, photoImg=null, gv=null, changeMode=null, S={day:newHalf(),night:newHalf()}, ran=false;
+let patterns={}, photoImg=null, gv=null, changeMode=null, S={day:newHalf(),night:newHalf()}, ran=false, autoTabDone=false, patServer=null, uploadTeam=null;
 
 // ---- 팀 선택: 패턴·직원 이름 목록은 팀마다 따로 저장 ----
 const team=()=>$('team').value;
@@ -332,10 +339,10 @@ const pKey=()=>'vts_s_patterns_t'+team(), tabKey=h=>'vts_s_tab_t'+team()+'_'+h, 
 try{ const old=LS.get('vts_s_patterns'); if(old&&!LS.get('vts_s_patterns_t1')) LS.set('vts_s_patterns_t1',old);
      const on=LS.get('vts_known_names'); if(on&&!LS.get('vts_known_names_t1')) LS.set('vts_known_names_t1',on); }catch(e){}
 // ---- 설정(이 기기에만 저장) ----
-{ const v=LS.get('vts_gv_worker'); if(v) $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>LS.set('vts_gv_worker',e.target.value.trim())); }
+{ const v=LS.get('vts_gv_worker'); if(v) $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>{ LS.set('vts_gv_worker',e.target.value.trim()); loadServerPatterns().then(refreshPatServer); }); }
 const adminKeyName=()=>'vts_team_code_t'+team();
 function loadAdminKey(){ $('gvAdmin').value=LS.get(adminKeyName())||''; } 
-$('gvAdmin').addEventListener('change',e=>LS.set(adminKeyName(),e.target.value.trim()));
+$('gvAdmin').addEventListener('change',e=>{ LS.set(adminKeyName(),e.target.value.trim()); loadServerPatterns().then(refreshPatServer); });
 $('knownNames').addEventListener('change',e=>LS.set(nameKey(),e.target.value.trim()));
 const staff=()=>$('knownNames').value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
 const shiftMode=()=>$('shift').value;                       // both | day | night
@@ -358,28 +365,121 @@ function setPatterns(p,msg){
   const n=Object.keys(p).length; $('patternMsg').textContent=msg||(n?`${team()}팀 패턴 ${n}개 준비됨`:'패턴 없음'); $('patternMsg').className='msg '+(n?'ok':'');
 }
 ['patDay','patNight'].forEach(id=>$(id).addEventListener('change',()=>{ LS.set(tabKey(id==='patDay'?'day':'night'),$(id).value); if(ran) start(changeMode); }));
+// ---- 패턴: 팀별 서버 저장(누구나 내려받기·교체·삭제·복원) ----
+const wUrlV=()=>$('gvWorker').value.trim().replace(/\/+$/,'');
+const codeFor=t=>String(t)===team()?($('gvAdmin').value.trim()||LS.get('vts_team_code_t'+t)||''):(LS.get('vts_team_code_t'+t)||'');
+const serverReady=()=>!!(wUrlV()&&$('gvAdmin').value.trim());
+async function pcall(path,method,body,code){
+  if(!wUrlV()||!code) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
+  const res=await fetch(wUrlV()+path,{method,headers:{'Content-Type':'application/json','X-Team-Code':code},body:body?JSON.stringify(body):undefined});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error((j.error&&(j.error.message||j.error))||('서버 응답 '+res.status));
+  return j;
+}
+const patSay=(t,c)=>{ $('patternMsg').textContent=t; $('patternMsg').className='msg '+(c||''); };
+const fmtWhen=iso=>{ try{ return new Date(Date.parse(iso)+9*3600e3).toISOString().slice(5,16).replace('T',' ').replace('-','.'); }catch(e){ return ''; } };
+const fmtKB=n=>n?(n>=1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'):'';
+function renderPatList(){
+  const box=$('patList');
+  if(!serverReady()){ box.innerHTML='<p class="hint">아래 "설정"에 Worker 주소와 팀 코드를 넣으면 패턴이 서버에 저장되어 다른 폰에서도 쓸 수 있습니다. 지금은 이 폰에만 저장됩니다.</p><div class="row"><button class="prow-up" data-t="'+team()+'">엑셀 올리기 (이 폰에만)</button></div>'; return; }
+  if(!patServer){ box.innerHTML='<p class="hint">서버에서 불러오는 중…</p>'; return; }
+  let h='';
+  ['1','2','3'].forEach(t=>{
+    const c=(patServer[t]||{}).current, pv=(patServer[t]||{}).previous;
+    h+=`<div class="prow ${t===team()?'cur':''}"><div class="pn"><b>${t}팀</b> ${c?esc(c.name)+' <small>· '+esc(fmtWhen(c.updated))+(c.size?' · '+fmtKB(c.size):'')+' · 탭 '+c.tabs+'개</small>':'<small>패턴 없음</small>'}</div>`
+      +(c&&c.hasFile?`<button class="sub" data-a="dl" data-t="${t}">다운로드</button>`:'')
+      +`<button data-a="up" data-t="${t}">${c?'새로 올리기':'올리기'}</button>`
+      +(c?`<button class="x" data-a="del" data-t="${t}">✕ 삭제</button>`:'')
+      +(pv?`<button class="sub" data-a="res" data-t="${t}">이전 파일 복원</button><small style="flex:1 1 100%;opacity:.7">이전: ${esc(pv.name)} · ${esc(fmtWhen(pv.updated))}</small>`:'')
+      +'</div>';
+  });
+  box.innerHTML=h;
+}
+async function refreshPatServer(){
+  if(!serverReady()){ patServer=null; renderPatList(); return; }
+  try{ const r=await pcall('/patterns/list','GET',null,$('gvAdmin').value.trim()); patServer=r.teams; }catch(e){ patServer=null; $('patList').innerHTML='<p class="msg bad">패턴 목록을 못 불러왔습니다: '+esc(e.message)+'</p>'; return; }
+  renderPatList(); renderMigrate();
+}
+function renderMigrate(){ // 이 폰에만 있는 패턴을 서버로 옮기기(예전 방식 사용자용)
+  const box=$('migrateBox'); box.innerHTML='';
+  if(!patServer||(patServer[team()]||{}).current) return;
+  const n=Object.keys(patterns).length; if(!n) return;
+  box.innerHTML=`<div class="row"><button id="migrateBtn">이 폰에 있는 ${team()}팀 패턴(${n}개 탭)을 서버에 올리기</button></div><p class="hint">원본 엑셀 파일이 아니라 이 폰에 저장된 내용이 올라가므로 "다운로드"는 되지 않습니다. 원본 파일을 올리면 다운로드도 됩니다.</p>`;
+  $('patBox').open=true; // 옮길 수 있다는 걸 놓치지 않게 펼쳐 둠
+  $('migrateBtn').onclick=async()=>{
+    try{ await pcall('/patterns','POST',{team:team(),name:team()+'팀 패턴(이 폰에서 옮김)',patterns},codeFor(team())); patSay(team()+'팀 패턴을 서버에 올렸습니다.','ok'); await refreshPatServer(); }
+    catch(e){ patSay('올리기 실패: '+e.message,'bad'); }
+  };
+}
+async function loadServerPatterns(){ // 서버에 이 팀 패턴이 있으면 그것을 사용(다른 폰에서 올린 최신 패턴)
+  if(!serverReady()) return;
+  const t=team();
+  try{
+    const r=await pcall('/patterns?team='+t,'GET',null,$('gvAdmin').value.trim());
+    if(t!==team()) return;
+    if(r.patterns){ LS.set(pKey(),JSON.stringify(r.patterns)); setPatterns(r.patterns,`${t}팀 패턴 불러옴 — ${r.meta.name} (${fmtWhen(r.meta.updated)})`); }
+  }catch(e){ if(t===team()) patSay((patterns&&Object.keys(patterns).length?'서버에 연결하지 못해 이 폰에 저장된 패턴을 씁니다. ':'')+'('+e.message+')','warn'); }
+}
+function b64OfBuffer(buf){ let s='',a=new Uint8Array(buf); for(let i=0;i<a.length;i+=0x8000) s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000)); return btoa(s); }
+$('patList').addEventListener('click',async e=>{
+  const bt=e.target.closest('button'); if(!bt) return;
+  const t=bt.dataset.t, a=bt.dataset.a;
+  if(bt.classList.contains('prow-up')){ uploadTeam=bt.dataset.t; $('patternFile').click(); return; }
+  try{
+    if(a==='up'){ uploadTeam=t; $('patternFile').click(); }
+    else if(a==='dl'){
+      const r=await pcall('/patterns/download?team='+t,'GET',null,$('gvAdmin').value.trim());
+      const bin=atob(r.xlsx), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+      const A=document.createElement('a'); A.href=URL.createObjectURL(new Blob([u],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})); A.download=r.name||('패턴_'+t+'팀.xlsx'); document.body.appendChild(A); A.click(); A.remove();
+    }else if(a==='del'){
+      const c=(patServer[t]||{}).current;
+      if(!confirm(`${t}팀 패턴 '${c?c.name:''}'을(를) 삭제할까요?\n(방금 지운 파일은 "이전 파일 복원"으로 되살릴 수 있습니다)`)) return;
+      await pcall('/patterns/delete','POST',{team:t},codeFor(t));
+      if(t===team()){ LS.set(pKey(),'{}'); patterns={}; fillPatternSelects(); }
+      patSay(t+'팀 패턴을 삭제했습니다.','ok'); await refreshPatServer();
+    }else if(a==='res'){
+      const r=await pcall('/patterns/restore','POST',{team:t},codeFor(t));
+      patSay(`${t}팀 패턴을 '${r.meta.name}'(으)로 복원했습니다.`,'ok');
+      if(t===team()) await loadServerPatterns();
+      await refreshPatServer();
+    }
+  }catch(err){ patSay('실패: '+err.message,'bad'); }
+});
 $('patternFile').addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f) return;
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  const ut=String(uploadTeam||team());
   const rd=new FileReader();
-  rd.onload=ev=>{
+  rd.onload=async ev=>{
     try{
       const wb=XLSX.read(ev.target.result,{type:'array'});
       const hidden=(wb.Workbook&&wb.Workbook.Sheets)||[]; const p={}; let skipped=0;
       wb.SheetNames.forEach((name,i)=>{ if(hidden[i]&&hidden[i].Hidden) return; const parsed=parseSheet(wb.Sheets[name]); if(parsed) p[name]=parsed; else skipped++; });
-      LS.set(pKey(),JSON.stringify(p));
-      setPatterns(p,`${team()}팀 패턴 ${Object.keys(p).length}개 저장됨`+(skipped?` (읽지 못한 탭 ${skipped}개 제외)`:''));
-    }catch(err){ $('patternMsg').textContent='엑셀 읽기 실패: '+(err.message||err); $('patternMsg').className='msg bad'; }
+      if(!Object.keys(p).length){ patSay('읽을 수 있는 탭이 없습니다(시간표 모양이 아님).','bad'); return; }
+      const note=` (읽지 못한 탭 ${skipped}개 제외)`;
+      if(!serverReady()){ // 설정이 없으면 예전처럼 이 폰에만 저장
+        LS.set(pKey(),JSON.stringify(p)); setPatterns(p,`${team()}팀 패턴 ${Object.keys(p).length}개 저장됨(이 폰에만)`+(skipped?note:'')); return;
+      }
+      const cur=((patServer||{})[ut]||{}).current;
+      if(cur&&!confirm(`${ut}팀에는 이미 '${cur.name}' 패턴이 있습니다.\n'${f.name}'(으)로 교체할까요?\n(바로 앞 파일 1개는 "이전 파일 복원"으로 되살릴 수 있습니다)`)){ patSay('취소했습니다. 기존 패턴은 그대로입니다.',''); return; }
+      patSay('서버에 올리는 중…','');
+      await pcall('/patterns','POST',{team:ut,name:f.name,patterns:p,xlsx:b64OfBuffer(ev.target.result)},codeFor(ut));
+      if(ut===team()){ LS.set(pKey(),JSON.stringify(p)); setPatterns(p,`${ut}팀 패턴 ${Object.keys(p).length}개 탭 — ${f.name} 서버에 저장됨`+(skipped?note:'')); }
+      else patSay(`${ut}팀 패턴(${f.name})을 서버에 저장했습니다.`,'ok');
+      await refreshPatServer();
+    }catch(err){ patSay('실패: '+(err.message||err),'bad'); }
   };
   rd.readAsArrayBuffer(f);
 });
 function loadTeam(){
   $('teamTitle').textContent=team()+'팀';
   $('knownNames').value=LS.get(nameKey())||''; loadAdminKey(); $('pubMsg').textContent=''; $('pubMsg').className='msg';
-  ran=false; changeMode=null; S={day:newHalf(),night:newHalf()}; $('result').innerHTML=''; say('','');
+  ran=false; changeMode=null; autoTabDone=false; S={day:newHalf(),night:newHalf()}; $('result').innerHTML=''; say('','');
   let loaded=false;
-  try{ const s=LS.get(pKey()); if(s){ setPatterns(JSON.parse(s),team()+'팀 저장된 패턴 불러옴'); loaded=true; } }catch(e){}
+  try{ const s=LS.get(pKey()); if(s&&s!=='{}'){ setPatterns(JSON.parse(s),team()+'팀 저장된 패턴 불러옴'); loaded=true; } }catch(e){}
   $('patBox').open=!loaded;
-  if(!loaded){ patterns={}; fillPatternSelects(); $('patternMsg').textContent=team()+'팀 패턴이 아직 없습니다 — 엑셀을 올려주세요'; $('patternMsg').className='msg'; }
+  if(!loaded){ patterns={}; fillPatternSelects(); patSay(team()+'팀 패턴이 아직 없습니다 — 엑셀을 올려주세요',''); }
+  renderPatList(); renderMigrate();
+  loadServerPatterns().then(refreshPatServer);
 }
 $('team').addEventListener('change',()=>{ LS.set('vts_s_team',team()); loadTeam(); });
 loadTeam();
@@ -388,7 +488,7 @@ loadTeam();
 $('photoFile').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
   const im=new Image();
-  im.onload=()=>{ photoImg=im; gv=null; ran=false; changeMode=null; S={day:newHalf(),night:newHalf()}; $('result').innerHTML='';
+  im.onload=()=>{ photoImg=im; gv=null; ran=false; autoTabDone=false; changeMode=null; S={day:newHalf(),night:newHalf()}; $('result').innerHTML='';
     $('photoPrev').src=im.src; $('photoPrev').style.display='block'; $('photoMsg').textContent='사진 준비됨'; $('photoMsg').className='msg ok'; say('',''); };
   im.onerror=()=>{ $('photoMsg').textContent='사진을 열 수 없습니다'; $('photoMsg').className='msg bad'; };
   im.src=URL.createObjectURL(f);
@@ -410,6 +510,18 @@ async function callGoogle(){
 
 // ---- 패턴 보조 ----
 const patOf=h=>patterns[$(HSEL[h]).value]||null;
+// 사진에서 읽은 인원수와 같은 숫자가 들어간 패턴 탭을 자동 선택(주간_17명 등). 없으면 가장 가까운 탭
+function pickTab(h,n){
+  if(!n) return null;
+  const names=Object.keys(patterns), cand=names.filter(x=>x.includes(HN[h])), pool=cand.length?cand:names;
+  const withN=pool.map(x=>{ const m=/(\d+)\s*명/.exec(x); return m?{x,k:+m[1]}:null; }).filter(Boolean);
+  if(!withN.length) return null;
+  const sel=$(HSEL[h]), exactAll=withN.filter(o=>o.k===n);
+  let best=exactAll.find(o=>o.x===sel.value)||exactAll[0], exact=!!best;
+  if(!best) best=withN.slice().sort((a,b)=>Math.abs(a.k-n)-Math.abs(b.k-n))[0];
+  sel.value=best.x;
+  return {exact,text:`[${HN[h]}] 인원 ${n}명 → '${best.x}' 탭`+(exact?' 자동 선택':' (인원이 같은 탭이 없어 가장 가까운 탭을 골랐습니다 — 확인하세요)')};
+}
 const lettersOf=cell=>(String(cell).match(/[A-Za-z]/g)||[]).map(s=>s.toUpperCase());
 const patternLetters=p=>{ const s=new Set(); p.rows.forEach(r=>r.cells.forEach(c=>lettersOf(c).forEach(l=>s.add(l)))); return [...s].sort(); };
 const nameOf=(h,l)=>S[h].roster[l]||l;
@@ -428,18 +540,21 @@ async function start(m){
   S={day:newHalf(),night:newHalf()};
   try{
     const g=await callGoogle();
-    const rr=autoRoster(g.symbols,g.words), known=staff(), ALPHA='ABCDEFGHIJKLMNOPQR', globalWarn=[];
+    const rr=autoRoster(g.symbols,g.words), known=staff(), ALPHA='ABCDEFGHIJKLMNOPQR', globalWarn=[], tabInfo=[];
     act.forEach(h=>{
       const st=S[h];
       if(rr.error){ st.warn.push('명단표를 못 읽었습니다('+rr.error+') — 이름을 직접 입력하세요.'); return; }
-      const bad=[];
+      const bad=[]; let cnt=0;
       rr.grid.forEach((row,i)=>{
         const t=String(row[HCOL[h]]||'').replace(/\s+/g,'');
+        if(t) cnt++;
         if(!/[가-힣]{2,}/.test(t)){ if(t) bad.push(ALPHA[i]); return; }
         const mm=known.length?bestNameMatch(t,known):null; st.roster[ALPHA[i]]=(mm&&mm.confident)?mm.name:t;
       });
       if(bad.length) st.warn.push('이름을 읽지 못한 줄: '+bad.join(', ')+' — 직접 고치세요.');
+      st.count=cnt;
     });
+    if(!autoTabDone){ autoTabDone=true; act.forEach(h=>{ const r=pickTab(h,S[h].count); if(r) tabInfo.push(r); }); }
     if(m==='no'){
       const probe=autoSectorGrid(g.symbols,g.words,0), tables=probe.error?0:probe.diag.tables;
       if(probe.error) globalWarn.push('사진 속 시간표를 못 읽어 패턴 그대로 보여줍니다('+probe.error+')');
@@ -453,7 +568,8 @@ async function start(m){
       });
     }
     const warns=[...globalWarn,...act.flatMap(h=>S[h].warn.map(w=>`[${HN[h]}] ${w}`))];
-    say(warns.join('\n')||'읽기 완료','ok'+(warns.length?' warn':''));
+    const infos=tabInfo.map(x=>x.text); const soft=tabInfo.some(x=>!x.exact);
+    say([...warns,...infos].join('\n')||'읽기 완료','ok'+((warns.length||soft)?' warn':''));
   }catch(err){ say('오류: '+(err.message||err),'bad'); return; }
   renderAll();
 }
@@ -684,7 +800,7 @@ $('pubBtn').onclick=async()=>{
 };
 $('resBtn').onclick=async()=>{
   try{ const s=await adminCall('/team/status?team='+team(),'GET'); const rs=s.reservations||[];
-    pubSay(`${team()}팀 현재 예약`+(rs.length?'':' 없음')+rs.map(r=>`\n · ${r.date==='?'?'?':mdOf(r.date)} ${SHL[r.shift]||r.shift} — ${r.count}건 (${r.people}명)`).join(''),'ok');
+    pubSay(`${team()}팀 현재 예약`+(rs.length?'':' 없음')+rs.map(r=>`\n · ${r.date==='?'?'?':mdOf(r.date)} ${SHL[r.shift]||r.shift} — 근무표 ${r.people}명 중 알림 받는 사람 ${r.receivers}명 (실제로 보낼 알림 ${r.sendable}건)`).join('')+(rs.length?'\n※ 알림 등록 안 한 사람의 예약은 등록하면 이후 알림부터 자동으로 받습니다':''),'ok');
   }catch(e){ pubSay('실패: '+e.message,'bad'); }
 };
 
