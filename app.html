@@ -63,11 +63,19 @@ nav button.on{color:var(--pri)}
 .floor h3 b{font-size:22px;background:#1e3a8a;color:#fff;border-radius:10px;padding:2px 10px}
 .floor h3 span{color:var(--mut);font-size:14px}
 .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.sgrid.c4{grid-template-columns:repeat(4,1fr)}
-.sc.wide{grid-column:1/-1}
-.sgrid.c4 .sc .nm{font-size:13px}
-.sgrid.c4 .bt{flex-direction:column}
-.sc .bt a,.sc .bt button{white-space:nowrap}
+.scene{position:relative;margin-bottom:22px}
+.scene .ani{position:absolute;pointer-events:none;background-repeat:no-repeat;transform-origin:50% 100%;animation:lvbob 3.2s ease-in-out infinite;-webkit-mask-image:radial-gradient(ellipse at 50% 55%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse at 50% 55%,#000 58%,transparent 100%)}
+@keyframes lvbob{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(var(--dy)) rotate(var(--r))}}
+@media (prefers-reduced-motion:reduce){.scene .ani{animation:none}}
+.scene>img{display:block;width:100%;height:auto;border-radius:12px;background:#cfe3f5}
+.scene .sc{width:100%;background:rgba(255,255,255,.96);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.scene .sc .sh{font-size:11px;padding:2px 0}
+.scene .sc .sb{padding:3px 2px;min-height:0}
+.scene .sc .an{display:none}
+.scene .sc .nm{font-size:12px;margin-top:0;line-height:1.25}
+.scene .sc .ph{font-size:11px;line-height:1.2}
+.scene .sc .bt{padding:0 2px 3px;gap:2px;flex-direction:row}
+.scene .sc .bt a,.scene .sc .bt button{padding:5px 0;font-size:10.5px;border-radius:5px;white-space:nowrap;min-width:0}
 .sc{border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--bg);display:flex;flex-direction:column}
 .sc .sh{color:#fff;font-weight:800;font-size:13px;text-align:center;padding:3px 0}
 .sc .sb{padding:6px 4px;text-align:center;flex:1;min-height:74px}
@@ -300,8 +308,12 @@ async function renderAdmin() {
 // ---- 실시간 근무현황 ----
 // 10층·9층 팀장석은 근무표와 상관없이 "팀장"으로 고정 표시
 const LV_FLOORS = [
-  { n: '10층', t: '제주해역 관제실', top: '팀장석10', secs: ['3섹터', '9섹터', '4섹터', '1섹터', '5섹터', '2섹터'], cols: 3 },
-  { n: '9층', t: '서귀포해역 관제실', secs: ['팀장석9', '6섹터', '7섹터', '8섹터'], cols: 4 }
+  { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', cls: 's10', H: 625,
+    anim: [[28,355,132,470],[185,362,285,470],[325,352,432,470],[495,362,592,470],[635,352,742,470],[770,352,875,470],[395,230,535,330]],
+    pos: { '3섹터': 8, '9섹터': 25, '4섹터': 40.5, '1섹터': 60, '5섹터': 75.5, '2섹터': 91 }, top: 71, lead: { sec: '팀장석10', x: 69, y: 30 } },
+  { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', cls: 's9', H: 572,
+    anim: [[95,250,245,375],[300,272,415,380],[485,278,592,385],[675,278,785,385],[800,290,897,372,3]],
+    pos: { '팀장석9': 17.5, '6섹터': 39, '7섹터': 59, '8섹터': 81.5 }, top: 73 }
 ];
 const LV_TEL = { '1섹터': '2160', '2섹터': '2260', '3섹터': '2360', '4섹터': '2460', '5섹터': '2560', '6섹터': '2660', '7섹터': '2760', '8섹터': '2860', '9섹터': '2960', '팀장석10': '2550', '팀장석9': '2750' }; // 앞에 064801을 붙여 건다
 const LV_PREFIX = '064801';
@@ -319,11 +331,20 @@ function lvBoard() {
 function lvNames(b, sec) { return (!b || isLead(sec)) ? [] : (b.sectors[sec] || []); }
 function lvCard(b, sec) {
   const lead = isLead(sec), names = lvNames(b, sec), k = lvKey(sec), tel = LV_TEL[sec];
-  const call = tel ? `<a class="call" href="tel:${LV_PREFIX}${tel}">📞 통화</a>` : `<a class="call dis">📞 통화</a>`;
+  const call = tel ? `<a class="call" href="tel:${LV_PREFIX}${tel}">통화</a>` : `<a class="call dis">통화</a>`;
   const body = lead ? '<div class="nm">팀장</div>' : (names.length ? names.map(n => `<div class="nm">${esc(n)}</div>`).join('') : '<div class="nm none">—</div>');
-  return `<div class="sc${lead && sec === '팀장석10' ? ' wide' : ''}"><div class="sh" style="background:${LV_COL[k] || '#475569'}">${lead ? '팀장석' : esc(sec)}</div>
+  return `<div class="sc"><div class="sh" style="background:${LV_COL[k] || '#475569'}">${lead ? '팀장석' : esc(sec)}</div>
     <div class="sb"><div class="an">${LV_ANI[k] || '👤'}</div>${body}${tel ? `<div class="ph">${tel}</div>` : ''}</div>
-    <div class="bt">${call}${lead ? '' : `<button class="dir" data-dir="${esc(sec)}">📝 지령</button>`}</div></div>`;
+    <div class="bt">${call}${lead ? '' : `<button class="dir" data-dir="${esc(sec)}">지령</button>`}</div></div>`;
+}
+// 캐릭터가 조금씩 움직이게: 그림에서 캐릭터 부분을 같은 자리에 겹쳐 올리고 살짝 들썩임(가장자리는 부드럽게 섞음)
+function lvAnim(f) {
+  const W = 900;
+  return (f.anim || []).map((a, i) => {
+    const [x0, y0, x1, y1, amp] = a, w = x1 - x0, hh = y1 - y0;
+    const dur = (2.8 + ((i * 7) % 5) * 0.45).toFixed(2), del = (-(i * 0.83) % 3).toFixed(2);
+    return `<div class="ani" style="left:${x0 / W * 100}%;top:${y0 / f.H * 100}%;width:${w / W * 100}%;height:${hh / f.H * 100}%;background-image:url(${f.img});background-size:${W / w * 100}% auto;background-position:${x0 / (W - w) * 100}% ${y0 / (f.H - hh) * 100}%;--dy:${-(amp || 2)}px;--r:${i % 2 ? -1.2 : 1.2}deg;animation-duration:${dur}s;animation-delay:${del}s"></div>`;
+  }).join('');
 }
 function renderLive() {
   const el = $('liveBody'); if (!el) return;
@@ -331,9 +352,13 @@ function renderLive() {
   let h = `<div class="lv-head"><p class="mut">${b ? `<b>${esc(b.team)}팀 ${SHN[b.shift]}</b> · ${hhmm(b.from)}~${hhmm(b.to)} 근무` : '지금 시각의 근무표가 없습니다'}${LV.err ? ' · ⚠ ' + esc(LV.err) : ''}</p><button id="lvRef">새로고침</button></div>`;
   if (b) h += '<button class="sec" id="lvPhoto" style="margin:0 0 10px">🖼 근무표 원본 보기</button>';
   if (!b && !LV.err) h += '<div class="card"><p class="mut">근무표가 예약되면 지금 근무자가 여기에 표시됩니다. (근무표는 <b>예약할 때</b> 서버에 저장되며, 근무가 끝나면 지워집니다.)</p></div>';
-  LV_FLOORS.forEach(f => { h += `<div class="floor"><h3><b>${f.n}</b><span>${f.t}</span></h3><div class="sgrid c${f.cols}">${f.top ? lvCard(b, f.top) : ''}${f.secs.map(s => lvCard(b, s)).join('')}</div></div>`; });
+  LV_FLOORS.forEach(f => {
+    const cards = Object.keys(f.pos).map(s => `<div style="position:absolute;left:${f.pos[s] - (f.cls === 's9' ? 8.75 : 7.8)}%;top:${f.top}%;width:${f.cls === 's9' ? 17.5 : 15.6}%">${lvCard(b, s)}</div>`).join('');
+    const lead = f.lead ? `<div style="position:absolute;left:${f.lead.x - 7.8}%;top:${f.lead.y}%;width:15.6%">${lvCard(b, f.lead.sec)}</div>` : '';
+    h += `<div class="floor"><h3><b>${f.n}</b><span>${f.t}</span></h3><div class="scene ${f.cls}"><img src="${f.img}" alt="${f.n} 관제실">${lvAnim(f)}${cards}${lead}</div></div>`;
+  });
   if (b) {
-    const known = new Set(LV_FLOORS.flatMap(f => f.secs));
+    const known = new Set(LV_FLOORS.flatMap(f => Object.keys(f.pos)));
     const extra = Object.keys(b.sectors).filter(k => /섹터/.test(k) && !known.has(k));
     if (extra.length) h += `<div class="floor"><h3><span>기타 섹터</span></h3><div class="sgrid c3">${extra.map(s => lvCard(b, s)).join('')}</div></div>`;
   }
