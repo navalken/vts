@@ -739,7 +739,7 @@ function computeAlerts(halves,date,lead,prevHO){
     });
     runs.forEach((r,k)=>{
       const c0=cols[r.g0], c1=cols[r.g1], range=hm(c0.s)+'~'+hm(c1.e);
-      const title=isRest(r.place)?`${lead}분 뒤 휴게 ${range}`:isWait(r.place)?`${lead}분 뒤 대기 근무 ${range}`:`${lead}분 뒤 ${r.place} 근무 ${range}`;
+      const title=isRest(r.place)?`휴게 ${range} · ${lead}분 전`:isWait(r.place)?`대기 근무 ${range} · ${lead}분 전`:`${r.place} 근무 ${range} · ${lead}분 전`;
       const lines=[];
       const card={me:name,k:isRest(r.place)?'r':isWait(r.place)?'q':'w',p:r.place,s:hm(c0.s),rg:range,l:lead,sh:c0.h}; // 카드 화면용 데이터(정보 없으면 해당 키 생략)
       if(isWork(r.place)){ // 현 섹터 근무자: 이 칸 바로 앞 칸에서 그 섹터에 있던 사람

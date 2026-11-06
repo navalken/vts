@@ -48,7 +48,8 @@ button:disabled{opacity:.5}
 .add{background:transparent;color:var(--pri);border:1px dashed var(--pri);margin-top:0}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
 nav button{flex:1;background:none;color:var(--mut);margin:0;border-radius:0;padding:8px 2px 6px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;width:auto}
-nav button i{font-style:normal;font-size:22px}
+nav button img{width:26px;height:26px;display:block}
+nav button .on{display:none}nav button.on .on{display:block}nav button.on .off{display:none}
 nav button.on{color:var(--pri)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:10}
 .modal[hidden]{display:none}
@@ -75,32 +76,42 @@ body.islive .lvpad{padding:0 16px}
 .wx{background:rgba(255,255,255,.9);border-radius:calc(var(--u)*10);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12284a;line-height:1.1}
 .wx .c{font-weight:800;font-size:calc(var(--u)*19)}
 .wx .r{display:flex;align-items:center;gap:calc(var(--u)*10);font-weight:800}
-.wx .r i{font-style:normal;font-size:calc(var(--u)*34)}
+.wx .r img{width:calc(var(--u)*40);height:calc(var(--u)*40);flex:none}
 .wx .r b{font-size:calc(var(--u)*24);display:block}
 .wx .r small{font-size:calc(var(--u)*13);font-weight:600;display:block;color:#475467}
 .clk{text-align:right;color:#0d2a63;font-weight:800;line-height:1.05;display:flex;flex-direction:column;justify-content:center}
 .clk .d{font-size:calc(var(--u)*20);font-weight:700}
 .clk .t{font-size:calc(var(--u)*54)}
-.bdg{background:rgba(255,255,255,.85);border-radius:calc(var(--u)*30);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#12284a;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.bdg b{background:#0f3d91;color:#fff;border-radius:calc(var(--u)*18);padding:0 calc(var(--u)*22);font-size:calc(var(--u)*46);line-height:1.2}
-.bdg span{font-size:calc(var(--u)*19);line-height:1.2;white-space:nowrap;margin-top:calc(var(--u)*10)}
-.bdg svg{width:calc(var(--u)*76);height:calc(var(--u)*24);margin-top:calc(var(--u)*6)}
-.stag{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:999px;border:calc(var(--u)*3) solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:calc(var(--u)*21);white-space:nowrap;cursor:pointer}
-.sc{display:flex;flex-direction:column;background:#fff;border-radius:calc(var(--u)*16);box-shadow:0 2px 8px rgba(0,0,0,.25);overflow:hidden;z-index:5;cursor:pointer}
-.sc .sh{flex:none;height:calc(var(--u)*38);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:calc(var(--u)*22)}
-.sc .sb{flex:1;display:flex;align-items:center;gap:calc(var(--u)*10);padding:0 calc(var(--u)*8) 0 calc(var(--u)*12);min-height:0}
-.sc .fc{width:calc(var(--u)*58);height:calc(var(--u)*58);border-radius:50%;flex:none}
-.sc.big .fc{width:calc(var(--u)*68);height:calc(var(--u)*68)}
-.sc .tx{min-width:0;line-height:1.15}
+.bdg{background:url(img/badge.png) 0 0/100% 100% no-repeat}
+.bdg>*{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800}
+.bdg b{left:4%;right:4%;top:7%;height:34%;color:#fff;font-size:calc(var(--u)*46);line-height:1}
+.bdg span{left:3%;right:3%;top:47%;height:17%;color:#12284a;font-size:calc(var(--u)*19);white-space:nowrap}
+.stag{background-size:100% 100%;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:calc(var(--u)*21);white-space:nowrap;cursor:pointer;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.stag.lead{padding-left:calc(var(--u)*40)}
+.sc{background-size:100% 100%;background-repeat:no-repeat;z-index:5;cursor:pointer}
+.sc>*{position:absolute}
+.sc .sh{left:0;right:0;top:1%;height:22%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:calc(var(--u)*22)}
+.sc .fc{border-radius:50%;object-fit:cover}
+.sc.c10 .fc{left:8%;top:26%;width:29.6%;aspect-ratio:1}
+.sc.c9 .fc{left:7%;top:23.6%;width:26%;aspect-ratio:1}
+.sc .tx{display:flex;flex-direction:column;justify-content:center;min-width:0;line-height:1.1}
+.sc.c10 .tx{left:42%;right:3%;top:26%;height:41%}
+.sc.c9 .tx{left:36%;right:3%;top:24%;height:42%}
 .sc .nm{font-weight:800;font-size:calc(var(--u)*21);color:#12284a;white-space:nowrap}
-.sc .nm.two{font-size:calc(var(--u)*16)}
+.sc .nm.two{font-size:calc(var(--u)*15)}
 .sc .nm.none{color:#98a2b3}
 .sc .ph{font-weight:800;font-size:calc(var(--u)*25);color:#0d2a63}
-.sc .bt{flex:none;height:calc(var(--u)*40);display:flex;gap:calc(var(--u)*6);padding:0 calc(var(--u)*4) calc(var(--u)*5);pointer-events:none}
-.sc .bt a,.sc .bt button{margin:0;padding:0;border:0;border-radius:calc(var(--u)*9);color:#fff;font-weight:800;font-size:calc(var(--u)*16);display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*5);text-decoration:none;white-space:nowrap;width:auto;pointer-events:none}
-.sc .bt .call{flex:1 1 0;background:#16a34a}
-.sc .bt .dir{flex:1.05 1 0;background:#2f8fff}
-.sc .bt i{font-style:normal;font-size:calc(var(--u)*18)}
+.sc.c9 .nm{font-size:calc(var(--u)*24)}.sc.c9 .nm.two{font-size:calc(var(--u)*17)}.sc.c9 .ph{font-size:calc(var(--u)*28)}
+.sc .bt{left:0;top:0;width:100%;height:100%;pointer-events:none}
+.sc .bt a,.sc .bt button{position:absolute;margin:0;padding:0;border:0;background:none;color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*4);text-decoration:none;white-space:nowrap;width:auto;pointer-events:none;font-size:inherit}
+.sc.c10 .bt{font-size:calc(var(--u)*13.5)}.sc.c9 .bt{font-size:calc(var(--u)*17)}
+.sc.c10 .bt .call{left:6.4%;width:41.6%;top:69%;height:24.5%}.sc.c10 .bt .dir{left:50%;width:44.6%;top:69%;height:24.5%}
+.sc.c9 .bt .call{left:5.2%;width:41.8%;top:67.8%;height:24.1%}.sc.c9 .bt .dir{left:48.8%;width:46.7%;top:67.8%;height:24.1%}
+.sc .bt svg{width:1.1em;height:1.1em;flex:none}
+.adm{position:relative;width:100%;aspect-ratio:1672/941;margin:2px 0 0;overflow:hidden}
+.adm img{width:100%;display:block}
+.adm .ab{position:absolute;top:82%;height:11%;width:27%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(#22b455,#0e9a3c);color:#fff;font-weight:800;border-radius:999px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);text-decoration:none;font-size:clamp(11px,3.7vw,19px)}
+.adm .ab svg{width:1.1em;height:1.1em}
 .sheetbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;margin-top:10px;border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;color:#fff;border:0}
 nav button{font-size:11px;line-height:1.15;text-align:center}
 nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
@@ -121,11 +132,11 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
   <section id="tab-set"><div id="setBody"></div></section>
 </main>
 <nav>
-  <button data-t="my"><i>🏠</i>내 근무</button>
-  <button data-t="live"><i>👥</i>실시간 근무현황</button>
-  <button data-t="board"><i>📅</i>전체 근무표</button>
-  <button data-t="dir"><i>📢</i>팀장지령·인수인계</button>
-  <button data-t="wx"><i>🌊</i>해상기상</button>
+  <button data-t="my"><img class="off" src="img/m-home-off.png" alt=""><img class="on" src="img/m-home-on.png" alt="">내 근무</button>
+  <button data-t="live"><img class="off" src="img/m-team-off.png" alt=""><img class="on" src="img/m-team-on.png" alt="">실시간 근무현황</button>
+  <button data-t="board"><img class="off" src="img/m-cal-off.png" alt=""><img class="on" src="img/m-cal-on.png" alt="">전체 근무표</button>
+  <button data-t="dir"><img class="off" src="img/m-mega-off.png" alt=""><img class="on" src="img/m-mega-on.png" alt="">팀장지령·인수인계</button>
+  <button data-t="wx"><img class="off" src="img/m-wave-off.png" alt=""><img class="on" src="img/m-wave-on.png" alt="">해상기상</button>
 </nav>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
@@ -347,12 +358,14 @@ const LV_FLOORS = [
   { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', imgN: 'img/live-10n.jpg', y: 108, ih: 552, up: 60, badge: [12, 120, 188, 270],
     cards: { '3섹터': [20, 500, 205, 648], '9섹터': [212, 500, 397, 648], '4섹터': [408, 500, 593, 648], '1섹터': [621, 500, 806, 648], '5섹터': [818, 500, 1003, 648], '2섹터': [1014, 500, 1198, 648] },
     tags: { '3섹터': [53, 358, 143, 389], '9섹터': [234, 358, 324, 389], '4섹터': [428, 358, 518, 389], '1섹터': [688, 358, 778, 389], '5섹터': [880, 358, 970, 389], '2섹터': [1069, 358, 1159, 389] },
-    lead: { sec: '팀장석10', tag: [540, 202, 660, 235] } },
+    lead: { sec: '팀장석10', tag: [537, 196, 663, 238] } },
   { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', imgN: 'img/live-9n.jpg', y: 662, ih: 486, up: 60, badge: [12, 680, 188, 830], big: true,
     cards: { '팀장석9': [63, 982, 325, 1128], '6섹터': [372, 982, 592, 1128], '7섹터': [631, 982, 856, 1128], '8섹터': [902, 982, 1128, 1128] },
     tags: { '6섹터': [406, 845, 503, 876], '7섹터': [674, 849, 771, 880], '8섹터': [911, 851, 1008, 882] },
-    lead: { sec: '팀장석9', tag: [132, 829, 262, 862], noTagCall: true } }
+    lead: { sec: '팀장석9', tag: [132, 822, 262, 865], noTagCall: true } }
 ];
+// 새 그림이 처음 그려질 때 깜빡이지 않도록 미리 받아 둔다
+['badge', 'c10-3', 'c10-9', 'c10-4', 'c10-1', 'c10-5', 'c10-2', 'c9-t', 'c9-6', 'c9-7', 'c9-8', 't-lead', 't-3', 't-9', 't-4', 't-1', 't-5', 't-2', 't-6', 't-7', 't-8', 'w-sun', 'w-part', 'w-cloud', 'live-10', 'live-9', 'live-10n', 'live-9n', 'adm', 'adm-n'].forEach(n => { const i = new Image(); i.src = 'img/' + n + (/^(live|adm)/.test(n) ? '.jpg' : '.png'); });
 const SHN = { day: '주간', night: '야간' };
 let LV = { data: null, timer: null, clk: null, err: '', wx: null, wxAt: 0 };
 const isLead = sec => sec.indexOf('팀장석') === 0;
@@ -363,17 +376,19 @@ function lvBoard() {
   return bs.length ? bs.slice().sort((a, b) => b.from - a.from)[0] : null;
 }
 function lvNames(b, sec) { return (!b || isLead(sec)) ? [] : (b.sectors[sec] || []); }
-const ICON_TEL = '<i>📞</i>', ICON_DOC = '<i>📝</i>';
+const ICON_TEL = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M6.6 10.8a15.1 15.1 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11.4 11.4 0 003.6.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.6a1 1 0 01-.25 1z"/></svg>';
+const ICON_DOC = '<svg viewBox="0 0 24 24" fill="#fff"><path fill-rule="evenodd" d="M6 2h8l5 5v15H6V2zm2 9.5v1.6h8v-1.6H8zm0 3.4v1.6h8v-1.6H8zM8 8v1.6h4V8H8z"/></svg>';
+const CKEY = k => k === '팀장' ? 't' : k;
 function lvCard(b, sec, box, f) {
-  const lead = isLead(sec), names = lvNames(b, sec), k = lvKey(sec), tel = LV_TEL[sec];
+  const lead = isLead(sec), names = lvNames(b, sec), k = lvKey(sec), tel = LV_TEL[sec], cl = f.big ? 'c9' : 'c10';
   const two = names.length > 1 ? ' two' : '';
   const nm = lead ? '<div class="nm">팀장</div>' : (names.length ? names.slice(0, 3).map(n => `<div class="nm${two}">${esc(n)}</div>`).join('') : '<div class="nm none">—</div>');
-  return `<div class="sc${f.big ? ' big' : ''}" data-sec="${esc(sec)}" style="${P(...box)}"><div class="sh" style="background:${LV_COL[k]}">${lead ? '팀장석' : esc(sec)}</div>
-    <div class="sb"><img class="fc" src="img/${FACEFILE[k]}.png" alt=""><div class="tx">${nm}<div class="ph">${tel}</div></div></div>
+  return `<div class="sc ${cl}" data-sec="${esc(sec)}" style="${P(...box)};background-image:url(img/${cl}-${CKEY(k)}.png)"><div class="sh">${lead ? '팀장석' : esc(sec)}</div>
+    <img class="fc" src="img/${FACEFILE[k]}.png" alt=""><div class="tx">${nm}<div class="ph">${tel}</div></div>
     <div class="bt"><a class="call" href="tel:${LV_PREFIX}${tel}">${ICON_TEL}<span>통화</span></a><button class="dir" data-dir="${esc(sec)}">${ICON_DOC}<span>지령입력</span></button></div></div>`;
 }
 const WXC = [['제주', 33.5097, 126.5219], ['서귀포', 33.2541, 126.5601], ['한림', 33.4114, 126.2619], ['성산', 33.3869, 126.9367]];
-function wxText(c) { return c === 0 ? ['☀️', '맑음'] : c === 1 ? ['🌤️', '대체로 맑음'] : c === 2 ? ['⛅', '구름조금'] : c === 3 ? ['☁️', '흐림'] : (c === 45 || c === 48) ? ['🌫️', '안개'] : (c >= 51 && c <= 57) ? ['🌦️', '이슬비'] : (c >= 61 && c <= 67) ? ['🌧️', '비'] : (c >= 71 && c <= 77) ? ['❄️', '눈'] : (c >= 80 && c <= 82) ? ['🌦️', '소나기'] : c >= 95 ? ['⛈️', '뇌우'] : ['⛅', '구름']; }
+function wxText(c) { const ic = c === 0 ? 'sun' : (c === 1 || c === 2) ? 'part' : 'cloud'; return [ic, c === 0 ? '맑음' : c === 1 ? '대체로 맑음' : c === 2 ? '구름조금' : c === 3 ? '흐림' : (c === 45 || c === 48) ? '안개' : (c >= 51 && c <= 57) ? '이슬비' : (c >= 61 && c <= 67) ? '비' : (c >= 71 && c <= 77) ? '눈' : (c >= 80 && c <= 82) ? '소나기' : c >= 95 ? '뇌우' : '구름']; }
 async function loadWx() { // 무료 Open-Meteo(키 없음)
   if (Date.now() - LV.wxAt < 600000) return;
   LV.wxAt = Date.now();
@@ -389,7 +404,7 @@ function lvHeader() {
   const wxBox = [[320, 481], [483, 644], [646, 807], [808, 967]];
   const wx = WXC.map((c, i) => {
     const d = LV.wx && LV.wx[i], [ic, tx] = d ? wxText(d.c) : ['', ''];
-    return `<div class="wx" style="${P(wxBox[i][0], 12, wxBox[i][1], 100)}"><div class="c">${c[0]}</div><div class="r"><i>${ic || '·'}</i><span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`;
+    return `<div class="wx" style="${P(wxBox[i][0], 12, wxBox[i][1], 100)}"><div class="c">${c[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`;
   }).join('');
   const cp = clkParts();
   return `<div class="hd"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100)}">${wx}
@@ -406,13 +421,15 @@ function renderLive() {
   LV_FLOORS.forEach(f => {
     const src = night ? f.imgN : f.img;
     h += `<div class="fl" style="${P(0, f.y, CW, f.y + f.ih)}"><div class="flx" style="background-image:url(${src})"></div><img src="${src}" alt="${f.n} 관제실" style="top:calc(var(--u)*-${f.up})"></div>`;
-    h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span>${WAVE}</div>`;
-    Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s])};background:${LV_COL[lvKey(s)]}">${esc(s)}</div>`; });
-    const L = f.lead, lk = LV_COL['팀장'];
-    h += `<div class="stag" data-sec="${esc(L.sec)}" data-tagonly="1" style="${P(...L.tag)};background:${lk}">👑 팀장석</div>`;
+    h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span></div>`;
+    Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s])};background-image:url(img/t-${lvKey(s)}.png)">${esc(s)}</div>`; });
+    const L = f.lead;
+    h += `<div class="stag lead" data-sec="${esc(L.sec)}" data-tagonly="1" style="${P(...L.tag)};background-image:url(img/t-lead.png)">팀장석</div>`;
     cardsHtml += Object.keys(f.cards).map(s => lvCard(b, s, f.cards[s], f)).join('');
   });
   h += cardsHtml + '</div>';
+  const AD = [['교육팀', '0648012770', 17.6], ['기획팀', '0648012450', 50], ['시설팀', '0648012270', 82]];
+  h += `<div class="adm"><img src="${night ? 'img/adm-n.jpg' : 'img/adm.jpg'}" alt="행정실">${AD.map(a => `<a class="ab" style="left:${a[2]}%" href="tel:${a[1]}">${ICON_TEL}<span>${a[0]}</span></a>`).join('')}</div>`;
   h += `<div class="lvpad"><div class="lv-head"><p class="mut">${b ? `<b>${esc(b.team)}팀 ${SHN[b.shift]}</b> · ${hhmm(b.from)}~${hhmm(b.to)} 근무` : '지금 시각의 근무표가 없습니다'}${LV.err ? ' · ⚠ ' + esc(LV.err) : ''}</p><button id="lvRef">새로고침</button></div>`;
   if (!b && !LV.err) h += '<div class="card"><p class="mut">근무표가 예약되면 지금 근무자가 여기에 표시됩니다. (근무표는 <b>예약할 때</b> 서버에 저장되며, 근무가 끝나면 지워집니다.)</p></div>';
   if (b) {
