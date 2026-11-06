@@ -26,7 +26,7 @@ self.addEventListener('push', event => {
   // 갤럭시(크롬)는 알림을 펼치면 큰 그림이 보임. 아이폰은 이 옵션을 무시하고 눌러야 카드가 열림
   if (card) {
     const kind = card.k === 'q' ? 'wait' : card.k === 'r' ? 'rest' : 'work';
-    try { opts.image = new URL('img/n-' + kind + '.jpg', self.registration.scope).href; } catch (_) { /* 그림 없이 */ }
+    try { opts.image = new URL('img/n-' + kind + '-' + (card.sh === 'night' ? 'night' : 'day') + '.jpg', self.registration.scope).href; } catch (_) { /* 그림 없이 */ }
   }
   event.waitUntil(self.registration.showNotification(title, opts));
 });

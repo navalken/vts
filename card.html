@@ -29,17 +29,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sa
 .logo{background:#fff;border-radius:12px;padding:6px 12px;box-shadow:0 1px 4px #0002;display:flex}
 .logo img{height:26px;display:block}
 .lead{background:var(--chip);color:var(--ink);font-weight:700;font-size:13px;border-radius:999px;padding:7px 13px;border:1px solid var(--line)}
-.hero{position:relative;border-radius:24px;overflow:hidden;height:250px;background:linear-gradient(180deg,var(--sea1),var(--sea2));box-shadow:0 6px 20px #0b1b3a22}
-body.night .hero::before{content:"";position:absolute;inset:0;
-  background-image:radial-gradient(#fff 1px,transparent 1.5px),radial-gradient(#fff9 1px,transparent 1.5px);
-  background-size:46px 46px,71px 71px;background-position:6px 9px,31px 28px;opacity:.55}
-body:not(.night) .hero::before{content:"";position:absolute;left:-10%;right:-10%;bottom:-32%;height:62%;border-radius:50%;background:#ffffff40}
-.hero .deco{position:absolute;bottom:0;opacity:.95}
-body.night .hero .deco{opacity:.55;filter:brightness(.8)}
-.hero .light{left:6px;height:112px}
-.hero .isle{right:-6px;height:84px}
-.hero .main{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);height:178px;max-width:60%;object-fit:contain;filter:drop-shadow(0 8px 6px #0006)}
-.hero .ground{position:absolute;left:50%;bottom:8px;width:170px;height:18px;margin-left:-85px;border-radius:50%;background:#0003;filter:blur(5px)}
+.hero{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(180deg,var(--sea1),var(--sea2));box-shadow:0 6px 20px #0b1b3a22;line-height:0}
+.hero img.scene{display:block;width:100%;height:auto}
+.hero::after{content:"";position:absolute;inset:0;border-radius:24px;box-shadow:inset 0 0 0 1px #ffffff22;pointer-events:none}
+h1 em{font-style:normal;color:var(--accent)}
+body.night.k-q h1 em{color:#ffd84a}
 h1{font-size:25px;line-height:1.3;margin:18px 2px 4px;letter-spacing:-.4px}
 .sub{margin:0 2px 14px;color:var(--sub);font-size:14px}
 .time{display:flex;gap:10px;margin-bottom:12px}
@@ -94,13 +88,12 @@ body.night button.ok{color:#0b1b3a}
     var night=c.sh==='night', k=c.k==='q'||c.k==='r'?c.k:'w';
     document.body.className=(night?'night ':'')+'k-'+k;
     document.querySelector('meta[name=theme-color]').setAttribute('content',night?'#0b1b3a':'#d9efff');
-    var hero=k==='r'?(night?'03_rabbit_sleeping.png':'02_rabbit_rest_chair.png'):HERO[k];
-    var title=k==='w'?esc(c.p)+' 근무가 시작됩니다':k==='q'?'대기근무입니다!':'다음 시간은 휴게입니다!';
+    var hero='hero-'+(k==='r'?'rest':k==='q'?'wait':'work')+'-'+(night?'night':'day')+'.jpg';
+    var title=k==='w'?'<em>'+esc(c.p)+'</em> 근무가 시작됩니다':k==='q'?'<em>대기근무</em>입니다!':'다음 시간은 <em>휴게</em>입니다!';
     var sub=k==='w'?'근무 시작 '+(c.l||15)+'분 전입니다':k==='q'?'대기 시간 안내':'잠시 쉬어 가세요';
     var h='';
     h+='<div class="top"><div class="logo"><img src="img/16_jeju_vts_logo.png" alt="Jeju VTS"></div><div class="lead">'+(c.l||15)+'분 전 알림</div></div>';
-    h+='<div class="hero"><img class="deco light" src="img/17_jeju_lighthouse.png" alt=""><img class="deco isle" src="img/18_jeju_island.png" alt="">'
-      +'<div class="ground"></div><img class="main" src="img/'+hero+'" alt=""></div>';
+    h+='<div class="hero"><img class="scene" src="img/'+hero+'" alt=""></div>';
     h+='<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
     if(k==='w') h+='<div class="time"><div class="tbox"><small>시작 시각</small><b>'+t4(c.s)+'</b></div><div class="tbox"><small>근무 섹터</small><b>'+esc(c.p)+'</b></div></div>'
       +'<div class="time"><div class="tbox"><small>근무 시간</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';
