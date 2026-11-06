@@ -58,46 +58,47 @@ nav button.on{color:var(--pri)}
 .lv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0}
 .lv-head .mut{margin:0}
 .lv-head button{width:auto;margin:0;padding:8px 12px;background:var(--chip);color:var(--pri)}
+html:has(body.islive),body.islive{overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none}
 body.islive header,body.islive #tab-live>h2{display:none}
 body.islive main{padding:0 0 90px;max-width:900px}
 body.islive .lvpad{padding:0 16px}
-.cv{position:relative;width:100%;aspect-ratio:1214/1148;container-type:inline-size;background:#dbe8f7;overflow:visible;margin-bottom:30px;font-family:-apple-system,"Noto Sans KR",sans-serif}
+/* 시안(가로 1214 기준)의 픽셀을 화면 폭에 비례해 그대로 줄여 쓴다: 1u = 시안의 1px */
+.cv{--u:calc(100cqw / 1214);position:relative;width:100%;aspect-ratio:1214/1148;container-type:inline-size;background:#dbe8f7;overflow:visible;margin-bottom:2px;font-family:-apple-system,"Noto Sans KR",sans-serif}
 .cv>*{position:absolute}
-.cv .bg{left:0;width:100%;height:auto;display:block}
+.cv .bg{left:0;width:100%;display:block;object-fit:cover}
 .cv .hd{left:0;top:0;width:100%;height:9.4%;background:linear-gradient(#e6f0fb,#d6e5f6)}
 .cv .logo{object-fit:contain;object-position:left center}
-.cv .gear{background:none;border:0;padding:0;margin:0;width:auto;font-size:max(14px,2.4cqw);color:#12284a;opacity:.7}
-.wx{background:rgba(255,255,255,.88);border-radius:max(5px,1cqw);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12284a;line-height:1.1}
-.wx .c{font-weight:800;font-size:max(9px,1.9cqw)}
-.wx .r{display:flex;align-items:center;gap:3%;font-weight:800}
-.wx .r i{font-style:normal;font-size:max(13px,3.2cqw)}
-.wx .r b{font-size:max(11px,2.3cqw)}
-.wx .r small{font-size:max(7px,1.4cqw);font-weight:600;display:block}
-.clk{text-align:right;color:#0d2a63;font-weight:800;line-height:1.05}
-.clk .d{font-size:max(8px,1.85cqw);font-weight:700}
-.clk .t{font-size:max(17px,4.4cqw)}
-.bdg{background:rgba(255,255,255,.82);border-radius:max(8px,2cqw);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3%;text-align:center;color:#12284a;font-weight:800}
-.bdg b{background:#0f3d91;color:#fff;border-radius:max(7px,1.6cqw);padding:0 12%;font-size:max(17px,4cqw);line-height:1.25}
-.bdg span{font-size:max(7.5px,1.5cqw);line-height:1.15;white-space:nowrap}
-.stag{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:999px;border:max(1.5px,.25cqw) solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:max(9px,1.9cqw);text-decoration:none;min-height:16px;white-space:nowrap}
-.sc{display:flex;flex-direction:column;background:#fff;border-radius:max(6px,1.4cqw);box-shadow:0 2px 6px rgba(0,0,0,.28);overflow:hidden;container-type:inline-size;min-height:66px;z-index:5}
-.sc .sh{flex:none;height:27%;min-height:15px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:max(10px,1.95cqw)}
-.sc .sb{flex:1;display:flex;align-items:center;gap:3%;padding:2px 4%;min-height:26px}
-.sc .fc{height:70%;max-height:26px;min-height:18px;aspect-ratio:1;border-radius:50%;flex:none}
-.sc .tx{min-width:0;line-height:1.2}
-.sc .nm{font-weight:800;font-size:max(10px,1.9cqw);color:#12284a;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.cv .gear{background:none;border:0;padding:0;margin:0;width:auto;font-size:calc(var(--u)*26);color:#12284a;opacity:.6;line-height:1}
+.wx{background:rgba(255,255,255,.9);border-radius:calc(var(--u)*10);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#12284a;line-height:1.1}
+.wx .c{font-weight:800;font-size:calc(var(--u)*19)}
+.wx .r{display:flex;align-items:center;gap:calc(var(--u)*10);font-weight:800}
+.wx .r i{font-style:normal;font-size:calc(var(--u)*34)}
+.wx .r b{font-size:calc(var(--u)*24);display:block}
+.wx .r small{font-size:calc(var(--u)*13);font-weight:600;display:block;color:#475467}
+.clk{text-align:right;color:#0d2a63;font-weight:800;line-height:1.05;display:flex;flex-direction:column;justify-content:center}
+.clk .d{font-size:calc(var(--u)*20);font-weight:700}
+.clk .t{font-size:calc(var(--u)*54)}
+.bdg{background:rgba(255,255,255,.85);border-radius:calc(var(--u)*30);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#12284a;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.bdg b{background:#0f3d91;color:#fff;border-radius:calc(var(--u)*18);padding:0 calc(var(--u)*22);font-size:calc(var(--u)*46);line-height:1.2}
+.bdg span{font-size:calc(var(--u)*19);line-height:1.2;white-space:nowrap;margin-top:calc(var(--u)*10)}
+.bdg svg{width:calc(var(--u)*76);height:calc(var(--u)*24);margin-top:calc(var(--u)*6)}
+.stag{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:999px;border:calc(var(--u)*3) solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:calc(var(--u)*21);white-space:nowrap;cursor:pointer}
+.sc{display:flex;flex-direction:column;background:#fff;border-radius:calc(var(--u)*16);box-shadow:0 2px 8px rgba(0,0,0,.25);overflow:hidden;z-index:5;cursor:pointer}
+.sc .sh{flex:none;height:calc(var(--u)*38);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:calc(var(--u)*22)}
+.sc .sb{flex:1;display:flex;align-items:center;gap:calc(var(--u)*10);padding:0 calc(var(--u)*8) 0 calc(var(--u)*12);min-height:0}
+.sc .fc{width:calc(var(--u)*58);height:calc(var(--u)*58);border-radius:50%;flex:none}
+.sc.big .fc{width:calc(var(--u)*68);height:calc(var(--u)*68)}
+.sc .tx{min-width:0;line-height:1.15}
+.sc .nm{font-weight:800;font-size:calc(var(--u)*21);color:#12284a;white-space:nowrap}
+.sc .nm.two{font-size:calc(var(--u)*16)}
 .sc .nm.none{color:#98a2b3}
-.sc .ph{font-weight:800;font-size:max(10px,1.9cqw);color:#0d2a63}
-.sc .bt{flex:none;height:28%;min-height:20px;display:flex;gap:3%;padding:0 3% 3%}
-.sc .bt a,.sc .bt button{margin:0;padding:0;border:0;border-radius:max(4px,.9cqw);color:#fff;font-weight:800;font-size:max(9px,1.55cqw);display:flex;align-items:center;justify-content:center;gap:2px;text-decoration:none;white-space:nowrap;overflow:hidden;width:auto}
+.sc .ph{font-weight:800;font-size:calc(var(--u)*25);color:#0d2a63}
+.sc .bt{flex:none;height:calc(var(--u)*40);display:flex;gap:calc(var(--u)*6);padding:0 calc(var(--u)*4) calc(var(--u)*5);pointer-events:none}
+.sc .bt a,.sc .bt button{margin:0;padding:0;border:0;border-radius:calc(var(--u)*9);color:#fff;font-weight:800;font-size:calc(var(--u)*16);display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*5);text-decoration:none;white-space:nowrap;width:auto;pointer-events:none}
 .sc .bt .call{flex:1 1 0;background:#16a34a}
-.sc .bt .dir{flex:1.06 1 0;background:#2f8fff}
-.sc .bt .sh2{display:none}
-@container (max-width:600px){ .wx .r small{display:none} .wx .r i{font-size:12px} .wx .r b{font-size:11px} .wx .c{font-size:9px} }
-@container (max-width:110px){ .sc .bt .lg{display:none} .sc .bt .sh2{display:inline} .sc .bt i{display:none} }
-.ani{pointer-events:none;background-repeat:no-repeat;transform-origin:50% 100%;animation:lvbob 3.2s ease-in-out infinite;-webkit-mask-image:radial-gradient(ellipse at 50% 55%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse at 50% 55%,#000 58%,transparent 100%)}
-@keyframes lvbob{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}25%{transform:translateY(calc(var(--dy) * .5)) rotate(calc(var(--r) * -.6)) scale(1.012)}50%{transform:translateY(var(--dy)) rotate(var(--r)) scale(1.03)}75%{transform:translateY(calc(var(--dy) * .4)) rotate(calc(var(--r) * .5)) scale(1.012)}}
-@media (prefers-reduced-motion:reduce){.ani{animation:none}}
+.sc .bt .dir{flex:1.05 1 0;background:#2f8fff}
+.sc .bt i{font-style:normal;font-size:calc(var(--u)*18)}
+.sheetbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;margin-top:10px;border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;color:#fff;border:0}
 nav button{font-size:11px;line-height:1.15;text-align:center}
 nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 </style>
@@ -324,24 +325,20 @@ async function renderAdmin() {
 
 // ---- 실시간 근무현황 (시안 좌표 그대로: 가로 1214 × 세로 1148 기준 비율) ----
 const CW = 1214, CH = 1148;
-const PM = (x0, y0, x1, y1) => `left:${x0 / CW * 100}%;top:${y0 / CH * 100}%;width:${(x1 - x0) / CW * 100}%;min-height:${(y1 - y0) / CW * 100}cqw`;
 const P = (x0, y0, x1, y1) => `left:${x0 / CW * 100}%;top:${y0 / CH * 100}%;width:${(x1 - x0) / CW * 100}%;height:${(y1 - y0) / CH * 100}%`;
 const LV_TEL = { '1섹터': '2160', '2섹터': '2260', '3섹터': '2360', '4섹터': '2460', '5섹터': '2560', '6섹터': '2660', '7섹터': '2760', '8섹터': '2860', '9섹터': '2960', '팀장석10': '2550', '팀장석9': '2750' }; // 앞에 064801을 붙여 건다
 const LV_PREFIX = '064801';
 const LV_COL = { '1': '#2f7df0', '2': '#17b34a', '3': '#f58a14', '4': '#8e5cf0', '5': '#ee4141', '6': '#f0b90b', '7': '#ef4f9c', '8': '#14b4cf', '9': '#8e5cf0', '팀장': '#12409a' };
-const LV_FACE = { '1': 'mouse', '2': 'ox', '3': 'tiger', '4': 'rabbit', '5': 'dragon', '6': 'horse', '7': 'sheep', '8': 'monkey', '9': 'cat', '팀장': 'croc' };
 const FACEFILE = { '3': 'face-3', '9': 'face-9', '4': 'face-4', '1': 'face-1', '5': 'face-5', '2': 'face-2', '6': 'face-6', '7': 'face-7', '8': 'face-8', '팀장': 'face-t' };
 const LV_FLOORS = [
-  { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', y: 108, ih: 552, H: 494, W: 1086, badge: [10, 120, 190, 270],
+  { n: '10층', t: '제주해역 관제실', img: 'img/live-10.jpg', y: 108, ih: 552, badge: [12, 120, 188, 270],
     cards: { '3섹터': [20, 500, 205, 648], '9섹터': [212, 500, 397, 648], '4섹터': [408, 500, 593, 648], '1섹터': [621, 500, 806, 648], '5섹터': [818, 500, 1003, 648], '2섹터': [1014, 500, 1198, 648] },
-    tags: { '3섹터': [65, 337, 155, 368], '9섹터': [251, 337, 341, 368], '4섹터': [437, 337, 524, 368], '1섹터': [690, 337, 776, 368], '5섹터': [871, 337, 962, 368], '2섹터': [1053, 337, 1141, 368] },
-    lead: { sec: '팀장석10', tag: [548, 172, 666, 207] },
-    anim: [[35, 238, 155, 375], [215, 245, 340, 375], [385, 238, 520, 375], [590, 245, 720, 375], [755, 238, 890, 375], [905, 238, 1050, 375], [500, 90, 650, 200]] },
-  { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', y: 662, ih: 486, H: 435, W: 1086, badge: [10, 680, 190, 830],
+    tags: { '3섹터': [56, 372, 146, 403], '9섹터': [251, 372, 341, 403], '4섹터': [453, 372, 543, 403], '1섹터': [672, 372, 762, 403], '5섹터': [868, 372, 958, 403], '2섹터': [1081, 372, 1171, 403] },
+    lead: { sec: '팀장석10', tag: [568, 180, 688, 213] } },
+  { n: '9층', t: '서귀포해역 관제실', img: 'img/live-9.jpg', y: 662, ih: 486, badge: [12, 680, 188, 830], big: true,
     cards: { '팀장석9': [63, 982, 325, 1128], '6섹터': [372, 982, 592, 1128], '7섹터': [631, 982, 856, 1128], '8섹터': [902, 982, 1128, 1128] },
-    tags: { '6섹터': [449, 822, 546, 858], '7섹터': [667, 822, 767, 858], '8섹터': [930, 822, 1029, 858] },
-    lead: { sec: '팀장석9', tag: [148, 810, 278, 845], noTagCall: true },
-    anim: [[60, 150, 300, 300], [370, 180, 500, 300], [590, 200, 730, 300], [800, 205, 950, 300], [960, 215, 1086, 295, 2.4]] }
+    tags: { '6섹터': [420, 874, 517, 905], '7섹터': [634, 874, 731, 905], '8섹터': [900, 874, 997, 905] },
+    lead: { sec: '팀장석9', tag: [148, 824, 278, 857], noTagCall: true } }
 ];
 const SHN = { day: '주간', night: '야간' };
 let LV = { data: null, timer: null, clk: null, err: '', wx: null, wxAt: 0 };
@@ -353,22 +350,14 @@ function lvBoard() {
   return bs.length ? bs.slice().sort((a, b) => b.from - a.from)[0] : null;
 }
 function lvNames(b, sec) { return (!b || isLead(sec)) ? [] : (b.sectors[sec] || []); }
-const ICON_TEL = '<i style="font-style:normal">📞</i>', ICON_DOC = '<i style="font-style:normal">📝</i>';
+const ICON_TEL = '<i>📞</i>', ICON_DOC = '<i>📝</i>';
 function lvCard(b, sec, box, f) {
   const lead = isLead(sec), names = lvNames(b, sec), k = lvKey(sec), tel = LV_TEL[sec];
-  const nm = lead ? '<div class="nm">팀장</div>' : (names.length ? names.map(n => `<div class="nm">${esc(n)}</div>`).join('') : '<div class="nm none">—</div>');
-  return `<div class="sc" style="${PM(...box)}"><div class="sh" style="background:${LV_COL[k]}">${lead ? '팀장석' : esc(sec)}</div>
+  const two = names.length > 1 ? ' two' : '';
+  const nm = lead ? '<div class="nm">팀장</div>' : (names.length ? names.slice(0, 3).map(n => `<div class="nm${two}">${esc(n)}</div>`).join('') : '<div class="nm none">—</div>');
+  return `<div class="sc${f.big ? ' big' : ''}" data-sec="${esc(sec)}" style="${P(...box)}"><div class="sh" style="background:${LV_COL[k]}">${lead ? '팀장석' : esc(sec)}</div>
     <div class="sb"><img class="fc" src="img/${FACEFILE[k]}.png" alt=""><div class="tx">${nm}<div class="ph">${tel}</div></div></div>
-    <div class="bt"><a class="call" href="tel:${LV_PREFIX}${tel}">${ICON_TEL}<span>통화</span></a><button class="dir" data-dir="${esc(sec)}">${ICON_DOC}<span class="lg">지령입력</span><span class="sh2">지령</span></button></div></div>`;
-}
-function lvAnim(f) {
-  return (f.anim || []).map((a, i) => {
-    const [x0, y0, x1, y1, amp] = a, w = x1 - x0, hh = y1 - y0;
-    const dur = (2.8 + ((i * 7) % 5) * 0.45).toFixed(2), del = (-(i * 0.83) % 3).toFixed(2);
-    // 장면 그림 안의 위치(x0..)를 캔버스 좌표로 환산해 같은 자리에 겹쳐 올림
-    const sx = CW / f.W, sy = f.ih / f.H;
-    return `<div class="ani" style="left:${x0 * sx / CW * 100}%;top:${(f.y + y0 * sy) / CH * 100}%;width:${w * sx / CW * 100}%;height:${hh * sy / CH * 100}%;background-image:url(${f.img});background-size:${f.W / w * 100}% auto;background-position:${x0 / (f.W - w) * 100}% ${y0 / (f.H - hh) * 100}%;--dy:${-(amp || 1.25)}cqw;--r:${i % 2 ? -3 : 3}deg;animation-duration:${dur}s;animation-delay:${del}s"></div>`;
-  }).join('');
+    <div class="bt"><a class="call" href="tel:${LV_PREFIX}${tel}">${ICON_TEL}<span>통화</span></a><button class="dir" data-dir="${esc(sec)}">${ICON_DOC}<span>지령입력</span></button></div></div>`;
 }
 const WXC = [['제주', 33.5097, 126.5219], ['서귀포', 33.2541, 126.5601], ['한림', 33.4114, 126.2619], ['성산', 33.3869, 126.9367]];
 function wxText(c) { return c === 0 ? ['☀️', '맑음'] : c === 1 ? ['🌤️', '대체로 맑음'] : c === 2 ? ['⛅', '구름조금'] : c === 3 ? ['☁️', '흐림'] : (c === 45 || c === 48) ? ['🌫️', '안개'] : (c >= 51 && c <= 57) ? ['🌦️', '이슬비'] : (c >= 61 && c <= 67) ? ['🌧️', '비'] : (c >= 71 && c <= 77) ? ['❄️', '눈'] : (c >= 80 && c <= 82) ? ['🌦️', '소나기'] : c >= 95 ? ['⛈️', '뇌우'] : ['⛅', '구름']; }
@@ -391,19 +380,20 @@ function lvHeader() {
   }).join('');
   const cp = clkParts();
   return `<div class="hd"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100)}">${wx}
-    <div class="clk" style="${P(985, 14, 1176, 100)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>
-    <button class="gear" onclick="goTab('set')" aria-label="설정" style="${P(1176, 6, 1210, 44)}">⚙️</button>`;
+    <div class="clk" style="${P(985, 8, 1180, 104)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>
+    <button class="gear" onclick="goTab('set')" aria-label="설정" style="${P(1182, 4, 1212, 34)}">⚙️</button>`;
 }
+const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
 function renderLive() {
   const el = $('liveBody'); if (!el) return;
   const b = lvBoard();
   let h = `<div class="cv">${lvHeader()}`, cardsHtml = '';
   LV_FLOORS.forEach(f => {
-    h += `<img class="bg" src="${f.img}" alt="${f.n} 관제실" style="top:${f.y / CH * 100}%;height:${f.ih / CH * 100}%;object-fit:cover">${lvAnim(f)}`;
-    h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span></div>`;
+    h += `<img class="bg" src="${f.img}" alt="${f.n} 관제실" style="top:${f.y / CH * 100}%;height:${f.ih / CH * 100}%">`;
+    h += `<div class="bdg" style="${P(...f.badge)}"><b>${f.n}</b><span>${f.t}</span>${WAVE}</div>`;
     Object.keys(f.tags).forEach(s => { h += `<div class="stag" style="${P(...f.tags[s])};background:${LV_COL[lvKey(s)]}">${esc(s)}</div>`; });
     const L = f.lead, lk = LV_COL['팀장'];
-    h += f.lead.noTagCall ? `<div class="stag" style="${P(...L.tag)};background:${lk}">👑 팀장석</div>` : `<a class="stag" href="tel:${LV_PREFIX}${LV_TEL[L.sec]}" style="${P(...L.tag)};background:${lk}" aria-label="10층 팀장석 전화">👑 팀장석</a>`;
+    h += `<div class="stag" data-sec="${esc(L.sec)}" data-tagonly="1" style="${P(...L.tag)};background:${lk}">👑 팀장석</div>`;
     cardsHtml += Object.keys(f.cards).map(s => lvCard(b, s, f.cards[s], f)).join('');
   });
   h += cardsHtml + '</div>';
@@ -465,9 +455,20 @@ async function startBoard() {
     $('lvPhImg').src = 'data:image/jpeg;base64,' + j.img; $('lvPhBox').style.display = 'block'; $('lvPhMsg').textContent = '사진을 탭하면 확대·축소됩니다 (버튼도 가능)';
   } catch (e) { $('lvPhMsg').textContent = e.status === 404 ? '저장된 원본 사진이 없습니다. (이 기능을 넣기 전에 예약했거나 이미 근무가 끝났습니다)' : '실패: ' + e.message; }
 }
+// 카드를 누르면 큰 버튼창(통화·지령입력)이 올라옴(카드 안 버튼은 폰에서 너무 작아 손가락으로 누르기 어려움)
+function lvActionSheet(sec, tagOnly) {
+  const b = lvBoard(), names = lvNames(b, sec), tel = LV_TEL[sec], lead = isLead(sec);
+  const who = lead ? '팀장' : (names.join(', ') || '근무자 없음');
+  openModal(`<h3>${esc(lead ? '팀장석' : sec)} · ${esc(who)}</h3>
+    <p class="mut">내선 ${tel}</p>
+    <a class="sheetbtn" style="background:#16a34a" href="tel:${LV_PREFIX}${tel}">📞 통화 ${LV_PREFIX}${tel}</a>
+    ${tagOnly || (lead && sec === '팀장석10') ? '' : '<button class="sheetbtn" style="background:#2f8fff" id="lvToDir">📝 지령 입력</button>'}
+    <button class="sec" onclick="closeModal()">닫기</button>`);
+  const g = $('lvToDir'); if (g) g.onclick = () => lvDirSheet(sec);
+}
 document.addEventListener('click', e => {
-  const d = e.target.closest('[data-dir]');
-  if (d) lvDirSheet(d.dataset.dir); else if (e.target.id === 'lvRef') loadLive();
+  const c = e.target.closest('[data-sec]');
+  if (c) lvActionSheet(c.dataset.sec, c.dataset.tagonly === '1'); else if (e.target.id === 'lvRef') loadLive();
 });
 function openModal(html) { $('sheet').innerHTML = html; $('modal').hidden = false; }
 function closeModal() { $('modal').hidden = true; }
