@@ -73,6 +73,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
   <p class="hint">③이 맞으면 누르세요. 위에서 고른 <b>팀 · 날짜 · 근무</b>의 예약만 새 내용으로 바뀌고, 다른 팀·다른 근무(주간/야간)·다른 날짜 예약은 그대로입니다. 종일을 고르면 주간·야간 예약이 둘 다 바뀝니다. 누구든(휴가 대체자도) 할 수 있습니다.</p>
   <div class="row"><label>몇 분 전</label> <input id="pubLead" type="number" value="15" min="1" max="60" style="width:70px"></div>
   <div class="row"><button id="pubBtn">확정 — 알림 예약</button> <button id="resBtn" style="background:#6b7280">예약 현황</button> <button id="staffBtn" style="background:#6b7280">알림 등록 현황</button> <button id="logBtn" style="background:#6b7280">발송 기록</button></div>
+  <p class="hint"><a href="card.html" target="_blank" style="color:#8ab4ff">알림 카드 미리보기</a> — 알림을 눌렀을 때 열리는 화면 예시</p>
   <div id="pubMsg" class="msg"></div>
 </div>
 <details><summary>설정 (처음 한 번만)</summary>
@@ -725,19 +726,26 @@ function computeAlerts(halves,date,lead,prevHO){
       const c0=cols[r.g0], c1=cols[r.g1], range=hm(c0.s)+'~'+hm(c1.e);
       const title=isRest(r.place)?`${lead}분 뒤 휴게 ${range}`:isWait(r.place)?`${lead}분 뒤 대기 근무 ${range}`:`${lead}분 뒤 ${r.place} 근무 ${range}`;
       const lines=[];
+      const card={me:name,k:isRest(r.place)?'r':isWait(r.place)?'q':'w',p:r.place,s:hm(c0.s),rg:range,l:lead,sh:c0.h}; // 카드 화면용 데이터(정보 없으면 해당 키 생략)
       if(isWork(r.place)){ // 현 섹터 근무자: 이 칸 바로 앞 칸에서 그 섹터에 있던 사람
         let names;
         if(r.g0>0&&cols[r.g0-1].s!=null) names=cols[r.g0-1].occ.filter(o=>o.place===r.place&&o.name!==name).map(o=>o.name);
         else { const v=prevHO&&prevHO[r.place]; names=(v&&v.length)?v.filter(n=>n!==name):null; } // 첫 칸: 직전 팀 정보가 없으면 정보없음
         if(names===null) lines.push(`현 ${r.place} 근무자 정보없음`);
-        else if(names.length) lines.push(`현 ${r.place} 근무자 ${uniq(names).join(', ')}`);
+        else if(names.length){ lines.push(`현 ${r.place} 근무자 ${uniq(names).join(', ')}`); card.cur=uniq(names); }
       }
       const pr=runs[k-1]; // 지금까지 근무 중이었다면: 내 섹터에 다음에 들어올 사람
       if(pr&&pr.g1===r.g0-1&&isWork(pr.place)){
         const nm=uniq(c0.occ.filter(o=>o.place===pr.place&&o.name!==name).map(o=>o.name));
-        if(nm.length) lines.push(`현 ${pr.place} 인수자 ${nm.join(', ')}`);
+        if(nm.length){ lines.push(`현 ${pr.place} 인수자 ${nm.join(', ')}`); card.rv={p:pr.place,n:nm}; }
       }
-      alerts.push({name,at:base+(c0.s-lead)*60000,title,body:lines.join('\n'),shift:c0.h});
+      if(isWait(r.place)){ // 같은 시간대에 함께 대기하는 다른 사람(카드 화면에서만 표시)
+        const ms=[]; for(let g=r.g0;g<=r.g1;g++) cols[g].occ.forEach(o=>{ if(o.place==='대기'&&o.name!==name&&!ms.includes(o.name)) ms.push(o.name); });
+        if(ms.length) card.m=ms;
+      }
+      const nx=runs[k+1]; // 이어지는 다음 칸(없거나 떨어져 있으면 생략)
+      if(nx&&nx.g0===r.g1+1&&cols[nx.g0].s!=null) card.nx={k:isRest(nx.place)?'r':isWait(nx.place)?'q':'w',p:nx.place,s:hm(cols[nx.g0].s),rg:hm(cols[nx.g0].s)+'~'+hm(cols[nx.g1].e)};
+      alerts.push({name,at:base+(c0.s-lead)*60000,title,body:lines.join('\n'),shift:c0.h,card});
     });
   });
   return alerts;

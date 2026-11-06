@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1b3a">
+<title>VTS 알림 카드</title>
+<style>
+:root{
+  --bg1:#d9efff; --bg2:#f4faff; --ink:#0f2447; --sub:#5b6f8c; --panel:#ffffff; --line:#dbe7f5;
+  --accent:#1f8f6b; --accent-soft:#e1f5ee; --sea1:#8fd0f5; --sea2:#4aa8e0; --chip:#ffffffcc;
+}
+body.night{
+  --bg1:#0b1b3a; --bg2:#122a52; --ink:#eaf2ff; --sub:#9db4d6; --panel:#16305c; --line:#27487c;
+  --sea1:#1d3f78; --sea2:#0f2a56; --chip:#0b1b3acc;
+}
+body.k-w{ --accent:#1f8f6b; --accent-soft:#e1f5ee; }
+body.k-q{ --accent:#5a6bd8; --accent-soft:#e8ebff; }
+body.k-r{ --accent:#d98b2b; --accent-soft:#fdf0dc; }
+body.night.k-w{ --accent:#4fd1a1; --accent-soft:#12433a; }
+body.night.k-q{ --accent:#93a0ff; --accent-soft:#23316b; }
+body.night.k-r{ --accent:#ffc271; --accent-soft:#4a3a1d; }
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,var(--bg1),var(--bg2) 60%);min-height:100vh;padding:0 0 env(safe-area-inset-bottom)}
+.wrap{max-width:460px;margin:0 auto;padding:14px 16px 28px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo{background:#fff;border-radius:12px;padding:6px 12px;box-shadow:0 1px 4px #0002;display:flex}
+.logo img{height:26px;display:block}
+.lead{background:var(--chip);color:var(--ink);font-weight:700;font-size:13px;border-radius:999px;padding:7px 13px;border:1px solid var(--line)}
+.hero{position:relative;border-radius:24px;overflow:hidden;height:250px;background:linear-gradient(180deg,var(--sea1),var(--sea2));box-shadow:0 6px 20px #0b1b3a22}
+body.night .hero::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(#fff 1px,transparent 1.5px),radial-gradient(#fff9 1px,transparent 1.5px);
+  background-size:46px 46px,71px 71px;background-position:6px 9px,31px 28px;opacity:.55}
+body:not(.night) .hero::before{content:"";position:absolute;left:-10%;right:-10%;bottom:-32%;height:62%;border-radius:50%;background:#ffffff40}
+.hero .deco{position:absolute;bottom:0;opacity:.95}
+body.night .hero .deco{opacity:.55;filter:brightness(.8)}
+.hero .light{left:6px;height:112px}
+.hero .isle{right:-6px;height:84px}
+.hero .main{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);height:178px;max-width:60%;object-fit:contain;filter:drop-shadow(0 8px 6px #0006)}
+.hero .ground{position:absolute;left:50%;bottom:8px;width:170px;height:18px;margin-left:-85px;border-radius:50%;background:#0003;filter:blur(5px)}
+h1{font-size:25px;line-height:1.3;margin:18px 2px 4px;letter-spacing:-.4px}
+.sub{margin:0 2px 14px;color:var(--sub);font-size:14px}
+.time{display:flex;gap:10px;margin-bottom:12px}
+.tbox{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px 14px}
+.tbox small{display:block;color:var(--sub);font-size:12px;margin-bottom:3px}
+.tbox b{font-size:22px;color:var(--accent);letter-spacing:-.3px}
+.tbox b.sm{font-size:19px}
+.row{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:13px 14px;margin-bottom:10px}
+.ico{flex:none;width:36px;height:36px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:19px}
+.row small{display:block;color:var(--sub);font-size:12.5px;margin-bottom:2px}
+.row strong{font-size:17px;font-weight:700;line-height:1.4;word-break:keep-all}
+.names{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.name{background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:15px;font-weight:600}
+.name.me{background:var(--accent);color:#fff}
+body.night .name.me{color:#0b1b3a}
+.checks{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:6px 14px;margin-bottom:10px}
+.checks h3{margin:10px 0 4px;font-size:14px;color:var(--sub);font-weight:700}
+.checks label{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);font-size:15.5px;line-height:1.45}
+.checks h3+label{border-top:0}
+.checks input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);flex:none}
+button.ok{width:100%;margin-top:14px;border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:800;background:var(--accent);color:#fff;cursor:pointer}
+body.night button.ok{color:#0b1b3a}
+.foot{text-align:center;color:var(--sub);font-size:12px;margin-top:14px}
+/* 미리보기 목록 */
+.demo h2{margin:6px 2px 10px;font-size:20px}
+.demo p{color:var(--sub);font-size:14px;margin:0 2px 14px;line-height:1.5}
+.demo a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px 16px;margin-bottom:10px;color:var(--ink);text-decoration:none;font-weight:700;font-size:16px}
+.demo a span{display:block;color:var(--sub);font-weight:400;font-size:13px;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+  var $app=document.getElementById('app');
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var t4=function(s){s=String(s||'');return /^\d{4}$/.test(s)?s.slice(0,2)+':'+s.slice(2):s;};              // 1500 → 15:00
+  var rgf=function(r){var m=/^(\d{4})~(\d{4})$/.exec(r||'');return m?t4(m[1])+' ~ '+t4(m[2]):(r||'');};   // 1500~1600 → 15:00 ~ 16:00
+  var SAMPLES={
+    w:{me:'김정민',k:'w',p:'4섹터',s:'1500',rg:'1500~1600',l:15,sh:'day',cur:['박현우'],rv:{p:'3섹터',n:['서현욱']},nx:{k:'r',p:'휴게',s:'1600',rg:'1600~1800'}},
+    q:{me:'김정민',k:'q',p:'대기',s:'2100',rg:'2100~0000',l:15,sh:'night',m:['이도윤','최민서'],nx:{k:'w',p:'3섹터',s:'0000',rg:'0000~0300'}},
+    r:{me:'김정민',k:'r',p:'휴게',s:'1300',rg:'1300~1500',l:15,sh:'day',rv:{p:'2섹터',n:['서현욱']},nx:{k:'w',p:'1섹터',s:'1500',rg:'1500~1800'}}
+  };
+  var HERO={w:'01_turtle_running.png',q:'04_vts_operator_cat.png',r:null};
+  function nextText(n){
+    if(!n) return '';
+    if(n.k==='w') return '다음 근무 시작 '+t4(n.s)+' · '+esc(n.p)+' 근무 예정';
+    if(n.k==='r') return '다음 시간은 휴게 · '+(n.rg?rgf(n.rg):'');
+    return '다음 시간은 대기 근무 · '+(n.rg?rgf(n.rg):'');
+  }
+  function render(c){
+    var night=c.sh==='night', k=c.k==='q'||c.k==='r'?c.k:'w';
+    document.body.className=(night?'night ':'')+'k-'+k;
+    document.querySelector('meta[name=theme-color]').setAttribute('content',night?'#0b1b3a':'#d9efff');
+    var hero=k==='r'?(night?'03_rabbit_sleeping.png':'02_rabbit_rest_chair.png'):HERO[k];
+    var title=k==='w'?esc(c.p)+' 근무가 시작됩니다':k==='q'?'대기근무입니다!':'다음 시간은 휴게입니다!';
+    var sub=k==='w'?'근무 시작 '+(c.l||15)+'분 전입니다':k==='q'?'대기 시간 안내':'잠시 쉬어 가세요';
+    var h='';
+    h+='<div class="top"><div class="logo"><img src="img/16_jeju_vts_logo.png" alt="Jeju VTS"></div><div class="lead">'+(c.l||15)+'분 전 알림</div></div>';
+    h+='<div class="hero"><img class="deco light" src="img/17_jeju_lighthouse.png" alt=""><img class="deco isle" src="img/18_jeju_island.png" alt="">'
+      +'<div class="ground"></div><img class="main" src="img/'+hero+'" alt=""></div>';
+    h+='<h1>'+title+'</h1><p class="sub">'+sub+'</p>';
+    if(k==='w') h+='<div class="time"><div class="tbox"><small>시작 시각</small><b>'+t4(c.s)+'</b></div><div class="tbox"><small>근무 섹터</small><b>'+esc(c.p)+'</b></div></div>'
+      +'<div class="time"><div class="tbox"><small>근무 시간</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';
+    else h+='<div class="time"><div class="tbox"><small>'+(k==='q'?'대기 시간':'휴게 시간')+'</small><b class="sm">'+rgf(c.rg)+'</b></div></div>';
+    // 정보가 없는 칸은 만들지 않는다(숨김)
+    if(k==='w' && c.cur && c.cur.length) h+='<div class="row"><div class="ico">👤</div><div><small>현 '+esc(c.p)+' 근무자</small><strong>'+c.cur.map(esc).join(', ')+'</strong></div></div>';
+    if(c.rv && c.rv.n && c.rv.n.length) h+='<div class="row"><div class="ico">🤝</div><div><small>현 '+esc(c.rv.p)+' 인수자</small><strong>'+c.rv.n.map(esc).join(', ')+'</strong></div></div>';
+    if(k==='q' && c.m && c.m.length){
+      h+='<div class="row"><div class="ico">👥</div><div><small>함께 대기 중 ('+(c.m.length+1)+'명)</small><div class="names">'
+        +(c.me?'<span class="name me">'+esc(c.me)+' (나)</span>':'')+c.m.map(function(n){return '<span class="name">'+esc(n)+'</span>';}).join('')+'</div></div></div>';
+    }
+    if(c.nx) h+='<div class="row"><div class="ico">⏭️</div><div><small>다음</small><strong>'+nextText(c.nx)+'</strong></div></div>';
+    if(k==='r'){
+      h+='<div class="checks"><h3>인수인계 체크리스트</h3>'
+        +'<label><input type="checkbox"><span>특이사항이 있으면 다음 근무자에게 전달해 주세요</span></label>'
+        +'<label><input type="checkbox"><span>지령사항 및 주요 상황을 메모해 주세요</span></label>'
+        +'<label><input type="checkbox"><span>충분한 휴식 후 다음 근무에 임해 주세요</span></label></div>';
+    }
+    h+='<button class="ok" id="okBtn">확인했어요</button><div class="foot">제주광역VTS 근무 알림</div>';
+    $app.className='wrap'; $app.innerHTML=h;
+    document.getElementById('okBtn').onclick=function(){
+      try{ window.close(); }catch(e){}
+      setTimeout(function(){ location.href='app.html'; },150);   // 창이 안 닫히면 앱으로
+    };
+  }
+  function gallery(){
+    document.body.className='';
+    $app.className='wrap demo';
+    $app.innerHTML='<h2>알림 카드 미리보기</h2><p>실제 알림을 누르면 그날의 이름·시간이 채워진 카드가 열립니다. 아래는 예시입니다.</p>'
+      +[['w','day','근무 시작 카드 (주간)','거북이 · 현 근무자 · 인수자'],['w','night','근무 시작 카드 (야간)','밤 테마'],
+        ['q','night','대기 카드 (야간)','함께 대기 중인 동료'],['q','day','대기 카드 (주간)',''],
+        ['r','day','휴게 카드 (주간)','체크리스트'],['r','night','휴게 카드 (야간)','수면 토끼']]
+       .map(function(x){return '<a href="?demo='+x[0]+'&sh='+x[1]+'">'+x[2]+'<span>'+x[3]+'</span></a>';}).join('');
+  }
+  var c=null, h=location.hash||'', q=new URLSearchParams(location.search);
+  if(h.indexOf('#c=')===0){ try{ c=JSON.parse(decodeURIComponent(h.slice(3))); }catch(e){ c=null; } }
+  if(!c && q.get('demo') && SAMPLES[q.get('demo')]){ c=JSON.parse(JSON.stringify(SAMPLES[q.get('demo')])); c.sh=q.get('sh')==='night'?'night':'day'; }
+  if(c) render(c); else gallery();
+})();
+</script>
+</body>
+</html>
