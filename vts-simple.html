@@ -667,9 +667,10 @@ function buildPeople(){
   });
   return out;
 }
+let peopleOpen=false;
 function renderPeople(){
   const list=buildPeople();
-  let h=`<details class="box" open><summary>사람별 하루 일정 (${list.length}명${activeHalves().length===2?' · 종일 '+list.filter(p=>p.both).length+'명':''})</summary><div class="people">`;
+  let h=`<details class="box" id="peopleDet"${peopleOpen?' open':''}><summary>사람별 하루 일정 (${list.length}명${activeHalves().length===2?' · 종일 '+list.filter(p=>p.both).length+'명':''})</summary><div class="people">`;
   list.forEach(p=>{
     h+=`<div class="person"><b>${esc(p.name)}</b>${p.both?' <span class="tag">종일</span>':''}`;
     ['day','night'].forEach(x=>{ if(p.lines[x]) h+=`<div class="pl"><span class="pk">${HN[x]}</span> ${p.lines[x].map(r=>`<span class="chip c-${r.place.replace(/\d/g,'').replace('섹터','s')}">${esc(r.t)} ${esc(r.place)}</span>`).join(' ')}</div>`; });
@@ -677,6 +678,7 @@ function renderPeople(){
   });
   h+='</div><div class="row"><button id="doneBtn">확정 — 사람별 일정 복사</button></div><div id="copyBox"></div></details>';
   $('peopleBox').innerHTML=h; $('doneBtn').onclick=()=>done(list);
+  $('peopleDet').addEventListener('toggle',()=>{ peopleOpen=$('peopleDet').open; });
 }
 function done(list){
   const txt=list.map(p=>p.name+(p.both?' (종일)':'')+'\n'+['day','night'].filter(x=>p.lines[x]).map(x=>`  ${HN[x]}: `+p.lines[x].map(r=>r.t+' '+r.place).join(', ')).join('\n')).join('\n');
@@ -770,6 +772,19 @@ function lastColHandover(halves){
     occ.forEach(o=>{ (m[o.place]=m[o.place]||[]).push(o.name); }); out[H.h]=m; });
   return out;
 }
+// 실시간 근무현황용: 모든 칸의 시각 구간과 장소별 근무자(분 단위, 날짜 0시 기준, 자정 넘으면 1440 이상)
+function buildBoard(halves){
+  const out=[]; let day=0, prevS=-1;
+  halves.forEach(H=>H.labels.forEach((lb,c)=>{
+    const m=/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/.exec(lb||''); if(!m) return;
+    let s=(+m[1])*60+(+m[2])+1440*day; if(s<prevS){ day++; s+=1440; }
+    let e=(+m[3])*60+(+m[4])+1440*day; if(e<=s) e+=1440;
+    prevS=s; const a={};
+    (H.occ[c]||[]).forEach(o=>{ const L=a[o.place]=a[o.place]||[]; if(L.indexOf(o.name)<0) L.push(o.name); });
+    out.push({s,e,h:H.h,a});
+  }));
+  return out;
+}
 // ---- ENGINE END ----
 const halvesForEngine=()=>activeHalves().map(x=>{
   const p=patOf(x), occ=p.timeLabels.map(()=>[]);
@@ -808,11 +823,13 @@ $('pubBtn').onclick=async()=>{
       if(!confirm(`${team()}팀 ${mdOf(date)} ${SHL[mode]}에 이미 예약 ${n}건이 있습니다.\n새 근무표로 교체할까요?`+(mode==='both'?'\n(종일: 주간·야간 예약이 모두 교체됩니다)':'')+'\n다른 팀·다른 근무 예약은 그대로입니다.')) return pubSay('취소했습니다. 기존 예약은 그대로입니다.','');
     }
     const halves=halvesForEngine();
+    let photo=null; // 원본 근무표 사진(앱 사용자 누구나 볼 수 있게, 근무가 끝나면 서버에서 삭제)
+    try{ if(photoImg){ const sc=Math.min(1,1600/Math.max(photoImg.width,photoImg.height)); const cv=document.createElement('canvas'); cv.width=Math.round(photoImg.width*sc); cv.height=Math.round(photoImg.height*sc); cv.getContext('2d').drawImage(photoImg,0,0,cv.width,cv.height); photo=cv.toDataURL('image/jpeg',0.72).split(',')[1]; if(photo.length>1400000) photo=cv.toDataURL('image/jpeg',0.5).split(',')[1]; if(photo.length>1400000) photo=null; } }catch(e){ photo=null; }
     let prevHO=null; // 직전 근무(주간 앞은 전날 야간, 야간 앞은 같은 날 주간)의 마지막 칸 정보
     try{ const first=halves[0].h; const r=await adminCall('/handover?date='+(first==='day'?addDays(date,-1):date)+'&shift='+(first==='day'?'night':'day'),'GET'); prevHO=r.handover||null; }catch(e){}
     const alerts=computeAlerts(halves,date,lead,prevHO);
     if(!alerts.length) return pubSay('보낼 알림이 없습니다.','bad');
-    const r=await adminCall('/publish','POST',{team:team(),date,shift:mode,alerts,handover:lastColHandover(halves)});
+    const r=await adminCall('/publish','POST',{team:team(),date,shift:mode,alerts,handover:lastColHandover(halves),board:buildBoard(halves),photo});
     pubSay(`알림 예약 완료 — ${team()}팀 ${mdOf(date)} ${SHL[mode]} ${r.scheduled}건`+(r.skipped?`, 이미 지난 시각 ${r.skipped}건 건너뜀`:'')
       +(r.unregistered.length?`\n아직 알림 등록 안 한 사람: ${r.unregistered.join(', ')}\n(등록하면 이후 알림부터 자동으로 받습니다)`:'\n전원 등록됨')
       +(r.onLeave&&r.onLeave.length?`\n휴직이라 제외: ${r.onLeave.join(', ')}`:'')
@@ -836,7 +853,7 @@ $('logBtn').onclick=async()=>{
 // ===== 팀 선택 버튼(펼침) =====
 function syncTeamBtns(){ document.querySelectorAll('#teamBtns button').forEach(b=>b.classList.toggle('on',b.dataset.t===team())); }
 document.querySelectorAll('#teamBtns button').forEach(b=>b.onclick=()=>{ if($('team').value===b.dataset.t) return; $('team').value=b.dataset.t; $('team').dispatchEvent(new Event('change')); });
-$('team').addEventListener('change',()=>{ syncTeamBtns(); refreshDirs(true); });
+$('team').addEventListener('change',()=>{ syncTeamBtns(); $('dirList').innerHTML=''; $('dirText').value=''; $('dirMsg').textContent=''; refreshDirs(true); });
 syncTeamBtns();
 
 // ===== 팀장 지령 =====
