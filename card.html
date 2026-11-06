@@ -127,7 +127,7 @@ body.night button.ok{color:#0b1b3a}
       +[['w','day','근무 시작 카드 (주간)','거북이 · 현 근무자 · 인수자'],['w','night','근무 시작 카드 (야간)','밤 테마'],
         ['q','night','대기 카드 (야간)','함께 대기 중인 동료'],['q','day','대기 카드 (주간)',''],
         ['r','day','휴게 카드 (주간)','체크리스트'],['r','night','휴게 카드 (야간)','수면 토끼']]
-       .map(function(x){return '<a href="?demo='+x[0]+'&sh='+x[1]+'">'+x[2]+'<span>'+x[3]+'</span></a>';}).join('');
+       .map(function(x){return '<a href="?demo='+x[0]+'&sh='+x[1]+'&v='+VER+'">'+x[2]+'<span>'+x[3]+'</span></a>';}).join('');
   }
   var c=null, h=location.hash||'', q=new URLSearchParams(location.search);
   if(h.indexOf('#c=')===0){ try{ c=JSON.parse(decodeURIComponent(h.slice(3))); }catch(e){ c=null; } }
