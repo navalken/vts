@@ -55,6 +55,97 @@ nav button.on{color:var(--pri)}
 .modal[hidden]{display:none}
 .sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .hide{display:none}
+/* ===== 내 근무 ===== */
+body.ismy header,body.ismy #tab-my>h2{display:none}
+body.ismy main{padding:0 0 96px;max-width:560px}
+.my{font-family:-apple-system,"Noto Sans KR",sans-serif;color:#12284a}
+.mh{position:relative;width:100%;aspect-ratio:815/250;container-type:inline-size;--u:calc(100cqw/815);background:#8cc8ff center/cover no-repeat;overflow:hidden}
+.mh>*{position:absolute}
+.mh .logo{left:calc(var(--u)*12);top:calc(var(--u)*10);width:calc(var(--u)*196);height:calc(var(--u)*72);object-fit:contain;object-position:left center;background:rgba(255,255,255,.86);border-radius:calc(var(--u)*14);padding:calc(var(--u)*5) calc(var(--u)*10);box-sizing:border-box}
+.mh .mclk{right:calc(var(--u)*44);top:calc(var(--u)*12);text-align:right;font-weight:800;line-height:1.05;color:#0d2a63;text-shadow:0 0 calc(var(--u)*6) rgba(255,255,255,.9)}
+.mh.n .mclk{color:#fff;text-shadow:0 1px calc(var(--u)*6) rgba(0,0,20,.7)}
+.mh .mclk .d{font-size:calc(var(--u)*20);font-weight:700}
+.mh .mclk .t{font-size:calc(var(--u)*40);letter-spacing:.5px;font-variant-numeric:tabular-nums}
+.mh .gear{right:calc(var(--u)*6);top:calc(var(--u)*6);background:none;border:0;padding:0;margin:0;width:auto;font-size:calc(var(--u)*26);opacity:.65;line-height:1}
+.mh .cap{left:calc(var(--u)*10);bottom:0;height:calc(var(--u)*150);width:auto}
+.mh .who{left:calc(var(--u)*130);bottom:calc(var(--u)*14);background:rgba(255,255,255,.88);border-radius:calc(var(--u)*14);padding:calc(var(--u)*6) calc(var(--u)*12);max-width:calc(var(--u)*190);line-height:1.15}
+.mh .who b{display:block;font-size:calc(var(--u)*26);color:#12284a}
+.mh .who span{display:block;font-size:calc(var(--u)*13);color:#475467;font-weight:600}
+.mh .mwx{right:calc(var(--u)*8);bottom:calc(var(--u)*8);display:flex;gap:calc(var(--u)*6)}
+.mh .mwx .wx{position:static;width:calc(var(--u)*96);height:calc(var(--u)*82);border-radius:calc(var(--u)*10)}
+.mh .mwx .wx .c{font-size:calc(var(--u)*17)}
+.mh .mwx .wx .r{gap:calc(var(--u)*4)}
+.mh .mwx .wx .r img{width:calc(var(--u)*32);height:calc(var(--u)*32)}
+.mh .mwx .wx .r b{font-size:calc(var(--u)*20)}
+.mh .mwx .wx .r small{font-size:calc(var(--u)*11)}
+.mg{display:grid;grid-template-columns:minmax(0,1fr) 29%;gap:9px;padding:9px 9px 0}
+.mg .card{margin:0;padding:10px 9px;border-radius:14px;box-shadow:0 1px 6px rgba(20,60,120,.1)}
+.tl{grid-area:1/1}.st{grid-area:2/1;display:grid;grid-template-columns:1fr 1fr;gap:9px}.cd{grid-area:1/2/3/3}
+.tlh{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.tlh b{font-size:15px;color:#12284a}
+.chip2{font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px;background:#e8f1fd;color:#1a5fb4}
+.trow{margin-top:2px}
+.trow .rt{font-size:11px;font-weight:800;color:#667085;height:16px}
+.cps{position:relative;height:50px}
+.cps.thin{height:2px}
+.cps img{position:absolute;bottom:-2px;height:48px;width:auto;transform:translateX(-50%);filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));pointer-events:none}
+.cells{display:flex;gap:clamp(2px,.7vw,3px)}
+.cell{--c:#2f7be8;flex:1;min-width:0;height:54px;border-radius:9px;border:1.5px solid var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:clamp(9px,2.7vw,11px);line-height:1.1;position:relative;overflow:hidden;white-space:nowrap}
+.cell.rest{--c:#f59e0b}.cell.wait{--c:#22a45d}
+.cell img{width:20px;height:20px;margin-bottom:1px}
+.cell .nm{font-size:clamp(13px,3.7vw,15px);line-height:1}
+.cell.nx{background:color-mix(in srgb,var(--c) 22%,#fff)}
+.cell.cur{background:var(--c);color:#fff;box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent);animation:myPulse 1.9s ease-out infinite;z-index:1}
+.cell.done{background:#eceff3;border-color:#d4d9e1;color:#98a1b0}
+.cell.done>*{opacity:.45}
+.cell.done::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 5L19 19M19 5L5 19' stroke='%237b8494' stroke-width='2.4' stroke-linecap='round'/></svg>") center/78% auto no-repeat;opacity:.8}
+.cell.flag{--c:#1f3a73;background:#fff}
+.cell.flag img{width:24px;height:24px}
+@keyframes myPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.cell.cur{animation:none}}
+.lbs{display:flex;gap:3px;margin-top:3px}
+.lbs i{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-align:center;font-style:normal;font-size:10px;color:#667085;font-weight:700;font-variant-numeric:tabular-nums}
+.lgd{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:8px;font-size:11px;color:#667085;font-weight:600}
+.lgd span{display:inline-flex;align-items:center;gap:4px}
+.lgd i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.hero{--c:#2f7be8;grid-column:1/-1;border-radius:14px;padding:12px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 14%,#fff),color-mix(in srgb,var(--c) 5%,#fff));border:1.5px solid color-mix(in srgb,var(--c) 40%,#fff);box-shadow:0 1px 6px rgba(20,60,120,.1)}
+.hero.rest{--c:#f59e0b}.hero.wait{--c:#22a45d}
+.hero .hh{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;color:var(--c)}
+.hero .hh img{width:30px;height:30px}
+.hero .hrow{display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap}
+.hero .hp{font-size:36px;font-weight:900;line-height:1;color:#12284a}
+.hero .ht{font-size:16px;font-weight:700;color:#344054;font-variant-numeric:tabular-nums}
+.hero .hb{height:9px;border-radius:99px;background:color-mix(in srgb,var(--c) 18%,#fff);margin-top:9px;overflow:hidden}
+.hero .hb i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .6s linear}
+.hero .hl{margin-top:6px;font-size:15px;font-weight:800;color:var(--c)}
+.hero .hn{margin-top:3px;font-size:12px;color:#667085;font-weight:600}
+.mini{--c:#2f7be8;border-radius:14px;padding:9px 10px;background:#fff;border:1.5px solid color-mix(in srgb,var(--c) 30%,#fff);box-shadow:0 1px 6px rgba(20,60,120,.08);min-width:0}
+.mini.rest{--c:#f59e0b}.mini.wait{--c:#22a45d}.mini.none{--c:#98a1b0;background:#f7f8fa}
+.mini .mh2{display:flex;align-items:center;gap:5px;font-weight:800;font-size:12px;color:var(--c)}
+.mini .mh2 img{width:24px;height:24px;flex:none}
+.mini .mp{white-space:nowrap;font-size:23px;font-weight:900;margin-top:4px;line-height:1.05}
+.mini .mt{font-size:12.5px;font-weight:700;color:#344054;margin-top:2px;font-variant-numeric:tabular-nums}
+.mini .mi{font-size:12px;font-weight:800;color:var(--c);margin-top:3px}
+.mini .mf{font-size:11px;color:#667085;font-weight:600;margin-top:2px}
+.mini .mq{font-size:12.5px;color:#667085;font-weight:700;margin-top:6px;line-height:1.35}
+.cd{container-type:inline-size;display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(#f3f8ff,#fff);padding:10px 6px!important}
+.cd .cdh{display:flex;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:12px;color:#1a5fb4;line-height:1.2}
+.cd .cdh img{width:22px;height:22px;flex:none}
+.cd .cdt{font-size:16.5cqw;font-weight:900;color:#1a6be0;font-variant-numeric:tabular-nums;letter-spacing:-.5px;margin-top:8px;line-height:1}
+.cd .cds{font-size:11px;color:#475467;font-weight:700;margin-top:6px;line-height:1.3}
+.cd .cdi{width:88%;height:auto;margin:auto 0;padding-top:8px}
+.nag{margin:9px 9px 0;border-radius:14px;padding:11px 13px;background:#fff1f1;border:1.5px solid #ffd0d0;box-shadow:0 1px 6px rgba(180,40,40,.08)}
+.nag .nh{display:flex;align-items:center;gap:7px;font-weight:900;font-size:15px;color:#c0392b}
+.nag .nh img{width:30px;height:30px}
+.nag .ni{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14.5px;line-height:1.4;font-weight:600;color:#12284a}
+.nag .ni b{flex:none;font-size:11.5px;padding:2px 8px;border-radius:99px;background:#c0392b;color:#fff;margin-top:1px}
+.nag .ni b.s{background:#1a6be0}
+.nag .ni span{white-space:pre-wrap;word-break:break-word;min-width:0}
+.mstate{margin:12px 9px 0;text-align:center;padding:18px 14px 16px}
+.mstate img{height:150px;width:auto;max-width:80%}
+.mstate h3{margin:8px 0 4px;font-size:19px}
+.mstate p{margin:0;color:#667085;font-size:14px;line-height:1.5}
+.mstate button{margin-top:12px;width:auto;padding:10px 18px}
 
 .lv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0}
 .lv-head .mut{margin:0}
@@ -125,7 +216,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
   <div class="sub"><span>Safe Sea, Better Tomorrow</span><span id="clock"></span></div>
 </header>
 <main>
-  <section id="tab-my" class="hide"><h2>내 근무</h2><div class="card"><p class="mut">오늘 내 근무와 다음 장소 이동이 여기에 표시됩니다. (준비 중)</p><button class="sec" onclick="location.href='vts-simple.html'">근무표 올리고 알림 예약하기</button></div></section>
+  <section id="tab-my" class="hide"><div id="myBody"></div></section>
   <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div id="liveBody"><div class="card"><p class="mut">불러오는 중…</p></div></div></section>
   <section id="tab-board" class="hide"><h2>전체 근무표</h2><div id="boardBody"></div></section>
   <section id="tab-dir" class="hide"><h2>팀장지령 · 인수인계</h2><div class="card"><p class="mut">팀장 지령 목록과 인수인계가 표시됩니다. (준비 중)</p></div></section>
@@ -162,8 +253,10 @@ function goTab(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.t === t));
   ['my', 'live', 'board', 'dir', 'wx', 'set'].forEach(k => $('tab-' + k).classList.toggle('hide', k !== t));
   document.body.classList.toggle('islive', t === 'live');
+  document.body.classList.toggle('ismy', t === 'my');
   if (t === 'set') renderSet();
   if (t === 'live') startLive(); else stopLive();
+  if (t === 'my') startMy(); else stopMy();
   if (t === 'board') startBoard();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => goTab(b.dataset.t));
@@ -407,7 +500,7 @@ async function loadWx() { // 무료 Open-Meteo(키 없음)
     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + WXC.map(x => x[1]).join(',') + '&longitude=' + WXC.map(x => x[2]).join(',') + '&current=temperature_2m,weather_code&timezone=Asia%2FSeoul');
     const j = await r.json(); const arr = Array.isArray(j) ? j : [j];
     LV.wx = arr.map(x => ({ t: Math.round(x.current.temperature_2m), c: x.current.weather_code }));
-    renderLive();
+    renderLive(); if (MY.poll) renderMy();
   } catch (e) { LV.wxAt = Date.now() - 540000; /* 1분 뒤 재시도 */ }
 }
 const clkParts = () => { const d = new Date(Date.now() + 9 * 3600e3 + new Date().getTimezoneOffset() * 0), s = d.toISOString(); const w = '일월화수목금토'[d.getUTCDay()]; return { d: `${s.slice(0, 4)}. ${s.slice(5, 7)}. ${s.slice(8, 10)}. (${w})`, t: s.slice(11, 16) }; };
@@ -467,6 +560,149 @@ function startLive() {
 function stopLive() { if (LV.timer) { clearInterval(LV.timer); LV.timer = null; } if (LV.clk) { clearInterval(LV.clk); LV.clk = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && LV.timer) loadLive(); });
 let lvRz; addEventListener('resize', () => { clearTimeout(lvRz); lvRz = setTimeout(() => { if (LV.timer) renderLive(); }, 200); });
+// ===== 내 근무 =====
+// 서버 /my: 이 기기에 등록된 사람이 올라간 근무(주간/야간)의 칸, 지령, 서버 시간. 시계는 서버 시간으로 보정해 정확히 맞춘다.
+const MY = { d: null, off: 0, err: '', poll: null, tick: null, sig: '', last: null };
+const MYK = p => p === '휴게' ? 'rest' : p === '대기' ? 'wait' : 'work';
+const pad2 = n => String(n).padStart(2, '0');
+const hm = ms => new Date(ms + 9 * 3600e3).toISOString().slice(11, 16);
+const myNowMs = () => Date.now() + MY.off;
+function fmtIn(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); if (s < 60) return s + '초'; const m = Math.floor(s / 60); if (m < 60) return m + '분'; const h = Math.floor(m / 60), r = m % 60; return h + '시간' + (r ? ' ' + r + '분' : ''); }
+const hmsOf = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor(s % 3600 / 60)) + ':' + pad2(s % 60); };
+const dayWord = (ms, now) => { const a = new Date(ms + 9 * 3600e3).toISOString().slice(0, 10), b = new Date(now + 9 * 3600e3).toISOString().slice(0, 10); if (a === b) return '오늘'; const d = Math.round((Date.parse(a) - Date.parse(b)) / 86400000); return d === 1 ? '내일' : d === -1 ? '어제' : a.slice(5).replace('-', '/') ; };
+function myKstClock(now) { const s = new Date(now + 9 * 3600e3).toISOString(), w = '일월화수목금토'[new Date(now + 9 * 3600e3).getUTCDay()]; return { d: `${s.slice(0, 4)}. ${s.slice(5, 7)}. ${s.slice(8, 10)}. (${w})`, t: s.slice(11, 19) }; }
+const myIsNight = now => { const m = parseInt(hm(now).slice(0, 2)) * 60 + parseInt(hm(now).slice(3)); return m >= 18 * 60 + 30 || m < 6 * 60; };
+
+async function loadMy() {
+  try { const t0 = Date.now(), d = await api('/my'), t1 = Date.now(); MY.off = d.now - (t0 + t1) / 2; MY.d = d; MY.err = ''; }
+  catch (e) { MY.err = e.status === 401 ? '알림 등록 후 볼 수 있습니다' : (e.message || '불러오지 못했습니다'); }
+  renderMy();
+  loadWx();
+}
+function myDuties(d) { // 같은 팀의 주간+야간이 이어지면 종일 근무 하나로 묶는다
+  const out = [], list = (d.shifts || []).slice().sort((a, b) => a.from - b.from);
+  list.forEach(s => {
+    const l = out[out.length - 1];
+    if (l && l.team === s.team && l.rows.length === 1 && l.rows[0].shift === 'day' && s.shift === 'night' && s.from - l.to <= 3600000) { l.rows.push(s); l.to = Math.max(l.to, s.to); }
+    else out.push({ team: s.team, from: s.from, to: s.to, rows: [s] });
+  });
+  return out;
+}
+function myModel(now) {
+  const d = MY.d; if (!d) return null;
+  const duties = myDuties(d);
+  let duty = duties.find(x => now >= x.from && now < x.to), st = 'on';
+  if (!duty) { const f = duties.filter(x => x.from > now).sort((a, b) => a.from - b.from)[0]; if (f && f.from - now <= 12 * 3600000) { duty = f; st = 'pre'; } else { st = f ? 'later' : 'none'; MY.later = f || null; } }
+  if (duty && st === 'on') { MY.last = { to: duty.to, chip: myChip(duty) }; ls.set('vts_my_last', JSON.stringify(MY.last)); }
+  if (!duty) {
+    const past = duties.filter(x => x.to <= now).sort((a, b) => b.to - a.to)[0];
+    let last = past ? { to: past.to, chip: myChip(past) } : null;
+    if (!last) { try { last = JSON.parse(ls.get('vts_my_last') || 'null'); } catch (e) { last = null; } }
+    if (last && now >= last.to && now - last.to < 10 * 3600000) return { st: 'off', last, later: MY.later };
+    return { st, later: MY.later };
+  }
+  const cells = []; duty.rows.forEach((r, ri) => r.cells.forEach(c => cells.push(Object.assign({ row: ri }, c))));
+  cells.sort((a, b) => a.from - b.from);
+  const cur = cells.find(c => now >= c.from && now < c.to) || null;
+  const fut = cells.filter(c => c.from > (st === 'pre' ? cells[0].from : now));
+  return { st, duty, cells, cur, nextWork: fut.find(c => MYK(c.place) !== 'rest') || null, nextRest: fut.find(c => MYK(c.place) === 'rest') || null, first: cells[0] };
+}
+const myChip = duty => duty.rows.length > 1 ? '종일 근무' : duty.rows[0].shift === 'night' ? '야간 근무' : '주간 근무';
+const secLab = p => { const m = /^(\d+)섹터$/.exec(p); return m ? `<span class="nm">${m[1]}</span><span>섹터</span>` : `<span>${esc(p)}</span>`; };
+
+function myHead(now) {
+  const night = myIsNight(now), c = myKstClock(now), nm = (MY.d && MY.d.name) || (S.me && S.me.name) || '';
+  const wx = WXC.map((x, i) => { const d = LV.wx && LV.wx[i], [ic, tx] = d ? wxText(d.c) : ['', '']; return `<div class="wx"><div class="c">${x[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`; }).join('');
+  return `<div class="mh${night ? ' n' : ''}" style="background-image:url(img/${night ? 'my-hd-n' : 'my-hd'}.jpg)">
+    <img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS">
+    <div class="mclk"><div class="d" id="myDate">${c.d}</div><div class="t" id="myTime">${c.t}</div></div>
+    <button class="gear" onclick="goTab('set')" aria-label="설정">⚙️</button>
+    <img class="cap" src="img/cap-head.png" alt="">
+    ${nm ? `<div class="who"><b>${esc(nm)} 님</b><span>오늘도 수고하고 있습니다!</span></div>` : ''}
+    <div class="mwx" id="myWx">${wx}</div></div>`;
+}
+function myStateCard(img, title, text, btn) { return `<div class="card mstate"><img src="img/${img}.png" alt=""><h3>${title}</h3><p>${text}</p>${btn ? `<button onclick="goTab('set')">설정으로 가기</button>` : ''}</div>`; }
+function myTimeline(m, now) {
+  const { duty, cells, cur } = m, anchor = cur || m.first, nx = m.cur ? cells.find(c => c.from > now) : m.first;
+  const rows = duty.rows.map((r, ri) => {
+    const rc = cells.filter(c => c.row === ri), last = ri === duty.rows.length - 1, n = rc.length + (last ? 1 : 0);
+    const hasAnchor = anchor && anchor.row === ri, ai = hasAnchor ? rc.indexOf(anchor) : -1;
+    const capK = anchor ? MYK(anchor.place) : 'work';
+    const cap = hasAnchor ? `<div class="cps"><img src="img/cap-${capK}.png" alt="" style="left:clamp(26px,${(ai + .5) / n * 100}%,calc(100% - 26px))"></div>` : '<div class="cps thin"></div>';
+    const tag = duty.rows.length > 1 ? `<div class="rt">${r.shift === 'night' ? '야간' : '주간'}</div>` : '';
+    const cs = rc.map(c => { const k = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${k} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}">${k === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : k === 'wait' ? '<img src="img/ic-desk.png" alt=""><span>대기</span>' : secLab(c.place)}</div>`; }).join('') + (last ? '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>' : '');
+    const lb = rc.map(c => { const t = hm(c.from); return `<i>${t.slice(3) === '00' ? t.slice(0, 2) : t}</i>`; }).join('') + (last ? `<i>${hm(duty.to).replace(/:00$/, '')}</i>` : '');
+    return `<div class="trow">${tag}${cap}<div class="cells">${cs}</div><div class="lbs">${lb}</div></div>`;
+  }).join('');
+  return `<div class="card tl"><div class="tlh"><b>오늘의 근무 일정</b><span class="chip2">${myChip(duty)}</span></div>${rows}
+    <div class="lgd"><span><i style="background:#2f7be8"></i>근무</span><span><i style="background:#f59e0b"></i>휴게</span><span><i style="background:#22a45d"></i>대기</span><span><i style="background:#d4d9e1"></i>지난 칸 ✕</span></div></div>`;
+}
+const KICON = { work: 'ic-helm', rest: 'ic-coffee', wait: 'ic-desk' };
+function myHero(m, now) {
+  const c = m.cur;
+  if (m.st === 'pre') { const f = m.first, k = MYK(f.place); return `<div class="hero ${k}"><div class="hh"><img src="img/${KICON[k]}.png" alt=""><span>첫 근무</span></div><div class="hrow"><span class="hp">${esc(f.place)}</span><span class="ht">${hm(f.from)} ~ ${hm(f.to)}</span></div><div class="hl" id="myLeft">${fmtIn(f.from - now)} 후 시작</div></div>`; }
+  if (!c) return `<div class="hero"><div class="hh"><img src="img/ic-clock.png" alt=""><span>지금은</span></div><div class="hrow"><span class="hp" style="font-size:24px">배정된 칸이 없어요</span></div></div>`;
+  const k = MYK(c.place), t = k === 'rest' ? '현재 휴게' : k === 'wait' ? '현재 대기' : '현재 근무', pct = Math.round((now - c.from) / (c.to - c.from) * 100);
+  const nx = (c.nxt || []).length && k === 'work' ? `<div class="hn">다음 인수: ${esc(c.nxt.join(', '))} 님</div>` : '';
+  return `<div class="hero ${k}"><div class="hh"><img src="img/${KICON[k]}.png" alt=""><span>${t}</span></div><div class="hrow"><span class="hp">${esc(c.place)}</span><span class="ht">${hm(c.from)} ~ ${hm(c.to)}</span></div><div class="hb"><i id="myBar" style="width:${pct}%"></i></div><div class="hl" id="myLeft">${fmtIn(c.to - now)} 남음</div>${nx}</div>`;
+}
+function myMinis(m, now) {
+  const w = m.nextWork, r = m.nextRest;
+  const a = w ? (() => { const k = MYK(w.place); return `<div class="mini ${k}"><div class="mh2"><img src="img/ic-clock.png" alt=""><span>다음 ${k === 'wait' ? '대기' : '근무'}</span></div><div class="mp">${esc(w.place)}</div><div class="mt">${hm(w.from)} ~ ${hm(w.to)}</div><div class="mi" id="myNW">${fmtIn(w.from - now)} 후 시작</div>${k === 'work' && (w.prev || []).length ? `<div class="mf">${esc(w.prev.join(', '))} 님께 인수</div>` : ''}</div>`; })()
+    : `<div class="mini none"><div class="mh2"><img src="img/ic-clock.png" alt=""><span>다음 근무</span></div><div class="mq">남은 근무가 없어요</div></div>`;
+  const b = r ? `<div class="mini rest"><div class="mh2"><img src="img/ic-coffee.png" alt=""><span>다음 휴게</span></div><div class="mp" style="font-size:clamp(13px,4vw,17px);letter-spacing:-.3px">${hm(r.from)}~${hm(r.to)}</div><div class="mi" id="myNR">${fmtIn(r.from - now)} 후</div></div>`
+    : `<div class="mini none"><div class="mh2"><img src="img/ic-coffee.png" alt=""><span>다음 휴게</span></div><div class="mq">오늘 남은 휴게가 없어요</div></div>`;
+  return a + b;
+}
+function myCount(m, now) {
+  const pre = m.st === 'pre', t = pre ? m.duty.from : m.duty.to;
+  return `<div class="card cd"><div class="cdh"><img src="img/ic-clock.png" alt=""><span>${pre ? '근무 시작까지' : '퇴근까지<br>남은 시간'}</span></div><div class="cdt" id="myCd">${hmsOf(t - now)}</div><div class="cds">${dayWord(t, now)} ${hm(t)} ${pre ? '출근' : '퇴근'}<br>(${myChip(m.duty)})</div><img class="cdi" src="img/cap-cheer.png" alt=""></div>`;
+}
+function myNag(m) {
+  const list = ((MY.d && MY.d.directives) || []).filter(x => x.mine && (!m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift)));
+  if (!list.length) return '';
+  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 6).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}</span></div>`).join('')}</div>`;
+}
+function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err].join('|'); }
+function renderMy() {
+  const el = $('myBody'); if (!el) return;
+  const now = myNowMs();
+  if (!S.token) { el.innerHTML = `<div class="my">${myHead(now)}${myStateCard('cap-nap', '아직 등록이 안 됐어요', '설정에서 이름을 등록하면<br>내 근무가 여기에 보여요.', true)}</div>`; return; }
+  const m = myModel(now);
+  let body;
+  if (!m) body = MY.err ? myStateCard('cap-nap', '불러오지 못했어요', esc(MY.err)) : myStateCard('cap-nap', '불러오는 중…', '잠시만 기다려 주세요.');
+  else if (m.st === 'off') body = myStateCard('cap-bye', '수고하셨습니다!', `${esc(m.last.chip)}을 마쳤어요.<br>오늘도 안전한 바다를 지켜줘서 고마워요.`);
+  else if (m.st === 'later') body = myStateCard('cap-nap', '지금은 근무가 없어요', `다음 근무는 ${dayWord(m.later.from, now)} ${hm(m.later.from)} (${myChip(m.later)})예요.`);
+  else if (m.st === 'none') body = myStateCard('cap-nap', '오늘은 근무가 없어요', '근무표가 올라오면 여기에 보여요.<br><small>(근무표 예약 후 이름이 시간표에 있어야 해요)</small>');
+  else body = `<div class="mg">${myTimeline(m, now)}${myCount(m, now)}<div class="st">${myHero(m, now)}${myMinis(m, now)}</div></div>`;
+  const nag = m && (m.st === 'on' || m.st === 'pre' || m.st === 'later' || m.st === 'none') ? myNag(m) : '';
+  el.innerHTML = `<div class="my">${myHead(now)}${body}${nag}</div>`;
+  MY.sig = mySig(now);
+}
+function myTickLoop() {
+  clearTimeout(MY.tick);
+  const run = () => {
+    const now = myNowMs(), c = myKstClock(now);
+    const t = $('myTime'); if (t) { t.textContent = c.t; $('myDate').textContent = c.d; }
+    if (mySig(now) !== MY.sig) renderMy();
+    else {
+      const m = myModel(now);
+      if (m && m.duty) {
+        const cd = $('myCd'); if (cd) cd.textContent = hmsOf((m.st === 'pre' ? m.duty.from : m.duty.to) - now);
+        const lf = $('myLeft'); if (lf) lf.textContent = m.st === 'pre' ? fmtIn(m.first.from - now) + ' 후 시작' : (m.cur ? fmtIn(m.cur.to - now) + ' 남음' : lf.textContent);
+        const br = $('myBar'); if (br && m.cur) br.style.width = Math.round((now - m.cur.from) / (m.cur.to - m.cur.from) * 100) + '%';
+        const nw = $('myNW'); if (nw && m.nextWork) nw.textContent = fmtIn(m.nextWork.from - now) + ' 후 시작';
+        const nr = $('myNR'); if (nr && m.nextRest) nr.textContent = fmtIn(m.nextRest.from - now) + ' 후';
+      }
+    }
+    MY.tick = setTimeout(run, 1000 - (myNowMs() % 1000) + 5);
+  };
+  run();
+}
+function startMy() { stopMy(); if (!$('myBody')) return; renderMy(); if (S.token) loadMy(); myTickLoop(); MY.poll = setInterval(() => { if (!document.hidden && S.token) loadMy(); }, 60000); }
+function stopMy() { clearTimeout(MY.tick); MY.tick = null; if (MY.poll) { clearInterval(MY.poll); MY.poll = null; } }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && MY.poll && S.token) loadMy(); });
+
 function lvDirSheet(sec) {
   const b = lvBoard(); if (!b) return;
   const all = isLead(sec), label = all ? '전체' : sec;
