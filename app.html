@@ -147,6 +147,12 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .mstate p{margin:0;color:#667085;font-size:14px;line-height:1.5}
 .mstate button{margin-top:12px;width:auto;padding:10px 18px}
 
+.mbt{display:flex;gap:8px;margin:9px 9px 0}
+.mbt .mb1,.mbt .mb2{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:13px;padding:13px 8px;font-size:15px;font-weight:800;text-decoration:none;border:1.5px solid #1a6be0;margin:0;width:auto;line-height:1.2}
+.mbt .mb1{background:#1a6be0;color:#fff}.mbt .mb2{background:#fff;color:#1a6be0}
+.mbt span{font-size:17px}
+.bkb{width:auto;margin:0 8px 0 0;padding:4px 11px;font-size:13px;font-weight:800;color:#1a6be0;background:#e8f1fd;border:0;border-radius:99px;vertical-align:2px}
+
 .lv-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0}
 .lv-head .mut{margin:0}
 .lv-head button{width:auto;margin:0;padding:8px 12px;background:var(--chip);color:var(--pri)}
@@ -218,7 +224,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 <main>
   <section id="tab-my" class="hide"><div id="myBody"></div></section>
   <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div id="liveBody"><div class="card"><p class="mut">불러오는 중…</p></div></div></section>
-  <section id="tab-board" class="hide"><h2>전체 근무표</h2><div id="boardBody"></div></section>
+  <section id="tab-board" class="hide"><h2><button class="bkb" onclick="goTab('my')">‹ 내 근무</button>전체 근무표</h2><div id="boardBody"></div></section>
   <section id="tab-dir" class="hide"><h2>팀장지령 · 인수인계</h2><div class="card"><p class="mut">팀장 지령 목록과 인수인계가 표시됩니다. (준비 중)</p></div></section>
   <section id="tab-wx" class="hide"><h2>해상기상</h2><div class="card"><p class="mut">제주 해상 기상(파고·풍속·시정)이 표시됩니다. (준비 중)</p></div></section>
   <section id="tab-set"><div id="setBody"></div></section>
@@ -226,7 +232,6 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 <nav>
   <button data-t="my"><img class="off" src="img/m-home-off.png" alt=""><img class="on" src="img/m-home-on.png" alt="">내 근무</button>
   <button data-t="live"><img class="off" src="img/m-team-off.png" alt=""><img class="on" src="img/m-team-on.png" alt="">실시간 근무현황</button>
-  <button data-t="board"><img class="off" src="img/m-cal-off.png" alt=""><img class="on" src="img/m-cal-on.png" alt="">전체 근무표</button>
   <button data-t="dir"><img class="off" src="img/m-mega-off.png" alt=""><img class="on" src="img/m-mega-on.png" alt="">팀장지령·인수인계</button>
   <button data-t="wx"><img class="off" src="img/m-wave-off.png" alt=""><img class="on" src="img/m-wave-on.png" alt="">해상기상</button>
 </nav>
@@ -664,6 +669,9 @@ function myCount(m, now) {
   const pre = m.st === 'pre', t = pre ? m.duty.from : m.duty.to;
   return `<div class="card cd"><div class="cdh"><img src="img/ic-clock.png" alt=""><span>${pre ? '근무 시작까지' : '퇴근까지'}</span></div><div class="cdt" id="myCd">${hmsOf(t - now)}</div><div class="cds">${dayWord(t, now)} ${hm(t)} ${pre ? '출근' : '퇴근'}<br>(${myChip(m.duty)})</div><img class="cdi" src="img/cap-cheer.png" alt=""></div>`;
 }
+function myBtns() {
+  return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.code ? '<a class="mb2" href="vts-simple.html" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
+}
 function myNag(m) {
   const list = ((MY.d && MY.d.directives) || []).filter(x => x.mine && (!m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift)));
   if (!list.length) return '';
@@ -682,7 +690,7 @@ function renderMy() {
   else if (m.st === 'none') body = myStateCard('cap-nap', '오늘은 근무가 없어요', '근무표가 올라오면 여기에 보여요.<br><small>(근무표 예약 후 이름이 시간표에 있어야 해요)</small>');
   else body = `<div class="mg">${myTimeline(m, now)}${myCount(m, now)}<div class="st">${myHero(m, now)}${myMinis(m, now)}</div></div>`;
   const nag = m && (m.st === 'on' || m.st === 'pre' || m.st === 'later' || m.st === 'none') ? myNag(m) : '';
-  el.innerHTML = `<div class="my">${myHead(now)}${body}${nag}</div>`;
+  el.innerHTML = `<div class="my">${myHead(now)}${body}${nag}${myBtns()}</div>`;
   MY.sig = mySig(now);
 }
 function myTickLoop() {
