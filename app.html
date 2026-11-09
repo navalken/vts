@@ -1033,7 +1033,7 @@ function openEdit(p) {
     <label>이름</label><input id="eName" value="${esc(p.name)}" maxlength="20">
     <label>팀</label><select id="eTeam">${['1', '2', '3'].map(t => `<option value="${t}" ${p.team === t ? 'selected' : ''}>${t}팀</option>`).join('')}</select>
     <label>상태</label><select id="eStatus"><option ${p.status === '재직' ? 'selected' : ''}>재직</option><option ${p.status === '휴직' ? 'selected' : ''}>휴직</option></select>
-    <label>보직 (팀마다 팀장·부팀장 각 1명)</label><select id="ePos">${[['', '팀원'], ['팀장', '팀장'], ['부팀장', '부팀장']].map(o => `<option value="${o[0]}" ${(p.pos || '') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
+    <label>보직 (팀장 최대 2명, 부팀장 최대 3명)</label><select id="ePos">${[['', '팀원'], ['팀장', '팀장'], ['부팀장', '부팀장']].map(o => `<option value="${o[0]}" ${(p.pos || '') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
     <label>전화번호</label><input id="ePhone" type="tel" inputmode="tel" value="${esc(p.phone)}">
     <button id="eSave">저장</button>
     ${chief && p.role !== 'chief' ? `<button class="sec" id="eRole">${p.role === 'teamadmin' ? '팀관리자 해제' : '이 팀의 팀관리자로 지정'}</button>` : ''}
