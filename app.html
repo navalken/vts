@@ -282,7 +282,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 <main>
   <section id="tab-my" class="hide"><div id="myBody"></div></section>
   <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div id="liveBody"><div class="card"><p class="mut">불러오는 중…</p></div></div></section>
-  <section id="tab-board" class="hide"><h2><button class="bkb" onclick="goTab('my')">‹ 내 근무</button>전체 근무표</h2><div id="boardBody"></div></section>
+  <section id="tab-board" class="hide"><h2><button class="bkb" onclick="navBack()">‹ 내 근무</button>전체 근무표</h2><div id="boardBody"></div></section>
   <section id="tab-lib" class="hide"><div id="libBody"></div></section>
   <section id="tab-wx" class="hide"><div id="wxBody"></div></section>
   <section id="tab-set"><div id="setBody"></div></section>
@@ -313,7 +313,7 @@ const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: nu
 
 
 // ---- 해상기상 탭 ----
-const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
+const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/mmis/m', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
 const WX = { d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
 // 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
 const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66] };
@@ -360,7 +360,7 @@ function wxBig() {
   const m = $('wxMap'); if (!m) return;
   const o = document.createElement('div'); o.id = 'wxBig';
   o.innerHTML = `<div class="bar"><span>지도 확대 (밀어서 이동)</span><button id="wxBigX">닫기</button></div><div class="sc"><div class="wxmap">${m.innerHTML}</div></div>`;
-  document.body.appendChild(o); o.querySelector('#wxBigX').onclick = () => o.remove();
+  document.body.appendChild(o); try { history.pushState({ t: 'wx', d: (navState().d || 0) + 1, big: 1 }, ''); } catch (_) { /* 무시 */ } o.querySelector('#wxBigX').onclick = () => { if (navState().big) history.back(); else o.remove(); };
 }
 async function wxLoadModel() { // 관측소가 없는 바다 3곳: Open-Meteo 격자 예측(실제 관측 아님)
   if (WX.model && Date.now() - WX.mt < 10 * 60e3) return;
@@ -385,7 +385,28 @@ function startWx() { renderWx(); loadMarine(false); stopWx(); WX.timer = setInte
 function stopWx() { if (WX.timer) { clearInterval(WX.timer); WX.timer = null; } }
 
 // ---- 탭 ----
-function goTab(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
+// 뒤로가기: 화면 이동을 브라우저 기록에 남겨 '내 근무 → 다른 화면 → 뒤로 = 내 근무', 내 근무에서 뒤로 = 앱 종료
+let CURT = 'my';
+function navState() { return history.state && typeof history.state === 'object' ? history.state : { t: 'my', d: 0 }; }
+function goTab(t) {
+  const cur = navState(), d = cur.d || 0;
+  if (t === 'my') { if (d > 0) { history.go(-d); return; } show('my'); return; }
+  if (cur.t === t && !cur.big) { show(t); return; }
+  try { if (d === 0) history.pushState({ t, d: 1, v: S.view }, ''); else history.replaceState({ t, d, v: S.view }, ''); } catch (_) { /* 기록 실패해도 화면은 이동 */ }
+  show(t);
+}
+function navBack() { const d = navState().d || 0; if (d > 0) history.back(); else show('my'); }
+window.addEventListener('popstate', e => {
+  const st = e.state || { t: 'my', d: 0 };
+  const big = document.getElementById('wxBig');
+  if (big && !st.big) { big.remove(); if (st.t === CURT) return; }
+  if (st.big) return;
+  if (st.t === 'set') S.view = st.v || 'home';
+  if (st.t === 'lib' && st.l) { LIBS.view = st.l[0]; LIBS.folder = st.l[1]; }
+  show(st.t || 'my');
+});
+function show(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
+  CURT = t;
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.t === t));
   ['my', 'live', 'board', 'lib', 'wx', 'set'].forEach(k => $('tab-' + k).classList.toggle('hide', k !== t));
   document.body.classList.toggle('islive', t === 'live');
@@ -462,8 +483,8 @@ async function renderSet() {
     <button id="mInfo">내 정보 <span class="arr">›</span></button>
     <button id="mAdmin">관리자 관리 <span class="arr">›</span></button>
   </div>${S.msg ? `<div class="msg bad">${esc(S.msg)}</div>` : ''}`;
-  $('mInfo').onclick = () => { S.view = 'info'; renderSet(); };
-  $('mAdmin').onclick = () => { S.view = 'admin'; renderSet(); };
+  $('mInfo').onclick = () => setView('info');
+  $('mAdmin').onclick = () => setView('admin');
 }
 
 function renderOnboard() {
@@ -506,7 +527,8 @@ function renderOnboard() {
 }
 
 function backBar(title) { return `<div class="top"><button id="back">‹ 설정</button><h2 style="margin:0">${title}</h2></div>`; }
-function wireBack() { $('back').onclick = () => { S.view = 'home'; renderSet(); }; }
+function setView(v) { S.view = v; try { history.pushState({ t: 'set', d: (navState().d || 0) + 1, v }, ''); } catch (_) { /* 무시 */ } renderSet(); }
+function wireBack() { $('back').onclick = () => { const st = navState(); if (st.t === 'set' && st.v && st.v !== 'home') history.back(); else { S.view = 'home'; renderSet(); } }; }
 
 function renderInfo() {
   const m = S.me;
@@ -869,7 +891,7 @@ function libKind(name) {
   if (['doc', 'docx'].includes(e)) return ['DOC', '#2f6fd6']; if (['ppt', 'pptx'].includes(e)) return ['PPT', '#e8782f']; if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'].includes(e)) return ['IMG', '#8a6bd6'];
   if (e === 'txt') return ['TXT', '#667085']; return ['FILE', '#667085'];
 }
-function libGo(v, f) { LIBS.view = v; LIBS.folder = f || null; renderLib(); window.scrollTo(0, 0); }
+function libGo(v, f) { LIBS.view = v; LIBS.folder = f || null; try { history.pushState({ t: 'lib', d: (navState().d || 0) + 1, l: [v, f || null] }, ''); } catch (_) { /* 무시 */ } renderLib(); window.scrollTo(0, 0); }
 function renderLib() {
   const el = $('libBody'); if (!el) return;
   if (!S.token) { el.innerHTML = `<div class="lib">${myStateCard('cap-nap', '아직 등록이 안 됐어요', '설정에서 이름을 등록하면<br>라이브러리를 쓸 수 있어요.', true)}</div>`; return; }
@@ -1021,7 +1043,8 @@ function openEdit(p) {
   if ($('eDel')) $('eDel').onclick = () => { if (confirm(`${p.name}님을 명단에서 삭제할까요?`)) run(() => api('/admin/person', 'POST', { action: 'delete', name: p.name })); };
 }
 
-renderSet();
+try { history.replaceState({ t: 'my', d: 0 }, ''); } catch (_) { /* 무시 */ }
+show('my');
 </script>
 </body>
 </html>
