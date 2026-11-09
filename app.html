@@ -40,6 +40,10 @@ button:disabled{opacity:.5}
 .person{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;background:var(--card)}
 .person .nm{flex:1;min-width:0}
 .person .nm b{font-size:17px}
+.tg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start}.tg h3{font-size:16px;text-align:center;margin:6px 0 8px}.tg h3 small{display:block;font-size:12px}
+.pc{position:relative;border-radius:10px;padding:10px 8px 9px;background:var(--card);border:1px solid var(--bd);margin-bottom:8px;min-height:62px}.pc.can{cursor:pointer}.pc.lead{background:#ffefd2;border-color:#f3d79b}.pc.sub{background:#e4f0ff;border-color:#bcd7f7}.pc.leave{opacity:.6}
+.pc b{display:block;font-size:15px;line-height:1.25;word-break:keep-all}.pc small{display:block;color:var(--mut);font-size:11px;margin-top:2px;line-height:1.3}.pc .tel{position:absolute;right:5px;top:5px;font-size:13px;text-decoration:none}
+.tg .add{width:100%;padding:9px 0;margin:0;font-size:13px}
 .badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--pri);margin-left:4px;font-weight:600;vertical-align:middle}
 .badge.leave{background:var(--warn);color:var(--tx)}
 .badge.off{background:transparent;border:1px solid var(--bd);color:var(--mut)}
@@ -248,7 +252,7 @@ body.islive .lvpad{padding:0 16px}
 .adm .ab{position:absolute;top:84%;height:9%;width:22%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:.4em;padding:0 .3em 0 .25em;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#12284a;font-weight:800;border-radius:999px;border:1px solid rgba(255,255,255,.95);box-shadow:0 2px 8px rgba(10,30,70,.28);text-decoration:none;font-size:clamp(10px,3.2vw,16px);white-space:nowrap}
 .adm .ab svg{width:1.55em;height:1.55em;padding:.3em;box-sizing:border-box;border-radius:50%;background:linear-gradient(#2fc463,#0e9a3c);flex:none}
 .sheetbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;margin-top:10px;border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;color:#fff;border:0}
-nav button{font-size:11px;line-height:1.15;text-align:center}
+nav button{font-size:10.5px;line-height:1.15;text-align:center;letter-spacing:-.3px;white-space:nowrap}
 nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 
 /* 해상기상 탭 */
@@ -275,7 +279,6 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 </head>
 <body>
 <header style="position:relative">
-  <button onclick="goTab('set')" aria-label="설정" style="position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top));width:auto;margin:0;padding:6px 10px;background:rgba(255,255,255,.2);font-size:20px">⚙️</button>
   <h1>〰 Jeju VTS</h1>
   <div class="sub"><span>Safe Sea, Better Tomorrow</span><span id="clock"></span></div>
 </header>
@@ -292,6 +295,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
   <button data-t="live"><img class="off" src="img/m-team-off.png" alt=""><img class="on" src="img/m-team-on.png" alt="">실시간 근무현황</button>
   <button data-t="lib"><img class="off" src="img/m-lib-off.png" alt=""><img class="on" src="img/m-lib-on.png" alt="">라이브러리</button>
   <button data-t="wx"><img class="off" src="img/m-wave-off.png" alt=""><img class="on" src="img/m-wave-on.png" alt="">해상기상</button>
+  <button data-t="set"><img class="off" src="img/m-set-off.png" alt=""><img class="on" src="img/m-set-on.png" alt="">설정</button>
 </nav>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
@@ -583,20 +587,23 @@ async function renderAdmin() {
   try { await loadPeople(); } catch (e) { $('setBody').innerHTML = backBar('관리자 관리') + `<div class="msg bad">${esc(e.message)}</div>`; wireBack(); return; }
   const me = S.me; const roleTxt = me.role ? ROLE[me.role] + (me.role === 'teamadmin' ? ` (${me.team}팀)` : '') : '일반 (보기만 가능)';
   let h = backBar('관리자 관리') + `<div class="card" style="padding:12px"><div class="mut">내 권한: <b>${roleTxt}</b></div></div>`;
+  const rank = p => p.pos === '팀장' ? 0 : p.pos === '부팀장' ? 1 : 2;
+  h += '<div class="tg">';
   ['1', '2', '3'].forEach(t => {
-    const list = S.people.filter(p => p.team === t);
-    h += `<div class="team"><h3>【${t}팀】 <small>${list.length}명</small></h3>`;
+    const list = S.people.filter(p => p.team === t).map((p, i) => [p, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
+    h += `<div class="tc"><h3>${t}팀<small>${list.length}명</small></h3>`;
     list.forEach(p => {
-      const badges = (p.role ? `<span class="badge">${ROLE[p.role]}</span>` : '') + (p.status === '휴직' ? '<span class="badge leave">휴직</span>' : '') + (!p.registered ? '<span class="badge off">앱 미등록</span>' : '');
-      h += `<div class="person"><div class="nm"><b>${esc(p.name)}</b>${badges}${p.phone ? `<div class="mut">${esc(p.phone)}</div>` : ''}</div>
-        ${p.phone ? `<a class="ic" href="tel:${esc(p.phone.replace(/[^0-9+]/g, ''))}" aria-label="${esc(p.name)} 전화">📞</a>` : '<span class="ic dis">📞</span>'}
-        ${canEditP(p) ? `<button class="ic" data-edit="${esc(p.name)}" aria-label="수정">✎</button>` : ''}</div>`;
+      const sub = [p.role ? ROLE[p.role] : '', !p.registered ? '앱 미등록' : ''].filter(Boolean).join(' · ');
+      h += `<div class="pc ${p.pos === '팀장' ? 'lead' : p.pos === '부팀장' ? 'sub' : ''} ${p.status === '휴직' ? 'leave' : ''} ${canEditP(p) ? 'can' : ''}" ${canEditP(p) ? `data-edit="${esc(p.name)}"` : ''}>
+        <b>${esc(p.name)}</b><small>${esc(p.pos || '팀원')} · ${esc(p.status)}</small>${sub ? `<small>${esc(sub)}</small>` : ''}
+        ${p.phone ? `<a class="tel" href="tel:${esc(p.phone.replace(/[^0-9+]/g, ''))}" aria-label="${esc(p.name)} 전화">📞</a>` : ''}</div>`;
     });
-    if (canAddTeam(t)) h += `<button class="add" data-add="${t}">＋ ${t}팀 직원 추가</button>`;
+    if (canAddTeam(t)) h += `<button class="add" data-add="${t}">＋ 추가</button>`;
     h += '</div>';
   });
+  h += '</div>';
   $('setBody').innerHTML = h; wireBack();
-  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEdit(S.people.find(p => p.name === b.dataset.edit)));
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { if (e.target.closest('a')) return; openEdit(S.people.find(p => p.name === b.dataset.edit)); });
   document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => openAdd(b.dataset.add));
 }
 
@@ -672,8 +679,7 @@ function lvHeader() {
   }).join('');
   const cp = clkParts();
   return `<div class="hd" style="height:calc(var(--u)*${108 + LX.eh})"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100, LX.eh / 2)}">${wx}
-    <div class="clk" style="${P(985, 8, 1180, 104, LX.eh / 2)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>
-    <button class="gear" onclick="goTab('set')" aria-label="설정" style="${P(1182, 4, 1212, 34)}">⚙️</button>`;
+    <div class="clk" style="${P(985, 8, 1180, 104, LX.eh / 2)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>`;
 }
 const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
 function lvIsNightClock() { const m = parseInt(clkParts().t.slice(0, 2)) * 60 + parseInt(clkParts().t.slice(3)); return m >= 18 * 60 + 30 || m < 6 * 60; } // 근무표가 없을 때는 시계로 낮/밤 구분
@@ -776,7 +782,6 @@ function myHead(now) {
   return `<div class="mh${night ? ' n' : ''}" style="background-image:url(img/${night ? 'my-hd-n' : 'my-hd'}.jpg)">
     <img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS">
     <div class="mclk"><div class="d" id="myDate">${c.d}</div><div class="t" id="myTime">${c.t}</div></div>
-    <button class="gear" onclick="goTab('set')" aria-label="설정">⚙️</button>
     <img class="cap" src="img/cap-head.png" alt="">
     ${nm ? `<div class="who"><b>${esc(nm)} 님</b><span>오늘도 수고하고 있습니다!</span></div>` : ''}
     <div class="mwx" id="myWx">${wx}</div></div>`;
@@ -1028,6 +1033,7 @@ function openEdit(p) {
     <label>이름</label><input id="eName" value="${esc(p.name)}" maxlength="20">
     <label>팀</label><select id="eTeam">${['1', '2', '3'].map(t => `<option value="${t}" ${p.team === t ? 'selected' : ''}>${t}팀</option>`).join('')}</select>
     <label>상태</label><select id="eStatus"><option ${p.status === '재직' ? 'selected' : ''}>재직</option><option ${p.status === '휴직' ? 'selected' : ''}>휴직</option></select>
+    <label>보직 (팀마다 팀장·부팀장 각 1명)</label><select id="ePos">${[['', '팀원'], ['팀장', '팀장'], ['부팀장', '부팀장']].map(o => `<option value="${o[0]}" ${(p.pos || '') === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>
     <label>전화번호</label><input id="ePhone" type="tel" inputmode="tel" value="${esc(p.phone)}">
     <button id="eSave">저장</button>
     ${chief && p.role !== 'chief' ? `<button class="sec" id="eRole">${p.role === 'teamadmin' ? '팀관리자 해제' : '이 팀의 팀관리자로 지정'}</button>` : ''}
@@ -1037,7 +1043,7 @@ function openEdit(p) {
   const done = () => { closeModal(); renderAdmin(); };
   const run = async fn => { try { await fn(); done(); } catch (e) { say($('eMsg'), e.message, 'bad'); } };
   $('eCancel').onclick = closeModal;
-  $('eSave').onclick = () => run(() => api('/admin/person', 'POST', { action: 'update', name: p.name, newName: $('eName').value.trim(), team: $('eTeam').value, status: $('eStatus').value, phone: $('ePhone').value.trim() }));
+  $('eSave').onclick = () => run(() => api('/admin/person', 'POST', { action: 'update', name: p.name, newName: $('eName').value.trim(), team: $('eTeam').value, status: $('eStatus').value, pos: $('ePos').value, phone: $('ePhone').value.trim() }));
   if ($('eRole')) $('eRole').onclick = () => run(() => api('/admin/role', 'POST', { name: p.name, role: p.role === 'teamadmin' ? '' : 'teamadmin' }));
   if ($('eXfer')) $('eXfer').onclick = () => { if (confirm(`총괄관리자를 ${p.name}님에게 인계합니다. 나는 일반 권한이 됩니다. 계속할까요?`)) run(async () => { await api('/admin/transfer', 'POST', { name: p.name }); }); };
   if ($('eDel')) $('eDel').onclick = () => { if (confirm(`${p.name}님을 명단에서 삭제할까요?`)) run(() => api('/admin/person', 'POST', { action: 'delete', name: p.name })); };
