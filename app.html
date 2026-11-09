@@ -492,7 +492,7 @@ function lvCard(b, sec, box, f, off) {
     <div class="bt"><a class="call" href="tel:${LV_PREFIX}${tel}">${ICON_TEL}<span>통화</span></a><button class="dir" data-dir="${esc(sec)}">${ICON_DOC}<span>지령입력</span></button></div></div>`;
 }
 const WXC = [['제주', 33.5097, 126.5219], ['서귀포', 33.2541, 126.5601], ['한림', 33.4114, 126.2619], ['성산', 33.3869, 126.9367]];
-function wxText(c) { const ic = c === 0 ? 'sun' : (c === 1 || c === 2) ? 'part' : 'cloud'; return [ic, c === 0 ? '맑음' : c === 1 ? '대체로 맑음' : c === 2 ? '구름조금' : c === 3 ? '흐림' : (c === 45 || c === 48) ? '안개' : (c >= 51 && c <= 57) ? '이슬비' : (c >= 61 && c <= 67) ? '비' : (c >= 71 && c <= 77) ? '눈' : (c >= 80 && c <= 82) ? '소나기' : c >= 95 ? '뇌우' : '구름']; }
+function wxText(c) { const ic = c === 0 ? 'sun' : (c === 1 || c === 2) ? 'part' : c === 3 ? 'cloud' : (c === 45 || c === 48) ? 'fog' : (c >= 51 && c <= 57) ? 'drizzle' : (c >= 61 && c <= 67) ? 'rain' : ((c >= 71 && c <= 77) || c === 85 || c === 86) ? 'snow' : (c >= 80 && c <= 82) ? 'shower' : c >= 95 ? 'thunder' : 'cloud'; return [ic, { sun: '맑음', part: c === 1 ? '대체로 맑음' : '구름조금', cloud: '흐림', fog: '안개', drizzle: '이슬비', rain: '비', snow: '눈', shower: '소나기', thunder: '뇌우' }[ic]]; }
 async function loadWx() { // 무료 Open-Meteo(키 없음)
   if (Date.now() - LV.wxAt < 600000) return;
   LV.wxAt = Date.now();
