@@ -55,6 +55,43 @@ nav button.on{color:var(--pri)}
 .modal[hidden]{display:none}
 .sheet{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
 .hide{display:none}
+/* ===== 라이브러리 ===== */
+#tab-lib{padding:0}
+.lib{font-family:-apple-system,"Noto Sans KR",sans-serif;color:#12284a}
+.lib h2{font-size:19px;margin:6px 0 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.lib .bk{width:auto;margin:0 4px 0 0;font-size:13px;font-weight:800;color:#1a6be0;background:#e8f1fd;border:0;border-radius:99px;padding:4px 11px}
+.lib .lc{background:#fff;border:1px solid #dbe4f0;border-radius:14px;box-shadow:0 1px 6px rgba(20,60,120,.08)}
+.lib .banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#e8f1fd,#f6faff);border:1.5px solid #cfe1fa;border-radius:16px;padding:10px 14px;margin-bottom:12px}
+.lib .banner img{height:70px;width:auto}.lib .banner b{font-size:15px;display:block}.lib .banner span{font-size:12.5px;color:#667085;font-weight:600;line-height:1.4}
+.lib .big{display:flex;align-items:center;gap:12px;padding:16px;margin-bottom:10px;font-weight:800;font-size:17px;width:100%;text-align:left;color:#12284a;cursor:pointer}
+.lib .big .ic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:28px;flex:none}
+.lib .big small{display:block;font-size:12.5px;color:#667085;font-weight:600;margin-top:2px}.lib .big .ar{margin-left:auto;color:#98a1b0;font-size:22px}
+.lib .fd{display:flex;align-items:center;gap:10px;padding:10px 11px;margin-bottom:8px;font-weight:700;font-size:14.5px}
+.lib .fd .go{display:flex;align-items:center;gap:10px;flex:1;min-width:0;background:none;border:0;padding:0;margin:0;width:auto;text-align:left;color:#12284a;font:inherit;cursor:pointer}
+.lib .fd .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:22px;background:#fff4d6;flex:none}
+.lib .fd .tx{min-width:0}.lib .fd .tx b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lib small{display:block;font-size:11.5px;color:#667085;font-weight:600;margin-top:1px}
+.lib .n{font-size:12px;font-weight:800;color:#1a6be0;background:#e8f1fd;border-radius:99px;padding:3px 9px;flex:none}.lib .n.z{background:#eef0f3;color:#98a1b0}
+.lib .sm{width:auto;margin:0;background:none;border:0;padding:4px 5px;font-size:13px;font-weight:800;color:#98a1b0;flex:none}.lib .sm.d{color:#c0392b}
+.lib .btn{display:flex;align-items:center;justify-content:center;gap:6px;background:#1a6be0;color:#fff;border-radius:13px;padding:13px;font-weight:800;font-size:15px;margin-top:6px;width:100%;border:0}.lib .btn.o{background:#fff;color:#1a6be0;border:1.5px solid #1a6be0}
+.lib .fl{display:flex;align-items:center;gap:10px;padding:10px 11px;margin-bottom:8px}
+.lib .fl .ti{width:38px;height:44px;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff;flex:none}
+.lib .fl .tx{min-width:0;flex:1}.lib .fl b{font-size:14px;display:block;line-height:1.3;word-break:break-all}
+.lib .fl .dl{font-size:20px;color:#1a6be0;text-decoration:none;flex:none;padding:2px 4px}
+.lib .new{font-size:10px;background:#e8453c;color:#fff;border-radius:99px;padding:1px 6px;margin-left:5px;vertical-align:1px}
+.lib .lk{display:flex;align-items:center;gap:10px;padding:10px 11px;margin-bottom:8px;font-weight:800;font-size:15px}
+.lib .lk a.go{display:flex;align-items:center;gap:12px;flex:1;min-width:0;color:#12284a;text-decoration:none}
+.lib .lk .ic{width:38px;height:38px;border-radius:11px;background:#e8f1fd;display:grid;place-items:center;font-size:21px;flex:none}
+.lib .lk .ar{margin-left:auto;color:#1a6be0;font-weight:900}
+.lib .mutc{color:#667085;font-size:12px;font-weight:600;text-align:center;margin-top:10px}
+.lib .empty{text-align:center;color:#667085;padding:22px 10px;font-size:14px;font-weight:600}
+.lsheet h3{margin:0 0 12px;font-size:17px}
+.lsheet .inp{display:block;width:100%;border:1.5px solid #dbe4f0;border-radius:11px;padding:11px 12px;margin:0 0 9px;font-size:15px;box-sizing:border-box;background:#fff;color:#12284a}
+.lsheet label.l{display:block;font-size:11.5px;color:#667085;font-weight:700;margin:0 0 3px}
+.lsheet .emo{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}.lsheet .emo button{width:auto;margin:0;padding:6px 9px;font-size:20px;background:#f2f6fc;border:1.5px solid transparent;border-radius:10px}.lsheet .emo button.on{border-color:#1a6be0}
+.lsheet .msg{min-height:18px;font-size:13px;font-weight:700;color:#c0392b;margin:2px 0 6px}
+.lsheet .btn{display:flex;align-items:center;justify-content:center;background:#1a6be0;color:#fff;border-radius:13px;padding:13px;font-weight:800;font-size:15px;width:100%;border:0;margin-top:6px}.lsheet .btn.o{background:#fff;color:#1a6be0;border:1.5px solid #1a6be0}
+.lsheet .btn[disabled]{opacity:.55}
 /* ===== 내 근무 ===== */
 body.ismy header,body.ismy #tab-my>h2{display:none}
 body.ismy main{padding:0 0 96px;max-width:560px}
@@ -225,14 +262,14 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
   <section id="tab-my" class="hide"><div id="myBody"></div></section>
   <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div id="liveBody"><div class="card"><p class="mut">불러오는 중…</p></div></div></section>
   <section id="tab-board" class="hide"><h2><button class="bkb" onclick="goTab('my')">‹ 내 근무</button>전체 근무표</h2><div id="boardBody"></div></section>
-  <section id="tab-dir" class="hide"><h2>팀장지령 · 인수인계</h2><div class="card"><p class="mut">팀장 지령 목록과 인수인계가 표시됩니다. (준비 중)</p></div></section>
+  <section id="tab-lib" class="hide"><div id="libBody"></div></section>
   <section id="tab-wx" class="hide"><h2>해상기상</h2><div class="card"><p class="mut">제주 해상 기상(파고·풍속·시정)이 표시됩니다. (준비 중)</p></div></section>
   <section id="tab-set"><div id="setBody"></div></section>
 </main>
 <nav>
   <button data-t="my"><img class="off" src="img/m-home-off.png" alt=""><img class="on" src="img/m-home-on.png" alt="">내 근무</button>
   <button data-t="live"><img class="off" src="img/m-team-off.png" alt=""><img class="on" src="img/m-team-on.png" alt="">실시간 근무현황</button>
-  <button data-t="dir"><img class="off" src="img/m-mega-off.png" alt=""><img class="on" src="img/m-mega-on.png" alt="">팀장지령·인수인계</button>
+  <button data-t="lib"><img class="off" src="img/m-lib-off.png" alt=""><img class="on" src="img/m-lib-on.png" alt="">라이브러리</button>
   <button data-t="wx"><img class="off" src="img/m-wave-off.png" alt=""><img class="on" src="img/m-wave-on.png" alt="">해상기상</button>
 </nav>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
@@ -256,13 +293,14 @@ const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: nu
 // ---- 탭 ----
 function goTab(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.t === t));
-  ['my', 'live', 'board', 'dir', 'wx', 'set'].forEach(k => $('tab-' + k).classList.toggle('hide', k !== t));
+  ['my', 'live', 'board', 'lib', 'wx', 'set'].forEach(k => $('tab-' + k).classList.toggle('hide', k !== t));
   document.body.classList.toggle('islive', t === 'live');
   document.body.classList.toggle('ismy', t === 'my');
   if (t === 'set') renderSet();
   if (t === 'live') startLive(); else stopLive();
   if (t === 'my') startMy(); else stopMy();
   if (t === 'board') startBoard();
+  if (t === 'lib') startLib();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => goTab(b.dataset.t));
 
@@ -276,7 +314,7 @@ async function api(path, method = 'GET', body) {
 }
 async function loadMe() {
   if (!S.token) { S.me = null; return; }
-  try { S.me = (await api('/me')).person; }
+  try { S.me = (await api('/me')).person; if (S.me) ls.set('vts_app_team', S.me.team); }
   catch (e) { if (e.status === 401) { S.me = null; S.msg = '이 기기의 등록이 만료되었습니다. 다시 등록해 주세요.'; S.token = ''; ls.del('vts_app_token'); } else throw e; }
 }
 async function loadPeople() { const j = await api('/people'); S.people = j.people; S.me = j.me; }
@@ -312,7 +350,7 @@ async function subscribeAndRegister(team, name, code) {
   const res = await fetch(base() + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team, name, code, sub: sub.toJSON() }) });
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error || ('등록 실패 ' + res.status));
-  S.token = j.token; S.code = code; ls.set('vts_app_token', j.token); ls.set('vts_app_code', code); S.me = j.person;
+  S.token = j.token; S.code = code; ls.set('vts_app_token', j.token); ls.set('vts_app_code', code); S.me = j.person; ls.set('vts_app_team', S.me.team);
 }
 
 // ---- 설정 화면 ----
@@ -406,7 +444,7 @@ function renderInfo() {
   wireBack();
   $('iPerm').textContent = ('Notification' in window ? '알림 권한: ' + ({ granted: '허용됨', denied: '차단됨(기기 설정에서 허용으로 바꾸세요)', default: '아직 안 물어봄' }[Notification.permission] || Notification.permission) : '이 화면에서는 알림 기능이 없습니다') + (isIOS && !standalone ? '\n아이폰은 홈 화면에 추가한 아이콘으로 열어야 알림이 옵니다.' : '');
   $('iSave').onclick = async () => {
-    try { const j = await api('/me', 'POST', { team: $('iTeam').value, phone: $('iPhone').value.trim(), status: $('iStatus').value }); S.me = j.person; say($('iMsg'), '저장했습니다.', 'ok'); }
+    try { const j = await api('/me', 'POST', { team: $('iTeam').value, phone: $('iPhone').value.trim(), status: $('iStatus').value }); S.me = j.person; ls.set('vts_app_team', S.me.team); say($('iMsg'), '저장했습니다.', 'ok'); }
     catch (e) { say($('iMsg'), e.message, 'bad'); }
   };
   $('iTest').onclick = async () => {
@@ -670,7 +708,7 @@ function myCount(m, now) {
   return `<div class="card cd"><div class="cdh"><img src="img/ic-clock.png" alt=""><span>${pre ? '근무 시작까지' : '퇴근까지'}</span></div><div class="cdt" id="myCd">${hmsOf(t - now)}</div><div class="cds">${dayWord(t, now)} ${hm(t)} ${pre ? '출근' : '퇴근'}<br>(${myChip(m.duty)})</div><img class="cdi" src="img/cap-cheer.png" alt=""></div>`;
 }
 function myBtns() {
-  return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.code ? '<a class="mb2" href="vts-simple.html" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
+  return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.code ? '<a class="mb2" href="vts-simple.html?own=1" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
 }
 function myNag(m) {
   const list = ((MY.d && MY.d.directives) || []).filter(x => x.mine && (!m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift)));
@@ -716,6 +754,88 @@ function myTickLoop() {
 function startMy() { stopMy(); if (!$('myBody')) return; renderMy(); if (S.token) loadMy(); myTickLoop(); MY.poll = setInterval(() => { if (!document.hidden && S.token) loadMy(); }, 60000); }
 function stopMy() { clearTimeout(MY.tick); MY.tick = null; if (MY.poll) { clearInterval(MY.poll); MY.poll = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && MY.poll && S.token) loadMy(); });
+
+// ===== 라이브러리(자료모음·바로가기) =====
+const LIBS = { d: null, view: 'home', folder: null, busy: false, err: '' };
+const LIB_EMOJI = ['⚖️', '🌊', '☀️', '⚓', '🛟', '🚢', '📘', '📞', '🗺️', '📡', '🔗'];
+async function libCall(path, method, body, raw) {
+  const r = await fetch(base() + path, { method: method || 'GET', headers: { ...(raw ? {} : { 'Content-Type': 'application/json' }), 'X-Token': S.token || '' }, body: raw ? raw : (body ? JSON.stringify(body) : undefined) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('오류 ' + r.status));
+  return j;
+}
+async function loadLib() { try { LIBS.d = await libCall('/lib'); LIBS.err = ''; } catch (e) { LIBS.err = e.message; } renderLib(); }
+function startLib() { if ($('libBody')) { renderLib(); if (S.token) loadLib(); } }
+const libDate = ms => { const d = new Date(ms + 9 * 3600e3); return String(d.getUTCMonth() + 1).padStart(2, '0') + '.' + String(d.getUTCDate()).padStart(2, '0'); };
+const libSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
+function libKind(name) {
+  const e = (String(name).split('.').pop() || '').toLowerCase();
+  if (e === 'pdf') return ['PDF', '#e5484d']; if (['xls', 'xlsx', 'csv'].includes(e)) return ['XLS', '#2e9a5b']; if (['hwp', 'hwpx'].includes(e)) return ['HWP', '#2f7be8'];
+  if (['doc', 'docx'].includes(e)) return ['DOC', '#2f6fd6']; if (['ppt', 'pptx'].includes(e)) return ['PPT', '#e8782f']; if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'].includes(e)) return ['IMG', '#8a6bd6'];
+  if (e === 'txt') return ['TXT', '#667085']; return ['FILE', '#667085'];
+}
+function libGo(v, f) { LIBS.view = v; LIBS.folder = f || null; renderLib(); window.scrollTo(0, 0); }
+function renderLib() {
+  const el = $('libBody'); if (!el) return;
+  if (!S.token) { el.innerHTML = `<div class="lib">${myStateCard('cap-nap', '아직 등록이 안 됐어요', '설정에서 이름을 등록하면<br>라이브러리를 쓸 수 있어요.', true)}</div>`; return; }
+  const d = LIBS.d;
+  if (!d) { el.innerHTML = `<div class="lib"><h2>📚 라이브러리</h2><div class="lc empty">${LIBS.err ? esc(LIBS.err) : '불러오는 중…'}</div></div>`; return; }
+  const admin = d.me.admin, me = d.me.name, tk = encodeURIComponent(S.token || '');
+  let h = '';
+  if (LIBS.view === 'home') {
+    h = `<h2>📚 라이브러리</h2><div class="banner"><img src="img/cap-head.png" alt=""><div><b>함께 쓰는 서재</b><span>자료는 같이 올리고,<br>자주 가는 곳은 바로 열어요</span></div></div>
+    <button class="lc big" data-a="go" data-v="folders"><div class="ic" style="background:#fff4d6">📁</div><div>자료모음<small>폴더 ${d.folders.length}개 · 파일 ${d.files.length}개</small></div><span class="ar">›</span></button>
+    <button class="lc big" data-a="go" data-v="links"><div class="ic" style="background:#e3f0ff">🔗</div><div>바로가기<small>링크 ${d.links.length}개</small></div><span class="ar">›</span></button>`;
+  } else if (LIBS.view === 'folders') {
+    h = `<h2><button class="bk" data-a="go" data-v="home">‹ 라이브러리</button>자료모음</h2>` + d.folders.map(f => `<div class="lc fd"><button class="go" data-a="go" data-v="folder" data-id="${esc(f.id)}"><div class="ic">📁</div><div class="tx"><b>${esc(f.name)}</b><small>${f.last ? '최근 ' + libDate(f.last.at) + ' · ' + esc(f.last.by) : '아직 자료가 없어요'}</small></div></button><span class="n${f.count ? '' : ' z'}">${f.count}</span><button class="sm" data-a="frn" data-id="${esc(f.id)}">✎</button>${(f.count === 0 || admin) ? `<button class="sm d" data-a="fdel" data-id="${esc(f.id)}">삭제</button>` : ''}</div>`).join('') + `<button class="btn o" data-a="fadd">＋ 폴더 추가</button>`;
+  } else if (LIBS.view === 'folder') {
+    const f = d.folders.find(x => x.id === LIBS.folder); if (!f) { LIBS.view = 'folders'; return renderLib(); }
+    const fs = d.files.filter(x => x.folder === f.id).sort((a, b) => b.at - a.at);
+    h = `<h2><button class="bk" data-a="go" data-v="folders">‹ 자료모음</button>${esc(f.name)}</h2>` + (fs.length ? fs.map(x => { const k = libKind(x.name); return `<div class="lc fl"><div class="ti" style="background:${k[1]}">${k[0]}</div><div class="tx"><b>${esc(x.name)}${Date.now() - x.at < 3 * 86400e3 ? '<span class="new">NEW</span>' : ''}</b><small>${esc(x.by)} · ${libDate(x.at)} · ${libSize(x.size)}</small></div><a class="dl" href="${esc(base())}/lib/file?id=${esc(x.id)}&t=${tk}" target="_blank" rel="noopener" aria-label="열기">⬇</a>${(admin || x.by === me) ? `<button class="sm d" data-a="xdel" data-id="${esc(x.id)}">삭제</button>` : ''}</div>`; }).join('') : '<div class="lc empty">아직 자료가 없어요.<br>첫 자료를 올려 주세요!</div>') +
+      `<button class="btn" data-a="xadd">⬆ 자료 올리기</button><p class="mutc">파일 하나 ${Math.round(d.limits.file / 1048576)}MB까지 · 올린 사람과 총괄관리자가 삭제할 수 있어요</p>`;
+  } else {
+    h = `<h2><button class="bk" data-a="go" data-v="home">‹ 라이브러리</button>바로가기</h2>` + d.links.map(l => `<div class="lc lk"><a class="go" href="${esc(l.url)}" target="_blank" rel="noopener"><div class="ic">${esc(l.emoji)}</div><span>${esc(l.name)}</span><span class="ar">↗</span></a><button class="sm" data-a="ledit" data-id="${esc(l.id)}">✎</button>${admin ? `<button class="sm d" data-a="ldel" data-id="${esc(l.id)}">삭제</button>` : ''}</div>`).join('') + `<button class="btn o" data-a="ladd">＋ 링크 추가</button>`;
+  }
+  el.innerHTML = `<div class="lib">${h}</div>`;
+}
+function libSheet(html) { openModal(`<div class="lsheet">${html}</div>`); }
+function libMsg(t) { const m = $('lsMsg'); if (m) m.textContent = t || ''; }
+async function libDo(fn) { try { LIBS.d = await fn(); closeModal(); renderLib(); } catch (e) { libMsg(e.message); const b = $('lsOk'); if (b) b.disabled = false; } }
+function libFolderSheet(f) {
+  libSheet(`<h3>${f ? '✎ 폴더 이름 바꾸기' : '📁 폴더 추가'}</h3><input class="inp" id="lsName" maxlength="30" placeholder="폴더 이름" value="${esc(f ? f.name : '')}"><div class="msg" id="lsMsg"></div><button class="btn" id="lsOk">${f ? '바꾸기' : '추가'}</button><button class="btn o" onclick="closeModal()">취소</button>`);
+  $('lsOk').onclick = () => { $('lsOk').disabled = true; libDo(() => libCall(f ? '/lib/folder/rename' : '/lib/folder', 'POST', { id: f && f.id, name: $('lsName').value })); };
+}
+function libLinkSheet(l) {
+  let emo = l ? l.emoji : '🔗';
+  libSheet(`<h3>${l ? '✎ 링크 고치기' : '🔗 링크 추가'}</h3><label class="l">이름</label><input class="inp" id="lsName" maxlength="30" placeholder="예: 선박안전기술공단" value="${esc(l ? l.name : '')}"><label class="l">주소</label><input class="inp" id="lsUrl" inputmode="url" autocapitalize="off" placeholder="https://" value="${esc(l ? l.url : '')}"><label class="l">그림</label><div class="emo">${LIB_EMOJI.map(e => `<button type="button" data-e="${e}" class="${e === emo ? 'on' : ''}">${e}</button>`).join('')}</div><div class="msg" id="lsMsg"></div><button class="btn" id="lsOk">${l ? '저장' : '추가'}</button><button class="btn o" onclick="closeModal()">취소</button>`);
+  document.querySelectorAll('.lsheet .emo button').forEach(b => b.onclick = () => { emo = b.dataset.e; document.querySelectorAll('.lsheet .emo button').forEach(x => x.classList.toggle('on', x === b)); });
+  $('lsOk').onclick = () => { $('lsOk').disabled = true; libDo(() => libCall(l ? '/lib/link/update' : '/lib/link', 'POST', { id: l && l.id, name: $('lsName').value, url: $('lsUrl').value.trim(), emoji: emo })); };
+}
+function libUploadSheet(folderId) {
+  const d = LIBS.d, f = d.folders.find(x => x.id === folderId);
+  libSheet(`<h3>⬆ 자료 올리기</h3><label class="l">폴더</label><div class="inp" style="background:#f6f9fd">${esc(f ? f.name : '')}</div><label class="l">파일 (${Math.round(d.limits.file / 1048576)}MB 이하)</label><input class="inp" id="lsFile" type="file"><label class="l">이름 (비워 두면 파일 이름)</label><input class="inp" id="lsName" maxlength="80" placeholder="예: 야간 근무 수칙.pdf"><div class="msg" id="lsMsg"></div><button class="btn" id="lsOk">올리기</button><button class="btn o" onclick="closeModal()">취소</button>`);
+  $('lsFile').onchange = () => { const x = $('lsFile').files[0]; if (x && !$('lsName').value) $('lsName').value = x.name; };
+  $('lsOk').onclick = () => {
+    const x = $('lsFile').files[0]; if (!x) return libMsg('파일을 선택하세요.');
+    if (x.size > d.limits.file) return libMsg('파일이 너무 큽니다(' + Math.round(d.limits.file / 1048576) + 'MB 이하).');
+    let name = $('lsName').value.trim() || x.name; if (!/\.[A-Za-z0-9]{1,6}$/.test(name) && /\.[A-Za-z0-9]{1,6}$/.test(x.name)) name += '.' + x.name.split('.').pop();
+    $('lsOk').disabled = true; $('lsOk').textContent = '올리는 중…';
+    libDo(() => libCall('/lib/upload?folder=' + encodeURIComponent(folderId) + '&name=' + encodeURIComponent(name) + '&type=' + encodeURIComponent(x.type || ''), 'POST', null, x));
+  };
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('#libBody [data-a]'); if (!b) return;
+  const a = b.dataset.a, id = b.dataset.id, d = LIBS.d; if (!d) return;
+  if (a === 'go') return libGo(b.dataset.v, id);
+  if (a === 'fadd') return libFolderSheet(null);
+  if (a === 'frn') return libFolderSheet(d.folders.find(x => x.id === id));
+  if (a === 'fdel') { const f = d.folders.find(x => x.id === id); if (confirm(`"${f.name}" 폴더를 지울까요?` + (f.count ? `\n\n안에 든 자료 ${f.count}개도 함께 사라집니다.` : ''))) libCall('/lib/folder/delete', 'POST', { id }).then(r => { LIBS.d = r; renderLib(); }).catch(er => alert(er.message)); return; }
+  if (a === 'xadd') return libUploadSheet(LIBS.folder);
+  if (a === 'xdel') { const x = d.files.find(v => v.id === id); if (confirm(`"${x.name}" 자료를 지울까요?`)) libCall('/lib/file/delete', 'POST', { id }).then(r => { LIBS.d = r; renderLib(); }).catch(er => alert(er.message)); return; }
+  if (a === 'ladd') return libLinkSheet(null);
+  if (a === 'ledit') return libLinkSheet(d.links.find(x => x.id === id));
+  if (a === 'ldel') { const l = d.links.find(x => x.id === id); if (confirm(`"${l.name}" 링크를 지울까요?`)) libCall('/lib/link/delete', 'POST', { id }).then(r => { LIBS.d = r; renderLib(); }).catch(er => alert(er.message)); return; }
+});
 
 function lvDirSheet(sec) {
   const b = lvBoard(); if (!b) return;

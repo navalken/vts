@@ -338,7 +338,9 @@ let patterns={}, photoImg=null, gv=null, changeMode=null, S={day:newHalf(),night
 
 // ---- 팀 선택: 패턴·직원 이름 목록은 팀마다 따로 저장 ----
 const team=()=>$('team').value;
-{ const t=LS.get('vts_s_team'); if(t&&['1','2','3'].includes(t)) $('team').value=t; }
+const ownTeam=()=>{ try{ const t=localStorage.getItem('vts_app_team'); return ['1','2','3'].includes(t)?t:''; }catch(e){ return ''; } };
+{ let t=LS.get('vts_s_team'); if(/[?&]own=1/.test(location.search)&&ownTeam()) t=ownTeam(); // 앱의 '근무표 올리기' 버튼으로 열면 내 소속 팀이 기본
+  if(t&&['1','2','3'].includes(t)) $('team').value=t; }
 const pKey=()=>'vts_s_patterns_t'+team(), tabKey=h=>'vts_s_tab_t'+team()+'_'+h, nameKey=()=>'vts_known_names_t'+team();
 // 이전 버전(팀 구분 없음)에 저장해 둔 패턴·이름은 1팀으로 옮김
 try{ const old=LS.get('vts_s_patterns'); if(old&&!LS.get('vts_s_patterns_t1')) LS.set('vts_s_patterns_t1',old);
@@ -803,6 +805,7 @@ const addDays=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*86400000).toISOString
 $('pubBtn').onclick=async()=>{
   try{
     if(!ran) return pubSay('먼저 ③에서 근무표를 만들어 확인하세요.','bad');
+    { const own=ownTeam(); if(own&&own!==team()&&!confirm('소속은 '+own+'팀입니다.\n'+team()+'팀 근무표를 올리시겠습니까?\n\n(대직으로 다른 팀 근무표를 올릴 때는 [확인]을 누르세요)')) return pubSay('취소했습니다. 위 ①에서 팀을 확인하세요.','bad'); }
     const date=$('pubDate').value, lead=Math.max(1,Math.min(60,+$('pubLead').value||15)), mode=shiftMode();
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return pubSay('위 ① 단계에서 날짜를 고르세요.','bad');
     const sh=mode==='both'?['day','night']:[mode];
