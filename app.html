@@ -252,7 +252,7 @@ nav button{font-size:11px;line-height:1.15;text-align:center}
 nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 
 /* 해상기상 탭 */
-.wxlinks{display:flex;gap:8px;margin:2px 0 10px}.wxlinks a,.wxlinks span{flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:#fff;border:1.5px solid var(--bd);font-weight:800;font-size:14px;color:#2a4a86;text-decoration:none;line-height:1.25}.wxlinks span{background:var(--pri);border-color:var(--pri);color:#fff}.wxlinks small{display:block;font-weight:600;font-size:10px;opacity:.85}
+.wxlinks{display:flex;gap:6px;margin:2px 0 10px}.wxlinks a,.wxlinks span{flex:1;min-width:0;text-align:center;padding:9px 2px;border-radius:12px;background:#fff;border:1.5px solid var(--bd);font-weight:800;font-size:13px;color:#2a4a86;text-decoration:none;line-height:1.25}.wxlinks span{background:var(--pri);border-color:var(--pri);color:#fff}.wxlinks small{display:block;font-weight:600;font-size:10px;opacity:.85}
 .wxh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.wxh b{font-size:16px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
 .wxmap{position:relative;width:100%;aspect-ratio:1500/1300;border-radius:12px;overflow:hidden;background:url(img/wx-map.jpg) center/100% 100%}
 .wxmap svg.ln{position:absolute;inset:0;width:100%;height:100%}
@@ -313,7 +313,7 @@ const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: nu
 
 
 // ---- 해상기상 탭 ----
-const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/';
+const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
 const WX = { d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
 // 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
 const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66] };
@@ -347,7 +347,7 @@ function renderWx() {
   const rows = pts.filter(p => p.ws != null).sort((a, b) => b.ws - a.ws).map(p => `<div class="wxrow ${wxLvl(p.ws, p.wh)}"><div class="rn"><b>${esc(p.nm)}</b><small>${p.t} · ${p.k === 'b' ? '부이' : p.k === 't' ? '관측소' : '예측모델'}${WX_OFF.includes(p.c) ? ' · 구역 밖' : ''}</small></div><div class="rw">${wxArrow(p.ws === 0 ? null : p.wd)}<span>${p.ws === 0 ? '무풍' : wxDir(p.wd)}</span></div><div class="rs"><b>${p.ws.toFixed(1)}</b><small>m/s</small></div><div class="rh">${p.wh != null ? `<b>${p.wh.toFixed(1)}</b><small>m</small>` : '<small>-</small>'}</div></div>`).join('');
   const d = WX.at ? new Date(WX.at) : null, hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
   const err = WX.err ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.err)}</p></div>` : '';
-  el.innerHTML = `<div class="wxlinks"><a href="${WXLINK_1}" target="_blank" rel="noopener">① 기상특보<small>날씨누리 ↗</small></a><span>② 관제구역<small>풍향·풍속·파고</small></span><a href="${WXLINK_3}" target="_blank" rel="noopener">③ 해상특보<small>해양기상포털 ↗</small></a></div>${err}
+  el.innerHTML = `<div class="wxlinks"><a href="${WXLINK_1}" target="_blank" rel="noopener">① 기상특보<small>날씨누리 ↗</small></a><span>② 관제구역<small>풍향·풍속·파고</small></span><a href="${WXLINK_3}" target="_blank" rel="noopener">③ 해상특보<small>해양기상포털 ↗</small></a><a href="${WXLINK_4}" target="_blank" rel="noopener">④ 윈디<small>바람지도 ↗</small></a></div>${err}
   <div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
   <div class="wxmap" id="wxMap">${mapHtml}</div>${chips ? `<div class="wxsub">관제구역 밖 (참고)</div>${chips}` : ''}
   <div class="wxlg"><span><i style="background:#2f7be8"></i>보통</span><span><i style="background:#f59e0b"></i>주의 풍속10↑·파고2↑</span><span><i style="background:#e03b3b"></i>위험 풍속14↑·파고3↑</span></div>
