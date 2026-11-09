@@ -250,6 +250,27 @@ body.islive .lvpad{padding:0 16px}
 .sheetbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;margin-top:10px;border-radius:14px;font-size:19px;font-weight:800;text-decoration:none;color:#fff;border:0}
 nav button{font-size:11px;line-height:1.15;text-align:center}
 nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
+
+/* 해상기상 탭 */
+.wxlinks{display:flex;gap:8px;margin:2px 0 10px}.wxlinks a,.wxlinks span{flex:1;text-align:center;padding:10px 4px;border-radius:12px;background:#fff;border:1.5px solid var(--bd);font-weight:800;font-size:14px;color:#2a4a86;text-decoration:none;line-height:1.25}.wxlinks span{background:var(--pri);border-color:var(--pri);color:#fff}.wxlinks small{display:block;font-weight:600;font-size:10px;opacity:.85}
+.wxh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.wxh b{font-size:16px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
+.wxmap{position:relative;width:100%;aspect-ratio:1500/1300;border-radius:12px;overflow:hidden;background:url(img/wx-map.jpg) center/100% 100%}
+.wxmap svg.ln{position:absolute;inset:0;width:100%;height:100%}
+.wxdot{position:absolute;width:8px;height:8px;border-radius:50%;background:#16233b;border:2px solid #fff;transform:translate(-50%,-50%)}
+.wxk,.wxchip{background:#fffffff0;border:2px solid #2f7be8;border-radius:8px;padding:1px 5px 2px;text-align:center;box-shadow:0 2px 5px #0003;white-space:nowrap;color:#16233b}
+.wxk{position:absolute;min-width:58px;transform:translate(-50%,-50%)}.wxchip{display:inline-block;margin:6px 6px 0 0;padding:3px 8px}
+.wxk.t,.wxchip.t{border-style:dashed}.wxk.m,.wxchip.m{border-style:dotted;background:#ffffffc8}
+.wxn{font-size:9.5px;font-weight:800;color:#2a4a86}.wxn em{font-style:normal;font-weight:600;color:#6b7a95;font-size:9px}
+.wxr{display:flex;align-items:center;justify-content:center;gap:2px}.wxr b{font-size:15px;line-height:1.1}.wxk small,.wxchip small{font-size:9px;color:#6b7a95}.wxw{font-size:10px;font-weight:700}
+.wxar{width:15px;height:15px;fill:#2f7be8;flex:none}
+.wxk.l1,.wxchip.l1{border-color:#f59e0b}.wxk.l1 .wxar,.wxchip.l1 .wxar{fill:#f59e0b}.wxk.l2,.wxchip.l2{border-color:#e03b3b;background:#fff0f0f0}.wxk.l2 .wxar,.wxchip.l2 .wxar{fill:#e03b3b}.wxk.l3,.wxchip.l3{border-color:#7a1020;background:#ffe3e6}.wxk.l3 .wxar,.wxchip.l3 .wxar{fill:#7a1020}
+.wxsub{font-size:11px;color:var(--mut);margin:8px 2px 0;font-weight:700}
+.wxlg{display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;color:#51607c;padding:8px 4px 0}.wxlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.wxhd,.wxrow{display:grid;grid-template-columns:1.5fr 1fr .9fr .8fr;align-items:center;gap:6px}.wxhd{padding:2px 6px 6px;font-size:11px;color:var(--mut);font-weight:700}
+.wxrow{padding:8px 6px;border-bottom:1px solid #e3e9f3}.wxrow:last-of-type{border:0}.wxrow .rn b{font-size:15px;display:block}.wxrow small{color:var(--mut);font-size:10.5px}.wxrow .rw{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:700}
+.wxrow .wxar{width:24px;height:24px}.wxrow .rs b,.wxrow .rh b{font-size:22px}.wxrow.l2 .rs b,.wxrow.l2 .rh b,.wxrow.l3 .rs b,.wxrow.l3 .rh b{color:#d12d2d}.wxrow.l1 .rs b{color:#c77a00}.wxrow.l2,.wxrow.l3{background:#fff1f1;border-radius:8px}
+.wxnote{font-size:11px;color:#7a869e;padding:6px 4px 0;line-height:1.5}
+#wxBig{position:fixed;inset:0;z-index:9999;background:#0b1a33ee;display:flex;flex-direction:column}#wxBig .bar{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 14px 8px;color:#fff;font-weight:700;font-size:14px}#wxBig .bar button{width:auto;margin:0;padding:6px 14px;background:#fff;color:#12284a}#wxBig .sc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}#wxBig .wxmap{width:max(230%,820px);border-radius:0}
 </style>
 </head>
 <body>
@@ -263,7 +284,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
   <section id="tab-live" class="hide"><h2>실시간 근무현황</h2><div id="liveBody"><div class="card"><p class="mut">불러오는 중…</p></div></div></section>
   <section id="tab-board" class="hide"><h2><button class="bkb" onclick="goTab('my')">‹ 내 근무</button>전체 근무표</h2><div id="boardBody"></div></section>
   <section id="tab-lib" class="hide"><div id="libBody"></div></section>
-  <section id="tab-wx" class="hide"><h2>해상기상</h2><div class="card"><p class="mut">제주 해상 기상(파고·풍속·시정)이 표시됩니다. (준비 중)</p></div></section>
+  <section id="tab-wx" class="hide"><div id="wxBody"></div></section>
   <section id="tab-set"><div id="setBody"></div></section>
 </main>
 <nav>
@@ -290,6 +311,79 @@ const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: nu
 // ---- 시계 ----
 (function tick() { const d = new Date(); const p = n => String(n).padStart(2, '0'); $('clock').textContent = `${p(d.getMonth() + 1)}.${p(d.getDate())}  ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; setTimeout(tick, 1000); })();
 
+
+// ---- 해상기상 탭 ----
+const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/';
+const WX = { d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
+// 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
+const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66] };
+const WX_OFF = ['KG_0021', 'IE_0060'], WX_OFFTXT = { KG_0021: '▼ 구역 남쪽 바깥 약90km', IE_0060: '◀ 구역 남서쪽 바깥' };
+const WX_MODEL = [['M1', '북서 해상', 33.80, 126.31], ['M2', '서쪽 해상', 33.42, 126.11], ['M3', '남동 해상', 33.28, 126.98]];
+const WX_DIRS = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
+const wxDir = d => d == null ? '—' : WX_DIRS[Math.floor((d + 11.25) / 22.5) % 16] + '풍';
+const wxLvl = (ws, wh) => { wh = wh || 0; return ws >= 21 || wh >= 5 ? 'l3' : ws >= 14 || wh >= 3 ? 'l2' : ws >= 10 || wh >= 2 ? 'l1' : ''; };
+const wxArrow = wd => wd == null ? '' : `<svg class="wxar" style="transform:rotate(${(wd + 180) % 360}deg)" viewBox="0 0 24 24"><path d="M12 2 L19 20 L12 16 L5 20 Z"/></svg>`;
+const wxXY = (lat, lon) => { const x = 680 + (lon - 126.25) * 1032.857, y = 130 + (33.95 - lat) * 1239.286; return [(x - 230) / 1500 * 100, (y - 40) / 1300 * 100]; };
+const wxT = t => { const m = /(\d{2}):(\d{2})/.exec(t || ''); return m ? m[1] + ':' + m[2] : '--:--'; };
+function wxCard(p, cls, pos, extra) {
+  const w = p.wh != null ? `<div class="wxw">파고 <b>${p.wh.toFixed(1)}</b>m</div>` : '';
+  const ws = p.ws == null ? '-' : p.ws.toFixed(1);
+  return `<div class="${cls} ${p.k} ${wxLvl(p.ws, p.wh)}" ${pos ? `style="left:${pos[0]}%;top:${pos[1]}%"` : ''}><div class="wxn">${esc(p.nm)}${extra ? ` <em>${extra}</em>` : ''}</div><div class="wxr">${wxArrow(p.ws === 0 ? null : p.wd)}<b>${ws}</b><small>m/s</small></div>${w}</div>`;
+}
+function wxPoints() { // 관측(부이 b·관측소 t) + 모델(m) 합치기
+  const out = [];
+  ((WX.d && WX.d.pts) || []).forEach(x => out.push({ c: x.c, nm: x.nm, lat: x.lat, lon: x.lon, wd: x.wd, ws: x.ws, wh: x.wh, t: wxT(x.t), k: x.src === 'b' ? 'b' : 't' }));
+  (WX.model || []).forEach(x => out.push(x));
+  return out;
+}
+function renderWx() {
+  const el = $('wxBody'); if (!el) return;
+  const pts = wxPoints(), on = [], off = [];
+  pts.forEach(p => { if (WX_OFF.includes(p.c)) off.push(p); else if (WX_POS[p.c] && p.lat != null) on.push(p); });
+  let lines = '', mk = '';
+  on.forEach(p => { const [x, y] = wxXY(p.lat, p.lon), c = WX_POS[p.c]; lines += `<line x1="${x.toFixed(2)}" y1="${y.toFixed(2)}" x2="${c[0]}" y2="${c[1]}" stroke="#16233b" stroke-width=".5" vector-effect="non-scaling-stroke"/>`; mk += `<i class="wxdot" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"></i>` + wxCard(p, 'wxk', c, p.k === 'm' ? '모델' : ''); });
+  const mapHtml = `<svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>${mk}`;
+  const chips = off.map(p => wxCard(p, 'wxchip', null, WX_OFFTXT[p.c] || '')).join('');
+  const rows = pts.filter(p => p.ws != null).sort((a, b) => b.ws - a.ws).map(p => `<div class="wxrow ${wxLvl(p.ws, p.wh)}"><div class="rn"><b>${esc(p.nm)}</b><small>${p.t} · ${p.k === 'b' ? '부이' : p.k === 't' ? '관측소' : '예측모델'}${WX_OFF.includes(p.c) ? ' · 구역 밖' : ''}</small></div><div class="rw">${wxArrow(p.ws === 0 ? null : p.wd)}<span>${p.ws === 0 ? '무풍' : wxDir(p.wd)}</span></div><div class="rs"><b>${p.ws.toFixed(1)}</b><small>m/s</small></div><div class="rh">${p.wh != null ? `<b>${p.wh.toFixed(1)}</b><small>m</small>` : '<small>-</small>'}</div></div>`).join('');
+  const d = WX.at ? new Date(WX.at) : null, hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
+  const err = WX.err ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.err)}</p></div>` : '';
+  el.innerHTML = `<div class="wxlinks"><a href="${WXLINK_1}" target="_blank" rel="noopener">① 기상특보<small>날씨누리 ↗</small></a><span>② 관제구역<small>풍향·풍속·파고</small></span><a href="${WXLINK_3}" target="_blank" rel="noopener">③ 해상특보<small>해양기상포털 ↗</small></a></div>${err}
+  <div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
+  <div class="wxmap" id="wxMap">${mapHtml}</div>${chips ? `<div class="wxsub">관제구역 밖 (참고)</div>${chips}` : ''}
+  <div class="wxlg"><span><i style="background:#2f7be8"></i>보통</span><span><i style="background:#f59e0b"></i>주의 풍속10↑·파고2↑</span><span><i style="background:#e03b3b"></i>위험 풍속14↑·파고3↑</span></div>
+  <div class="wxlg"><span>실선=부이(파고 포함)</span><span>점선=관측소(풍향·풍속만)</span><span>작은 점선=예측모델(관측 아님)</span></div><div class="wxnote">지도를 누르면 크게 볼 수 있습니다.</div></div>
+  <div class="card"><div class="wxhd"><span>지점 (풍속 센 순)</span><span>바람</span><span>풍속</span><span>파고</span></div>${rows || '<p class="mut">자료를 불러오는 중…</p>'}<div class="wxnote">화살표는 바람이 불어가는 쪽입니다. 부이·관측소는 해양조사원 최신 관측값(시각 표시), 모델은 Open-Meteo 예측으로 실제 관측이 아닙니다. 서귀포 등 항구 관측소는 지형 영향을 받을 수 있습니다.</div></div>`;
+  $('wxRef').onclick = () => loadMarine(true);
+  $('wxMap').onclick = wxBig;
+}
+function wxBig() {
+  const m = $('wxMap'); if (!m) return;
+  const o = document.createElement('div'); o.id = 'wxBig';
+  o.innerHTML = `<div class="bar"><span>지도 확대 (밀어서 이동)</span><button id="wxBigX">닫기</button></div><div class="sc"><div class="wxmap">${m.innerHTML}</div></div>`;
+  document.body.appendChild(o); o.querySelector('#wxBigX').onclick = () => o.remove();
+}
+async function wxLoadModel() { // 관측소가 없는 바다 3곳: Open-Meteo 격자 예측(실제 관측 아님)
+  if (WX.model && Date.now() - WX.mt < 10 * 60e3) return;
+  try {
+    const la = WX_MODEL.map(x => x[2]).join(','), lo = WX_MODEL.map(x => x[3]).join(',');
+    const [a, b] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FSeoul`).then(r => r.json()),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&current=wave_height&timezone=Asia%2FSeoul`).then(r => r.json()).catch(() => null)]);
+    const A = Array.isArray(a) ? a : [a], B = b ? (Array.isArray(b) ? b : [b]) : [];
+    WX.model = WX_MODEL.map((x, i) => { const c = A[i] && A[i].current || {}, w = B[i] && B[i].current || {}; return c.wind_speed_10m == null ? null : { c: x[0], nm: x[1], lat: x[2], lon: x[3], wd: c.wind_direction_10m, ws: Math.round(c.wind_speed_10m * 10) / 10, wh: w.wave_height != null ? w.wave_height : null, t: wxT(c.time), k: 'm' }; }).filter(Boolean);
+    WX.mt = Date.now();
+  } catch (e) { /* 모델 값이 없으면 그 3곳만 안 보임 */ }
+}
+async function loadMarine(force) {
+  if (WX.busy) return; if (!S.token) { WX.err = '앱 등록 후 볼 수 있습니다(설정에서 등록)'; renderWx(); return; }
+  if (!force && WX.d && Date.now() - WX.at < 5 * 60e3) { renderWx(); return; }
+  WX.busy = true; renderWx();
+  try { WX.d = await libCall('/marine'); WX.err = ''; WX.at = Date.now(); } catch (e) { WX.err = '관측 자료를 불러오지 못했습니다: ' + e.message; }
+  await wxLoadModel(); WX.busy = false; renderWx();
+}
+function startWx() { renderWx(); loadMarine(false); stopWx(); WX.timer = setInterval(() => { if (!document.hidden) loadMarine(false); }, 60e3); }
+function stopWx() { if (WX.timer) { clearInterval(WX.timer); WX.timer = null; } }
+
 // ---- 탭 ----
 function goTab(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.t === t));
@@ -301,6 +395,7 @@ function goTab(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
   if (t === 'my') startMy(); else stopMy();
   if (t === 'board') startBoard();
   if (t === 'lib') startLib();
+  if (t === 'wx') startWx(); else stopWx();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => goTab(b.dataset.t));
 
