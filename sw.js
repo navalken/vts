@@ -19,16 +19,17 @@ self.addEventListener('push', event => {
   }
   const title = d.title || 'VTS 근무 알림';
   const card = d.card && typeof d.card === 'object' ? d.card : null;
+  // 알림 종류: 대기 q / 휴게 r / 그 외 근무. 상태 표시줄 작은 아이콘(흰색 실루엣)을 종류별로 고름
+  const kind = card ? (card.k === 'q' ? 'wait' : card.k === 'r' ? 'rest' : 'work') : 'work';
   const opts = {
     body: (d.body != null ? d.body : '알림이 도착했습니다.'),
-    icon: 'icon-192.png',
-    badge: 'icon-192.png',
+    // icon 생략: 접힌 알림 오른쪽 큰 그림을 빼서 글자 자리를 넓힘
+    badge: 'img/b-' + kind + '.png',
     tag: d.tag || ('vts-' + Date.now()),
     data: { url: card ? cardUrl(card) : (d.url || new URL('app.html', self.registration.scope).href), receivedAt: Date.now() }
   };
   // 갤럭시(크롬)는 알림을 펼치면 큰 그림이 보임. 아이폰은 이 옵션을 무시하고 눌러야 카드가 열림
   if (card) {
-    const kind = card.k === 'q' ? 'wait' : card.k === 'r' ? 'rest' : 'work';
     try { opts.image = new URL('img/n-' + kind + '-' + (card.sh === 'night' ? 'night' : 'day') + '.jpg', self.registration.scope).href; } catch (_) { /* 그림 없이 */ }
   }
   event.waitUntil(self.registration.showNotification(title, opts));

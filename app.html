@@ -129,7 +129,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .cells{display:flex;gap:4px;container-type:inline-size;--k:8}
 .cell{--c:#2f7be8;--w:calc((100cqw - 4px*(var(--k) - 1))/var(--k));flex:0 0 var(--w);min-width:0;height:calc(var(--w)*1.7);min-height:62px;border-radius:11px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.27);line-height:1.1;position:relative;overflow:hidden;white-space:nowrap}
 .cell.rest{--c:#f59e0b}.cell.wait{--c:#22a45d}
-.cell img{width:calc(var(--w)*.62);height:calc(var(--w)*.62);margin-bottom:2px}
+.cell img{width:calc(var(--w)*.62);height:calc(var(--w)*.62);margin-bottom:2px;object-fit:contain}
 .cell .nm{font-size:calc(var(--w)*.55);line-height:1;font-weight:900}
 .cell.nx{background:color-mix(in srgb,var(--c) 22%,#fff)}
 .cell.cur{background:var(--c);color:#fff;box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent);animation:myPulse 1.9s ease-out infinite;z-index:1}
@@ -148,7 +148,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .hero{--c:#2f7be8;grid-column:1/-1;border-radius:14px;padding:9px 12px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 14%,#fff),color-mix(in srgb,var(--c) 5%,#fff));border:1.5px solid color-mix(in srgb,var(--c) 40%,#fff);box-shadow:0 1px 6px rgba(20,60,120,.1)}
 .hero.rest{--c:#f59e0b}.hero.wait{--c:#22a45d}
 .hero .hh{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;color:var(--c)}
-.hero .hh img{width:30px;height:30px}
+.hero .hh img{width:30px;height:30px;object-fit:contain}
 .hero .hrow{display:flex;align-items:baseline;gap:12px;margin-top:4px;flex-wrap:wrap}
 .hero .hp{font-size:28px;font-weight:900;line-height:1;color:#12284a}
 .hero .ht{font-size:16px;font-weight:700;color:#344054;font-variant-numeric:tabular-nums}
@@ -159,7 +159,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .mini{--c:#2f7be8;border-radius:14px;padding:7px 9px;background:#fff;border:1.5px solid color-mix(in srgb,var(--c) 30%,#fff);box-shadow:0 1px 6px rgba(20,60,120,.08);min-width:0}
 .mini.rest{--c:#f59e0b}.mini.wait{--c:#22a45d}.mini.none{--c:#98a1b0;background:#f7f8fa}
 .mini .mh2{display:flex;align-items:center;gap:5px;font-weight:800;font-size:12px;color:var(--c)}
-.mini .mh2 img{width:24px;height:24px;flex:none}
+.mini .mh2 img{width:24px;height:24px;flex:none;object-fit:contain}
 .mini .mp{white-space:nowrap;font-size:19px;font-weight:900;margin-top:4px;line-height:1.05}
 .mini .mt{font-size:12.5px;font-weight:700;color:#344054;margin-top:2px;font-variant-numeric:tabular-nums}
 .mini .mi{font-size:12px;font-weight:800;color:var(--c);margin-top:3px}
@@ -677,7 +677,7 @@ function myTimeline(m, now) {
       const ch = items.slice(o, o + per), k = Math.max(per, 5);
       const ai = anchor && anchor.row === ri ? ch.findIndex(x => x.c === anchor) : -1;
       const cap = ai >= 0 ? `<div class="cps"><img src="img/cap-${capK}.png" alt="" style="left:clamp(26px,${(ai + .5) / k * 100}%,calc(100% - 26px))"></div>` : '<div class="cps thin"></div>';
-      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-desk.png" alt=""><span>대기</span>' : secLab(c.place)}</div>`; }).join('');
+      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-hourglass.png" alt=""><span>대기</span>' : secLab(c.place)}</div>`; }).join('');
       const lb = ch.map(x => { const t = hm(x.flag ? duty.to : x.c.from); return `<i>${t.slice(3) === '00' ? t.slice(0, 2) : t}</i>`; }).join('');
       out += `${cap}<div class="cells" style="--k:${k}">${cs}</div><div class="lbs" style="--k:${k}">${lb}</div>`;
     }
@@ -686,7 +686,7 @@ function myTimeline(m, now) {
   return `<div class="card tl"><div class="tlh"><b>오늘의 근무 일정</b><span class="chip2">${myChip(duty)}</span></div>${rows}
     <div class="lgd"><span><i style="background:#2f7be8"></i>근무</span><span><i style="background:#f59e0b"></i>휴게</span><span><i style="background:#22a45d"></i>대기</span><span><i style="background:#d4d9e1"></i>지난 칸 ✕</span></div></div>`;
 }
-const KICON = { work: 'ic-helm', rest: 'ic-coffee', wait: 'ic-desk' };
+const KICON = { work: 'ic-desk', rest: 'ic-coffee', wait: 'ic-hourglass' };
 function myHero(m, now) {
   const c = m.cur;
   if (m.st === 'pre') { const f = m.first, k = MYK(f.place); return `<div class="hero ${k}"><div class="hh"><img src="img/${KICON[k]}.png" alt=""><span>첫 근무</span></div><div class="hrow"><span class="hp">${esc(f.place)}</span><span class="ht">${hm(f.from)} ~ ${hm(f.to)}</span></div><div class="hl" id="myLeft">${fmtIn(f.from - now)} 후 시작</div></div>`; }

@@ -732,21 +732,23 @@ function computeAlerts(halves,date,lead,prevHO){
       else runs.push({place:z.place,g0:z.gi,g1:z.gi});
     });
     runs.forEach((r,k)=>{
-      const c0=cols[r.g0], c1=cols[r.g1], range=hm(c0.s)+'~'+hm(c1.e);
-      const title=isRest(r.place)?`휴게 ${range} · ${lead}분 전`:isWait(r.place)?`대기 근무 ${range} · ${lead}분 전`:`${r.place} 근무 ${range} · ${lead}분 전`;
+      const c0=cols[r.g0], c1=cols[r.g1], range=hm(c0.s)+'~'+hm(c1.e), rng2=hm(c0.s)+'-'+hm(c1.e);
+      const title=isRest(r.place)?'휴게알림':isWait(r.place)?'대기알림':'근무알림';
+      const first=isRest(r.place)?`휴게 ${rng2} ${lead}분전`:isWait(r.place)?`대기 ${rng2} ${lead}분전`:`${r.place} 근무 ${rng2} ${lead}분전`;
+      const cur2=[]; // 둘째 줄: 현 근무자 + 다음(인수자)을 한 줄로
       const lines=[];
       const card={me:name,k:isRest(r.place)?'r':isWait(r.place)?'q':'w',p:r.place,s:hm(c0.s),rg:range,l:lead,sh:c0.h}; // 카드 화면용 데이터(정보 없으면 해당 키 생략)
       if(isWork(r.place)){ // 현 섹터 근무자: 이 칸 바로 앞 칸에서 그 섹터에 있던 사람
         let names;
         if(r.g0>0&&cols[r.g0-1].s!=null) names=cols[r.g0-1].occ.filter(o=>o.place===r.place&&o.name!==name).map(o=>o.name);
         else { const v=prevHO&&prevHO[r.place]; names=(v&&v.length)?v.filter(n=>n!==name):null; } // 첫 칸: 직전 팀 정보가 없으면 정보없음
-        if(names===null) lines.push(`현 ${r.place} 근무자 정보없음`);
-        else if(names.length){ lines.push(`현 ${r.place} 근무자 ${uniq(names).join(', ')}`); card.cur=uniq(names); }
+        if(names===null) cur2.push(`현 ${r.place} 정보없음`);
+        else if(names.length){ cur2.push(`현 ${r.place} ${uniq(names).join(',')}`); card.cur=uniq(names); }
       }
       const pr=runs[k-1]; // 지금까지 근무 중이었다면: 내 섹터에 다음에 들어올 사람
       if(pr&&pr.g1===r.g0-1&&isWork(pr.place)){
         const nm=uniq(c0.occ.filter(o=>o.place===pr.place&&o.name!==name).map(o=>o.name));
-        if(nm.length){ lines.push(`현 ${pr.place} 인수자 ${nm.join(', ')}`); card.rv={p:pr.place,n:nm}; }
+        if(nm.length){ cur2.push(`다음 ${pr.place} ${nm.join(',')}`); card.rv={p:pr.place,n:nm}; }
       }
       if(isWait(r.place)){ // 같은 시간대에 함께 대기하는 다른 사람(카드 화면에서만 표시)
         const ms=[]; for(let g=r.g0;g<=r.g1;g++) cols[g].occ.forEach(o=>{ if(o.place==='대기'&&o.name!==name&&!ms.includes(o.name)) ms.push(o.name); });
@@ -754,7 +756,7 @@ function computeAlerts(halves,date,lead,prevHO){
       }
       const nx=runs[k+1]; // 이어지는 다음 칸(없거나 떨어져 있으면 생략)
       if(nx&&nx.g0===r.g1+1&&cols[nx.g0].s!=null) card.nx={k:isRest(nx.place)?'r':isWait(nx.place)?'q':'w',p:nx.place,s:hm(cols[nx.g0].s),rg:hm(cols[nx.g0].s)+'~'+hm(cols[nx.g1].e)};
-      alerts.push({name,at:base+(c0.s-lead)*60000,title,body:lines.join('\n'),shift:c0.h,card});
+      alerts.push({name,at:base+(c0.s-lead)*60000,title,body:[first].concat(cur2.length?[cur2.join(' ')]:[]).join('\n'),shift:c0.h,card});
     });
   });
   return alerts;
