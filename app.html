@@ -562,6 +562,8 @@ function renderInfo() {
   <div class="card">
     <h3>🔔 알림</h3>
     <div class="mut" id="iPerm"></div>
+    <button id="iMute" class="sec"></button>
+    <div class="mut" style="margin:4px 0 8px">끄면 근무 알림이 이 앱으로 오지 않습니다. 관리자 명단에는 "알림 꺼짐"으로 표시됩니다.</div>
     <button id="iTest" class="sec">시험 알림 보내기</button>
     <button id="iRe" class="sec">이 기기 알림 다시 등록</button>
     <div class="msg" id="iMsg2" hidden></div>
@@ -583,6 +585,15 @@ function renderInfo() {
     try { const j = await api('/me/test-push', 'POST', {}); say($('iMsg2'), j.status === 201 ? '✅ 보냈습니다. 몇 초 안에 알림이 와야 합니다. 안 오면 기기 알림 설정·절전 모드를 확인하세요.' : ('푸시 서비스 응답 ' + j.status + (j.status === 404 || j.status === 410 ? ' — 등록이 만료됐습니다. "다시 등록"을 누르세요.' : '')), j.status === 201 ? 'ok' : 'bad'); }
     catch (e) { say($('iMsg2'), e.message, 'bad'); }
   };
+  const paintMute = () => { $('iMute').textContent = S.me.muted ? '🔔 알림 켜기' : '🔕 알림 끄기'; $('iMute').style.cssText = S.me.muted ? 'background:#2f8fff;color:#fff' : ''; };
+  paintMute();
+  $('iMute').onclick = async () => {
+    try {
+      if (S.me.muted) { await subscribeAndRegister(S.me.team, S.me.name, S.code); say($('iMsg2'), '🔔 알림을 켰습니다.', 'ok'); }
+      else { const j = await api('/me', 'POST', { muted: true }); S.me = j.person; say($('iMsg2'), '🔕 알림을 껐습니다. 다시 받으려면 "알림 켜기"를 누르세요.', 'ok'); }
+      paintMute();
+    } catch (e) { say($('iMsg2'), e.message, 'bad'); }
+  };
   $('iRe').onclick = async () => {
     try { await subscribeAndRegister(S.me.team, S.me.name, S.code); say($('iMsg2'), '다시 등록했습니다.', 'ok'); } catch (e) { say($('iMsg2'), e.message, 'bad'); }
   };
@@ -603,7 +614,7 @@ async function renderAdmin() {
     const list = S.people.filter(p => p.team === t).map((p, i) => [p, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
     h += `<div class="tc"><h3>${t}팀<small>${list.length}명</small></h3>`;
     list.forEach(p => {
-      const sub = [p.role ? ROLE[p.role] : '', !p.registered ? '앱 미등록' : ''].filter(Boolean).join(' · ');
+      const sub = [p.role ? ROLE[p.role] : '', !p.registered ? '앱 미등록' : p.muted ? '알림 꺼짐' : ''].filter(Boolean).join(' · ');
       h += `<div class="pc ${p.pos === '팀장' ? 'lead' : p.pos === '부팀장' ? 'sub' : ''} ${p.status === '휴직' ? 'leave' : ''} ${canEditP(p) ? 'can' : ''}" ${canEditP(p) ? `data-edit="${esc(p.name)}"` : ''}>
         <b>${esc(p.name)}</b><small>${esc(p.pos || '팀원')} · ${esc(p.status)}</small>${sub ? `<small>${esc(sub)}</small>` : ''}
         ${p.phone ? `<a class="tel" href="tel:${esc(p.phone.replace(/[^0-9+]/g, ''))}" aria-label="${esc(p.name)} 전화">📞</a>` : ''}</div>`;
