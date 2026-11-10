@@ -351,7 +351,7 @@ function renderWx() {
   const rows = pts.filter(p => p.ws != null).sort((a, b) => b.ws - a.ws).map(p => `<div class="wxrow ${wxLvl(p.ws, p.wh)}"><div class="rn"><b>${esc(p.nm)}</b><small>${p.t} · ${p.k === 'b' ? '부이' : p.k === 't' ? '관측소' : '예측모델'}${WX_OFF.includes(p.c) ? ' · 구역 밖' : ''}</small></div><div class="rw">${wxArrow(p.ws === 0 ? null : p.wd)}<span>${p.ws === 0 ? '무풍' : wxDir(p.wd)}</span></div><div class="rs"><b>${p.ws.toFixed(1)}</b><small>m/s</small></div><div class="rh">${p.wh != null ? `<b>${p.wh.toFixed(1)}</b><small>m</small>` : '<small>-</small>'}</div></div>`).join('');
   const d = WX.at ? new Date(WX.at) : null, hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
   const err = WX.err ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.err)}</p></div>` : '';
-  el.innerHTML = `<div class="wxlinks"><a href="${WXLINK_1}" target="_blank" rel="noopener">① 기상특보<small>날씨누리 ↗</small></a><span>② 관제구역<small>풍향·풍속·파고</small></span><a href="${WXLINK_3}" target="_blank" rel="noopener">③ 해상특보<small>해양기상포털 ↗</small></a><a href="${WXLINK_4}" target="_blank" rel="noopener">④ 윈디<small>바람지도 ↗</small></a></div>${err}
+  el.innerHTML = `<div class="wxlinks"><a href="${WXLINK_1}" data-ext="1">① 기상특보<small>날씨누리 ↗</small></a><span>② 관제구역<small>풍향·풍속·파고</small></span><a href="${WXLINK_3}" data-ext="1">③ 해상특보<small>해양기상포털 ↗</small></a><a href="${WXLINK_4}" data-ext="1">④ 윈디<small>바람지도 ↗</small></a></div>${err}
   <div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
   <div class="wxmap" id="wxMap">${mapHtml}</div>${chips ? `<div class="wxsub">관제구역 밖 (참고)</div>${chips}` : ''}
   <div class="wxlg"><span><i style="background:#2f7be8"></i>보통</span><span><i style="background:#f59e0b"></i>주의 풍속10↑·파고2↑</span><span><i style="background:#e03b3b"></i>위험 풍속14↑·파고3↑</span></div>
@@ -400,8 +400,18 @@ function goTab(t) {
   show(t);
 }
 function navBack() { const d = navState().d || 0; if (d > 0) history.back(); else show('my'); }
+let EXIT_AT = 0;
+function exitToast() {
+  let el = document.getElementById('exitToast');
+  if (!el) { el = document.createElement('div'); el.id = 'exitToast'; el.textContent = '한 번 더 누르면 종료됩니다'; el.style.cssText = 'position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:rgba(20,30,50,.92);color:#fff;padding:11px 18px;border-radius:22px;font-size:14px;font-weight:700;z-index:9999;pointer-events:none;transition:opacity .25s'; document.body.appendChild(el); }
+  el.style.opacity = '1'; clearTimeout(el._t); el._t = setTimeout(() => { el.style.opacity = '0'; }, 1800);
+}
 window.addEventListener('popstate', e => {
   const st = e.state || { t: 'my', d: 0 };
+  if (st.g) { // 내 근무에서 뒤로가기: 2초 안에 한 번 더 눌러야 종료
+    if (Date.now() - EXIT_AT < 2000) { history.back(); return; }
+    EXIT_AT = Date.now(); exitToast(); try { history.pushState({ t: 'my', d: 0 }, ''); } catch (_) { /* 무시 */ } show('my'); return;
+  }
   const big = document.getElementById('wxBig');
   if (big && !st.big) { big.remove(); if (st.t === CURT) return; }
   if (st.big) return;
@@ -916,7 +926,7 @@ function renderLib() {
     h = `<h2><button class="bk" data-a="go" data-v="folders">‹ 자료모음</button>${esc(f.name)}</h2>` + (fs.length ? fs.map(x => { const k = libKind(x.name); return `<div class="lc fl"><div class="ti" style="background:${k[1]}">${k[0]}</div><div class="tx"><b>${esc(x.name)}${Date.now() - x.at < 3 * 86400e3 ? '<span class="new">NEW</span>' : ''}</b><small>${esc(x.by)} · ${libDate(x.at)} · ${libSize(x.size)}</small></div><a class="dl" href="${esc(base())}/lib/file?id=${esc(x.id)}&t=${tk}" target="_blank" rel="noopener" aria-label="열기">⬇</a>${(admin || x.by === me) ? `<button class="sm d" data-a="xdel" data-id="${esc(x.id)}">삭제</button>` : ''}</div>`; }).join('') : '<div class="lc empty">아직 자료가 없어요.<br>첫 자료를 올려 주세요!</div>') +
       `<button class="btn" data-a="xadd">⬆ 자료 올리기</button><p class="mutc">파일 하나 ${Math.round(d.limits.file / 1048576)}MB까지 · 올린 사람과 총괄관리자가 삭제할 수 있어요</p>`;
   } else {
-    h = `<h2><button class="bk" data-a="go" data-v="home">‹ 라이브러리</button>바로가기</h2>` + d.links.map(l => `<div class="lc lk"><a class="go" href="${esc(l.url)}" target="_blank" rel="noopener"><div class="ic">${esc(l.emoji)}</div><span>${esc(l.name)}</span><span class="ar">↗</span></a><button class="sm" data-a="ledit" data-id="${esc(l.id)}">✎</button>${admin ? `<button class="sm d" data-a="ldel" data-id="${esc(l.id)}">삭제</button>` : ''}</div>`).join('') + `<button class="btn o" data-a="ladd">＋ 링크 추가</button>`;
+    h = `<h2><button class="bk" data-a="go" data-v="home">‹ 라이브러리</button>바로가기</h2>` + d.links.map(l => `<div class="lc lk"><a class="go" href="${esc(l.url)}" data-ext="1"><div class="ic">${esc(l.emoji)}</div><span>${esc(l.name)}</span><span class="ar">↗</span></a><button class="sm" data-a="ledit" data-id="${esc(l.id)}">✎</button>${admin ? `<button class="sm d" data-a="ldel" data-id="${esc(l.id)}">삭제</button>` : ''}</div>`).join('') + `<button class="btn o" data-a="ladd">＋ 링크 추가</button>`;
   }
   el.innerHTML = `<div class="lib">${h}</div>`;
 }
@@ -1007,6 +1017,10 @@ function lvActionSheet(sec, tagOnly) {
     <button class="sec" onclick="closeModal()">닫기</button>`);
   const g = $('lvToDir'); if (g) g.onclick = () => lvDirSheet(sec);
 }
+document.addEventListener('click', e => { // 외부 링크는 같은 창에서 열고, 뒤로 돌아오면 보던 화면으로
+  const a = e.target.closest('a[data-ext]');
+  if (a) { try { sessionStorage.setItem('vts_ret', JSON.stringify({ t: CURT, l: [LIBS.view, LIBS.folder || null], at: Date.now() })); } catch (_) { /* 무시 */ } }
+});
 document.addEventListener('click', e => {
   const c = e.target.closest('[data-sec]');
   if (c) lvActionSheet(c.dataset.sec, c.dataset.tagonly === '1'); else if (e.target.id === 'lvRef') loadLive();
@@ -1049,8 +1063,21 @@ function openEdit(p) {
   if ($('eDel')) $('eDel').onclick = () => { if (confirm(`${p.name}님을 명단에서 삭제할까요?`)) run(() => api('/admin/person', 'POST', { action: 'delete', name: p.name })); };
 }
 
-try { history.replaceState({ t: 'my', d: 0 }, ''); } catch (_) { /* 무시 */ }
-show('my');
+(function startNav() {
+  let ret = null;
+  try { ret = JSON.parse(sessionStorage.getItem('vts_ret') || 'null'); sessionStorage.removeItem('vts_ret'); } catch (_) { /* 무시 */ }
+  let fresh = true; try { const n = performance.getEntriesByType('navigation')[0]; fresh = !n || n.type === 'navigate'; } catch (_) { /* 무시 */ }
+  try {
+    if (fresh) { history.replaceState({ g: 1 }, ''); history.pushState({ t: 'my', d: 0 }, ''); }
+    else if (!(history.state && history.state.t)) history.replaceState({ t: 'my', d: 0 }, '');
+  } catch (_) { /* 무시 */ }
+  show('my');
+  if (ret && ret.t && ret.t !== 'my' && Date.now() - (ret.at || 0) < 3600000) { // 외부 링크에서 돌아옴 → 보던 화면 복원
+    if (ret.t === 'lib' && ret.l) { LIBS.view = ret.l[0]; LIBS.folder = ret.l[1]; }
+    try { if (!(history.state && history.state.t === ret.t)) history.pushState({ t: ret.t, d: 1 }, ''); } catch (_) { /* 무시 */ }
+    show(ret.t);
+  }
+})();
 </script>
 </body>
 </html>
