@@ -609,6 +609,7 @@ async function renderAdmin() {
   const me = S.me; const roleTxt = me.role ? ROLE[me.role] + (me.role === 'teamadmin' ? ` (${me.team}팀)` : '') : '일반 (보기만 가능)';
   let h = backBar('관리자 관리') + `<div class="card" style="padding:12px"><div class="mut">내 권한: <b>${roleTxt}</b></div></div>`;
   const rank = p => p.pos === '팀장' ? 0 : p.pos === '부팀장' ? 1 : 2;
+  if (['1', '2', '3'].some(canAddTeam)) h += '<button id="bulkBtn" class="sec" style="margin:0 0 10px">📋 명단 한꺼번에 추가</button>';
   h += '<div class="tg">';
   ['1', '2', '3'].forEach(t => {
     const list = S.people.filter(p => p.team === t).map((p, i) => [p, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
@@ -626,6 +627,7 @@ async function renderAdmin() {
   $('setBody').innerHTML = h; wireBack();
   document.querySelectorAll('[data-edit]').forEach(b => b.onclick = e => { if (e.target.closest('a')) return; openEdit(S.people.find(p => p.name === b.dataset.edit)); });
   document.querySelectorAll('[data-add]').forEach(b => b.onclick = () => openAdd(b.dataset.add));
+  if ($('bulkBtn')) $('bulkBtn').onclick = openBulk;
 }
 
 
@@ -1041,6 +1043,39 @@ function openModal(html) { $('sheet').innerHTML = html; $('modal').hidden = fals
 function closeModal() { $('modal').hidden = true; }
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
 
+function parseRoster(text, defTeam) {
+  const out = [];
+  String(text || '').split(/\r?\n/).forEach(line => {
+    const raw = line.trim(); if (!raw) return;
+    const pm = raw.match(/01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}/);
+    let phone = '', rest = raw;
+    if (pm) { const d = pm[0].replace(/\D/g, ''); phone = d.length === 11 ? d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7) : d.slice(0, 3) + '-' + d.slice(3, 6) + '-' + d.slice(6); rest = raw.replace(pm[0], ' '); }
+    let team = defTeam; const tm = rest.match(/([123])\s*팀/) || rest.match(/^\s*([123])[\s,\t]/);
+    if (tm) { team = tm[1]; rest = rest.replace(tm[0], ' '); }
+    const name = rest.replace(/[,\t|]/g, ' ').trim().split(/\s+/).filter(Boolean).join('');
+    if (name) out.push({ team, name, phone });
+  });
+  return out;
+}
+function openBulk() {
+  openModal(`<h3>명단 한꺼번에 추가</h3>
+    <div class="mut" style="margin-bottom:6px">한 줄에 한 명: <b>이름 전화번호</b> (팀이 줄에 없으면 아래 선택한 팀으로 들어갑니다. 이미 있는 이름은 건너뜁니다.)</div>
+    <label>팀</label><select id="bTeam"><option>1</option><option>2</option><option>3</option></select>
+    <textarea id="bText" rows="8" placeholder="소남우 010-2007-5923&#10;김중근 010-5206-9436" style="width:100%;box-sizing:border-box;font-size:15px"></textarea>
+    <div class="mut" id="bCnt" style="margin:4px 0">0명 인식</div>
+    <button id="bSave">등록</button><button class="sec" id="bCancel">닫기</button><div class="msg" id="bMsg" hidden></div>`);
+  const upd = () => { const l = parseRoster($('bText').value, $('bTeam').value); $('bCnt').textContent = l.length + '명 인식' + (l.length ? ' (전화번호 ' + l.filter(x => x.phone).length + '명)' : ''); };
+  $('bText').oninput = upd; $('bTeam').onchange = upd;
+  $('bCancel').onclick = closeModal;
+  $('bSave').onclick = async () => {
+    const items = parseRoster($('bText').value, $('bTeam').value); if (!items.length) return say($('bMsg'), '등록할 줄이 없습니다', 'bad');
+    try {
+      const j = await api('/admin/person', 'POST', { action: 'bulk', items });
+      const msg = `추가 ${j.added.length}명` + (j.updated.length ? ` · 번호 보충 ${j.updated.length}명` : '') + (j.skipped.length ? ` · 건너뜀 ${j.skipped.length}명(이미 있음: ${j.skipped.join(', ')})` : '') + (j.errors.length ? ` · 오류 ${j.errors.length}건: ${j.errors.join(', ')}` : '');
+      say($('bMsg'), msg, j.errors.length ? 'bad' : 'ok'); renderAdmin();
+    } catch (e) { say($('bMsg'), e.message, 'bad'); }
+  };
+}
 function openAdd(team) {
   openModal(`<h3>${team}팀 직원 추가</h3>
     <label>이름</label><input id="aName" maxlength="20">
