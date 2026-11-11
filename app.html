@@ -540,11 +540,22 @@ function stopWx() { if (WX.timer) { clearInterval(WX.timer); WX.timer = null; } 
 // 뒤로가기: 화면 이동을 브라우저 기록에 남겨 '내 근무 → 다른 화면 → 뒤로 = 내 근무', 내 근무에서 뒤로 = 앱 종료
 let CURT = 'my';
 function navState() { return history.state && typeof history.state === 'object' ? history.state : { t: 'my', d: 0 }; }
+const TABBASE = {};
+function resetTab(t) { // 이미 열린 탭을 다시 누르면 그 탭의 첫 화면으로
+  const big = document.getElementById('wxBig'); if (big) big.remove();
+  if (t === 'set') S.view = 'home';
+  if (t === 'lib') { LIBS.view = 'home'; LIBS.folder = null; }
+  if (t === 'wx') { WX.mode = 'wind'; WX.tq = ''; WX.treg = ''; }
+  const d = navState().d || 0, bs = TABBASE[t] || d;
+  try { if (d > bs) history.go(bs - d); else if (d > 0) history.replaceState({ t, d, v: S.view }, ''); } catch (_) { /* 무시 */ }
+  show(t); window.scrollTo(0, 0);
+}
 function goTab(t) {
   const cur = navState(), d = cur.d || 0;
-  if (t === 'my') { if (d > 0) { history.go(-d); return; } show('my'); return; }
-  if (cur.t === t && !cur.big) { show(t); return; }
+  if (CURT === t && t !== 'my') { resetTab(t); return; }
+  if (t === 'my') { if (d > 0) { history.go(-d); return; } show('my'); window.scrollTo(0, 0); return; }
   try { if (d === 0) history.pushState({ t, d: 1, v: S.view }, ''); else history.replaceState({ t, d, v: S.view }, ''); } catch (_) { /* 기록 실패해도 화면은 이동 */ }
+  TABBASE[t] = d === 0 ? 1 : d;
   show(t);
 }
 function navBack() { const d = navState().d || 0; if (d > 0) history.back(); else show('my'); }
@@ -564,7 +575,7 @@ window.addEventListener('popstate', e => {
   if (big && !st.big) { big.remove(); if (st.t === CURT) return; }
   if (st.big) return;
   if (st.t === 'set') S.view = st.v || 'home';
-  if (st.t === 'lib' && st.l) { LIBS.view = st.l[0]; LIBS.folder = st.l[1]; }
+  if (st.t === 'lib') { if (st.l) { LIBS.view = st.l[0]; LIBS.folder = st.l[1]; } else { LIBS.view = 'home'; LIBS.folder = null; } }
   show(st.t || 'my');
 });
 function show(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
