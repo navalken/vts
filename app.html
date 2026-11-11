@@ -137,13 +137,13 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .cell img{width:calc(var(--w)*.62);height:calc(var(--w)*.62);margin-bottom:2px;object-fit:contain}
 .cell .nm{font-size:calc(var(--w)*.55);line-height:1;font-weight:900}
 .cell.nx{background:color-mix(in srgb,var(--c) 22%,#fff)}
-.cell.cur{background:var(--c);color:#fff;box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 60%,transparent);animation:myPulse 1.9s ease-out infinite;z-index:1}
+.cell.cur{background:var(--c);color:#fff;box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 6px 5px rgba(255,238,0,.85);animation:myPulse 1.3s ease-in-out infinite;z-index:1}
 .cell.done{background:#eceff3;border-color:#d4d9e1;color:#98a1b0}
 .cell.done>*{opacity:.45}
 .cell.done::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M5 5L19 19M19 5L5 19' stroke='%237b8494' stroke-width='2.4' stroke-linecap='round'/></svg>") center/78% auto no-repeat;opacity:.8}
 .cell.flag{--c:#1f3a73;background:#fff}
 .cell.flag img{width:calc(var(--w)*.7);height:calc(var(--w)*.7)}
-@keyframes myPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--c) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes myPulse{0%,100%{box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 6px 5px rgba(255,238,0,.85)}50%{box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 2px 1px rgba(255,238,0,.2)}}
 @media (prefers-reduced-motion:reduce){.cell.cur{animation:none}}
 .lbs{display:flex;gap:4px;margin-top:4px;margin-bottom:8px}
 .lbs i{flex:0 0 calc((100% - 4px*(var(--k) - 1))/var(--k));min-width:0;overflow:hidden;white-space:nowrap;text-align:center;font-style:normal;font-size:11px;color:#667085;font-weight:700;font-variant-numeric:tabular-nums}
