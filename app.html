@@ -135,7 +135,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .cell{--c:#2f7be8;--w:calc((100cqw - 4px*(var(--k) - 1))/var(--k));flex:0 0 var(--w);min-width:0;height:calc(var(--w)*1.7);min-height:62px;border-radius:11px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);color:var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--w)*.27);line-height:1.1;position:relative;overflow:hidden;white-space:nowrap}
 .cell.rest{--c:#f59e0b}.cell.wait{--c:#22a45d}
 .cell img{width:calc(var(--w)*.62);height:calc(var(--w)*.62);margin-bottom:2px;object-fit:contain}
-.cell .nm{font-size:calc(var(--w)*.55);line-height:1;font-weight:900}
+.cell.hasm img{width:calc(var(--w)*.4);height:calc(var(--w)*.4);margin-bottom:1px}.cell .wm{display:flex;flex-direction:column;align-items:center;margin-top:2px;font-weight:800;font-size:max(7.5px,calc(var(--w)*.24));line-height:1.12;letter-spacing:-.4px;color:#14653a}.cell .wm i{font-style:normal}.cell.cur .wm{color:#fff}.cell .nm{font-size:calc(var(--w)*.55);line-height:1;font-weight:900}
 .cell.nx{background:color-mix(in srgb,var(--c) 22%,#fff)}
 .cell.cur{background:var(--c);color:#fff;box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 6px 5px rgba(255,238,0,.85);animation:myPulse 1.3s ease-in-out infinite;z-index:1}
 .cell.done{background:#eceff3;border-color:#d4d9e1;color:#98a1b0}
@@ -974,7 +974,7 @@ function myTimeline(m, now) {
       const ch = items.slice(o, o + per), k = Math.max(per, 5);
       const ai = anchor && anchor.row === ri ? ch.findIndex(x => x.c === anchor) : -1;
       const cap = ai >= 0 ? `<div class="cps"><img src="img/cap-${capK}.png" alt="" style="left:clamp(26px,${(ai + .5) / k * 100}%,calc(100% - 26px))"></div>` : '<div class="cps thin"></div>';
-      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-hourglass.png" alt=""><span>대기</span>' : secLab(c.place)}</div>`; }).join('');
+      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}${kd === 'wait' && (c.with || []).length ? ' hasm' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-hourglass.png" alt=""><span>대기</span>' + ((c.with || []).length ? `<b class="wm">${c.with.map(n => '<i>' + esc(n) + '</i>').join('')}</b>` : '') : secLab(c.place)}</div>`; }).join('');
       const lb = ch.map(x => { const t = hm(x.flag ? duty.to : x.c.from); return `<i>${t.slice(3) === '00' ? t.slice(0, 2) : t}</i>`; }).join('');
       out += `${cap}<div class="cells" style="--k:${k}">${cs}</div><div class="lbs" style="--k:${k}">${lb}</div>`;
     }
