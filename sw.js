@@ -3,7 +3,7 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 // 카드 화면·그림을 바꿨을 때 이 숫자를 올리면 폰에 남은 예전 화면 대신 새 화면이 열린다
-const CARD_VER = '6';
+const CARD_VER = '7';
 
 // 카드 화면 주소: 알림에 실린 카드 데이터를 주소 뒤(#c=...)에 담아 card.html로 연다
 function cardUrl(card) {
@@ -47,7 +47,9 @@ self.addEventListener('notificationclick', event => {
       if (!('focus' in c)) continue;
       try { await c.focus(); } catch (_) { /* 계속 */ }
       // 아이폰 홈 화면 앱은 navigate()가 조용히 실패하는 경우가 있어, 앱 화면에도 직접 "이 주소로 가라"고 알려 준다
-      try { c.postMessage({ type: 'vts-open', url }); } catch (_) { /* 계속 */ }
+      // 아이폰은 백그라운드에 있던 앱이 깨어나는 데 시간이 걸려, 첫 메시지를 놓칠 수 있다 → 몇 번 더 알린다
+      const tell = () => { try { c.postMessage({ type: 'vts-open', url }); } catch (_) { /* 계속 */ } };
+      tell(); await new Promise(r => setTimeout(r, 400)); tell(); await new Promise(r => setTimeout(r, 1200)); tell();
       try { if ('navigate' in c) { await c.navigate(url); return; } } catch (_) { continue; /* 이 창은 이동 불가 → 아래에서 새 창으로 */ }
       return;
     }

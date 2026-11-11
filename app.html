@@ -465,7 +465,10 @@ async function vtsPendingOpen() { // 누른 알림의 카드 주소가 남아 �
     if (d && d.url && Date.now() - d.t < 120000 && d.url !== location.href) location.href = d.url;
   } catch (_) { /* 구형 브라우저 */ }
 }
-vtsPendingOpen(); document.addEventListener('visibilitychange', () => { if (!document.hidden) vtsPendingOpen(); });
+vtsPendingOpen();
+const vtsPendingBurst = () => { [0, 300, 800, 1600, 3000, 5000].forEach(ms => setTimeout(vtsPendingOpen, ms)); }; // 아이폰은 깨어나는 데 시간이 걸려 여러 번 확인
+document.addEventListener('visibilitychange', () => { if (!document.hidden) vtsPendingBurst(); });
+window.addEventListener('focus', vtsPendingBurst); window.addEventListener('pageshow', vtsPendingBurst);
 try { navigator.serviceWorker.addEventListener('message', e => { const d = e.data; if (d && d.type === 'vts-open' && typeof d.url === 'string' && d.url !== location.href) location.href = d.url; }); } catch (_) { /* 구형 브라우저 */ } // 알림을 누르면 카드 화면으로 이동
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 async function subscribeAndRegister(team, name, code) {
