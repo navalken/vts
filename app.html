@@ -426,16 +426,22 @@ function tdCard(id, p, now) {
   while (cells.length < 4) cells.push('<div class="em">-</div>');
   return `<div class="tdc" data-tp="${id}"><div class="h"><b>${esc(L.n)} <small style="font-size:11px;color:var(--mut)">${esc(L.r)}</small></b>${st}</div><div class="sub">${sub}${L.f ? (p.fb ? ` · <span style="color:#b45309">${esc(L.f)} 기준값</span>` : ' · <span style="color:#6b7a95">좌표 계산</span>') : ''}</div><div class="tdg">${cells.slice(0, 4).join('')}</div></div>`;
 }
+function tdResHtml(now) {
+  const T = WX.td; const q = WX.tq.trim(), res = (q ? T.list.filter(x => x.n.includes(q)) : WX.treg ? T.list.filter(x => x.r === WX.treg) : []).slice(0, 12); tdNeed(res);
+  return (q || WX.treg) ? `<div style="margin-top:6px">${res.map(x => { const pp = T.ports.find(y => y.id === x.id) || (WX.tx || {})[x.id]; return pp ? tdCard(x.id, pp, now) : (WX.txbusy ? '' : ''); }).join('') || '<span class="mut">' + (WX.txbusy ? '불러오는 중…' : '검색 결과가 없습니다') + '</span>'}</div>` : '';
+}
+function tdBindCards(root) { root.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => tdOpen(b.dataset.tp)); }
 function renderTide() {
   const el = $('wxBody'); if (!el) return;
+  if (document.activeElement && document.activeElement.id === 'tdQ' && $('tdRes')) { $('tdRes').innerHTML = tdResHtml(Date.now()); tdBindCards($('tdRes')); return; } // 입력 중에는 입력칸을 다시 그리지 않음(한글 조합이 끊기지 않게)
   const T = WX.td, now = Date.now(), hm = WX.tat ? tdHM(WX.tat) : '';
   const err = WX.terr ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.terr)}</p></div>` : '';
   let body = '';
   if (T) {
     let lines = '', mk = '', cards = '';
     const mains = T.ports.filter(p => (T.list.find(x => x.id === p.id) || {}).m); mains.forEach(p => { const c = tdChip(p.id, p, now); lines += c.l; mk += c.m; cards += tdCard(p.id, p, now); });
-    const q = WX.tq.trim(), res = (q ? T.list.filter(x => x.n.includes(q)) : WX.treg ? T.list.filter(x => x.r === WX.treg) : []).slice(0, 12); tdNeed(res);
-    const resHtml = (q || WX.treg) ? `<div style="margin-top:6px">${res.map(x => { const pp = T.ports.find(y => y.id === x.id) || (WX.tx || {})[x.id]; return pp ? tdCard(x.id, pp, now) : (WX.txbusy ? '' : ''); }).join('') || '<span class="mut">' + (WX.txbusy ? '불러오는 중…' : '검색 결과가 없습니다') + '</span>'}</div>` : '';
+
+    const q = WX.tq.trim(), resHtml = `<div id="tdRes">${tdResHtml(now)}</div>`;
     body = `${tdSpringMsg(T.spring, now)}
     <div class="card"><div class="wxh"><b>제주 주요 포구 물때</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 기준 ' : ''}<button id="tdRef">${WX.tbusy ? '…' : '↻'}</button></span></div>
     <div class="tdscr" id="tdScr"><div class="wxmap" id="tdMap"><svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>${mk}</div></div>
@@ -454,7 +460,7 @@ function renderTide() {
   const r = $('tdRef'); if (r) r.onclick = () => loadTide(true);
   el.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => tdOpen(b.dataset.tp));
   el.querySelectorAll('[data-treg]').forEach(b => b.onclick = () => { WX.treg = WX.treg === b.dataset.treg ? '' : b.dataset.treg; WX.tq = ''; renderTide(); });
-  const q = $('tdQ'); if (q) { q.oninput = () => { WX.tq = q.value; const pos = q.selectionStart; renderTide(); const n = $('tdQ'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (_) { /* 무시 */ } }; if (keep) { q.focus(); } }
+  const q = $('tdQ'); if (q) { q.oninput = () => { WX.tq = q.value; WX.treg = ''; $('tdRes').innerHTML = tdResHtml(Date.now()); tdBindCards($('tdRes')); document.querySelectorAll('[data-treg]').forEach(b => b.classList.remove('on')); }; if (keep) { q.focus(); } }
 }
 function tdNeed(res) { // 목록에 없는 포구의 물때를 서버에서 받아 옴(한 번에 최대 12곳, 받은 건 기억)
   WX.tx = WX.tx || {}; const T = WX.td, ids = res.map(x => x.id).filter(id => !T.ports.find(p => p.id === id) && !WX.tx[id] && !(WX.txf || {})[id]);
