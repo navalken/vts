@@ -290,7 +290,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .tdg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.tdg>div{border:1px solid #dfe6f2;border-radius:8px;padding:4px 2px;text-align:center;font-size:11px;color:#51607c;line-height:1.3}.tdg b{display:block;font-size:15px;color:#16233b}.tdg i{font-style:normal;font-weight:800}
 .tdg>div.pa{opacity:.45}.tdg>div.nx{border:2px solid #f59e0b;background:#fff8e6;opacity:1}.tdg>div.em{visibility:hidden}
 .tdpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.tdpick input{width:auto;margin:0;padding:8px;font-size:16px}
-#wxBig.tdd .sc{background:#f4f7fb;padding:12px;color:#16233b}
+#wxBig.tdd .sc{background:#f4f7fb;padding:12px;color:#16233b}#wxBig.tdd .sc>*{position:static!important;width:auto!important;left:auto!important;top:auto!important}
 #wxBig{position:fixed;inset:0;z-index:9999;background:#0b1a33ee;display:flex;flex-direction:column}#wxBig .bar{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 14px 8px;color:#fff;font-weight:700;font-size:14px}#wxBig .bar button{width:auto;margin:0;padding:6px 14px;background:#fff;color:#12284a}#wxBig .sc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}#wxBig .wxmap{width:max(230%,820px);border-radius:0}
 </style>
 </head>
@@ -394,7 +394,12 @@ function tdInfo(ext, now) {
   const next = nx[0] || null, prev = pv[pv.length - 1] || null, today = tdYmd(now);
   return { today: ev.filter(e => tdYmd(e.ms) === today), nx, next, prev, nextH: nx.find(e => e.k === 'H') || null, nextL: nx.find(e => e.k === 'L') || null, rising: next ? next.k === 'H' : prev ? prev.k === 'L' : null };
 }
-function tdLevel(s, ms) { if (!s || !s.length || ms < s[0][0] || ms > s[s.length - 1][0]) return null; for (let i = 1; i < s.length; i++) if (s[i][0] >= ms) { const a = s[i - 1], b = s[i], f = (ms - a[0]) / (b[0] - a[0] || 1); return Math.round(a[1] + (b[1] - a[1]) * f); } return null; }
+function tdLevel(ext, ms) { // 만조·간조 사이를 코사인 곡선으로 이어 그 시각의 수위(cm)를 어림
+  const e = (ext || []).slice().sort((a, b) => a.ms - b.ms);
+  for (let i = 1; i < e.length; i++) if (e[i].ms >= ms && e[i - 1].ms <= ms) { const a = e[i - 1], b = e[i], f = (ms - a.ms) / (b.ms - a.ms || 1); return Math.round((a.h + b.h) / 2 + (a.h - b.h) / 2 * Math.cos(Math.PI * f)); }
+  return null;
+}
+function tdSeries(ext, x0, x1) { const out = []; for (let t = x0; t <= x1; t += 30 * 60e3) { const v = tdLevel(ext, t); if (v != null) out.push([t, v]); } return out; }
 function tdSpringMsg(sp, now) {
   if (!sp || !sp.big || !sp.big.length) return '';
   const days = sp.big.slice().sort(), groups = []; let g = null;
@@ -419,7 +424,7 @@ function tdCard(id, p, now) {
   const sub = i.next ? `다음 ${i.next.k === 'H' ? '만조' : '간조'} ${tdHM(i.next.ms)} · ${tdIn(i.next.ms - now)} 후` : '오늘 남은 물때 없음';
   const cells = i.today.map(e => `<div class="${e.ms <= now ? 'pa' : i.next && e.ms === i.next.ms ? 'nx' : ''}"><i class="${e.k === 'H' ? 'tdH' : 'tdL'}">${e.k === 'H' ? '▲ 만조' : '▼ 간조'}</i><b>${tdHM(e.ms)}</b>${e.h}cm</div>`);
   while (cells.length < 4) cells.push('<div class="em">-</div>');
-  return `<div class="tdc" data-tp="${id}"><div class="h"><b>${esc(L.n)} <small style="font-size:11px;color:var(--mut)">${esc(L.r)}</small></b>${st}</div><div class="sub">${sub}</div><div class="tdg">${cells.slice(0, 4).join('')}</div></div>`;
+  return `<div class="tdc" data-tp="${id}"><div class="h"><b>${esc(L.n)} <small style="font-size:11px;color:var(--mut)">${esc(L.r)}</small></b>${st}</div><div class="sub">${sub}${L.f ? ` · <span style="color:#b45309">${esc(L.f)} 기준값</span>` : ''}</div><div class="tdg">${cells.slice(0, 4).join('')}</div></div>`;
 }
 function renderTide() {
   const el = $('wxBody'); if (!el) return;
@@ -439,7 +444,7 @@ function renderTide() {
     <div class="tdsch"><input id="tdQ" type="search" placeholder="항·포구 이름 검색 (예: 함덕)" value="${esc(WX.tq)}"></div>
     <div class="tdreg">${TD_REG.map(r => `<button data-treg="${r}" class="${WX.treg === r && !q ? 'on' : ''}">${r}</button>`).join('')}</div>${resHtml}</div>
     <div class="card"><div class="wxh"><b>오늘 물때 (주요 ${T.ports.length}곳)</b></div>${cards}
-    <div class="wxnote">조석 <b>예측값</b>입니다. 기상·기압·바람에 따라 실제 수위·시각이 달라질 수 있으니 참고용으로 보세요. 관측소가 없는 포구는 가까운 기준항 값으로 계산해 수 cm·수 분 차이가 날 수 있습니다. (국립해양조사원)</div></div>`;
+    <div class="wxnote">조석 <b>예측값</b>입니다. 기상·기압·바람에 따라 실제 수위·시각이 달라질 수 있으니 참고용으로 보세요. 예보지점이 없는 포구는 가장 가까운 지점(카드에 '○○ 기준값' 표시) 값이라 시각이 다를 수 있습니다. (국립해양조사원 조석예보)</div></div>`;
   } else body = `<div class="card"><p class="mut">${WX.tbusy ? '조석 자료를 불러오는 중…' : '자료가 없습니다'}</p></div>`;
   const keep = $('tdQ') && document.activeElement === $('tdQ');
   el.innerHTML = wxLinks() + err + body;
@@ -466,9 +471,9 @@ async function tdOpen(id) {
   const sc = o.querySelector('.sc');
   let r; try { r = await libCall('/tide/port?id=' + encodeURIComponent(id)); } catch (e) { sc.innerHTML = `<p class="mut" style="color:var(--bad)">불러오지 못했습니다: ${esc(e.message)}</p>`; return; }
   const draw = () => {
-    const now = Date.now(), i = tdInfo(r.ext, now), s = r.s || [];
+    const now = Date.now(), i = tdInfo(r.ext, now), d0 = Date.parse(tdYmd(now) + 'T00:00:00+09:00'), s = tdSeries(r.ext, d0, d0 + 48 * 3600e3);
     const days = {}; (r.ext || []).forEach(e => { (days[tdYmd(e.ms)] = days[tdYmd(e.ms)] || []).push(e); });
-    const dl = Object.keys(days).sort().slice(0, 2).map(d => `<div class="card" style="margin-bottom:8px"><div class="wxh"><b>${d.slice(5).replace('-', '/')}${d === tdYmd(now) ? ' (오늘)' : ' (내일)'}</b></div><div class="tdg">${days[d].map(e => `<div class="${e.ms <= now ? 'pa' : i.next && e.ms === i.next.ms ? 'nx' : ''}"><i class="${e.k === 'H' ? 'tdH' : 'tdL'}">${e.k === 'H' ? '▲ 만조' : '▼ 간조'}</i><b>${tdHM(e.ms)}</b>${e.h}cm</div>`).join('')}</div></div>`).join('');
+    const dl = Object.keys(days).sort().filter(d => d >= tdYmd(now)).slice(0, 2).map(d => `<div class="card" style="margin-bottom:8px"><div class="wxh"><b>${d.slice(5).replace('-', '/')}${d === tdYmd(now) ? ' (오늘)' : ' (내일)'}</b></div><div class="tdg">${days[d].map(e => `<div class="${e.ms <= now ? 'pa' : i.next && e.ms === i.next.ms ? 'nx' : ''}"><i class="${e.k === 'H' ? 'tdH' : 'tdL'}">${e.k === 'H' ? '▲ 만조' : '▼ 간조'}</i><b>${tdHM(e.ms)}</b>${e.h}cm</div>`).join('')}</div></div>`).join('');
     let svg = '';
     if (s.length > 2) {
       const x0 = s[0][0], x1 = s[s.length - 1][0], hs = s.map(x => x[1]), mn = Math.min(...hs), mx = Math.max(...hs), W = 300, H = 110, X = ms => (ms - x0) / (x1 - x0) * W, Y = v => 8 + (mx - v) / (mx - mn || 1) * (H - 16);
@@ -477,12 +482,12 @@ async function tdOpen(id) {
       const pts = (r.ext || []).filter(e => e.ms >= x0 && e.ms <= x1).map(e => `<circle cx="${X(e.ms)}" cy="${Y(e.h)}" r="3" fill="${e.k === 'H' ? '#d12d2d' : '#1f5fd0'}"/>`).join('');
       svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:#fff;border-radius:10px;border:1px solid #dfe6f2"><path d="${path}" fill="none" stroke="#2f7be8" stroke-width="2"/>${nowx}${pts}</svg><div class="wxnote" style="padding-top:2px">주황선=지금 · 빨강=만조 · 파랑=간조 · 오늘 0시부터 이틀간</div>`;
     }
-    const lv = tdLevel(s, now), st = i.rising == null ? '' : i.rising ? '<b class="tdH">↑ 상승 중</b>' : '<b class="tdL">↓ 하강 중</b>';
+    const ref = L.f ? `<div class="wxnote" style="padding:0 0 6px">이 포구는 예보지점이 없어 가장 가까운 <b>${esc(L.f)}</b> 값을 보여 줍니다. 실제 시각이 수 분~수십 분 다를 수 있습니다.</div>` : '', lv = tdLevel(r.ext, now), st = i.rising == null ? '' : i.rising ? '<b class="tdH">↑ 상승 중</b>' : '<b class="tdL">↓ 하강 중</b>';
     const hd = `<div class="card"><div class="wxh"><b>지금 ${st}</b><span style="font-size:12px;color:var(--mut)">${lv != null ? '약 ' + lv + 'cm' : ''}</span></div><div style="font-size:14px;font-weight:700;line-height:1.7">${i.nextH ? `다음 <span class="tdH">만조</span> ${tdHM(i.nextH.ms)} (${tdIn(i.nextH.ms - now)} 후, ${i.nextH.h}cm)` : ''}<br>${i.nextL ? `다음 <span class="tdL">간조</span> ${tdHM(i.nextL.ms)} (${tdIn(i.nextL.ms - now)} 후, ${i.nextL.h}cm)` : ''}</div></div>`;
     const pick = `<div class="card"><div class="wxh"><b>시각 지정</b></div><div class="tdpick"><input id="tdT" type="time" value="${tdHM(now)}"><span id="tdTR" style="font-weight:800"></span></div><div class="wxnote" style="padding:0">오늘 안에서 원하는 시각의 예상 수위·상승/하강을 봅니다.</div></div>`;
-    sc.innerHTML = hd + dl + `<div class="card">${svg}</div>` + pick + `<div class="wxnote">예측값입니다. 실제 수위·시각은 기상·기압·바람 영향으로 다를 수 있습니다.</div>`;
+    sc.innerHTML = ref + hd + dl + `<div class="card">${svg}</div>` + pick + `<div class="wxnote">예측값입니다. 실제 수위·시각은 기상·기압·바람 영향으로 다를 수 있습니다.</div>`;
     const t = sc.querySelector('#tdT'), out = sc.querySelector('#tdTR');
-    const upd = () => { const v = t.value.split(':'); if (v.length < 2) return; const base = Date.parse(tdYmd(now) + 'T00:00:00+09:00'), ms = base + (+v[0] * 60 + +v[1]) * 60e3, a = tdLevel(s, ms), b = tdLevel(s, ms + 15 * 60e3); out.innerHTML = a == null ? '자료 없음' : `약 ${a}cm ${b == null ? '' : b > a ? '<span class="tdH">↑ 상승</span>' : b < a ? '<span class="tdL">↓ 하강</span>' : '정조'}`; };
+    const upd = () => { const v = t.value.split(':'); if (v.length < 2) return; const base = Date.parse(tdYmd(now) + 'T00:00:00+09:00'), ms = base + (+v[0] * 60 + +v[1]) * 60e3, a = tdLevel(r.ext, ms), b = tdLevel(r.ext, ms + 15 * 60e3); out.innerHTML = a == null ? '자료 없음' : `약 ${a}cm ${b == null ? '' : b > a ? '<span class="tdH">↑ 상승</span>' : b < a ? '<span class="tdL">↓ 하강</span>' : '정조'}`; };
     t.oninput = upd; upd();
   };
   draw();
