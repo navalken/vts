@@ -278,7 +278,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 /* 조석 */
 .wxlinks span{cursor:pointer}.wxlinks span.off{background:#fff;border-color:var(--bd);color:#2a4a86}.wxlinks{gap:4px}.wxlinks a,.wxlinks span{font-size:11.5px;padding:8px 1px;letter-spacing:-.5px;white-space:nowrap}.wxlinks small{font-size:9.5px;letter-spacing:-.5px}
 .tdk{position:absolute;transform:translate(-50%,-50%);background:#fffffff2;border:2px solid #2f7be8;border-radius:8px;padding:1px 4px 2px;text-align:center;box-shadow:0 2px 5px #0003;white-space:nowrap;color:#16233b;line-height:1.2;cursor:pointer}
-.tdk .n{font-size:9.5px;font-weight:800;color:#2a4a86;display:block}.tdk .e{font-size:9.5px;font-weight:800;display:block}
+.tdk .n{font-size:10px;font-weight:800;color:#16233b;display:block}.tdk .g{display:flex;gap:6px;justify-content:center}.tdk .g>div{display:flex;flex-direction:column;align-items:center}.tdk .g b{font-size:8.5px;font-weight:800}.tdk .g span{font-size:9.5px;font-weight:800;color:#16233b;white-space:nowrap}.tdk .g em{font-style:normal;font-weight:600;font-size:8.5px;color:#51607c}.tdk .g span.pa{opacity:.4}.tdk .g span.nx{background:#fff2c2;border-radius:3px}.tdscr{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}.tdscr .wxmap{width:155%}
 .tdH{color:#d12d2d}.tdL{color:#1f5fd0}
 .tdban{border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13px;line-height:1.5;font-weight:700;background:#eaf2ff;color:#1d3f7a;border:1.5px solid #bcd3f7}.tdban.big{background:#fff4d6;color:#7a4a00;border-color:#f3c75a}.tdban small{display:block;font-weight:600;font-size:11px;opacity:.85}
 .tdsch{display:flex;gap:6px;margin:0 0 8px}.tdsch input{flex:1;min-width:0;margin:0;padding:10px 12px;font-size:15px}
@@ -384,7 +384,7 @@ function renderWx() {
 }
 // ---- 조석 ----
 const TD_XY = { chuja: [33.5, 6.4], jeju: [50.2, 47.2], aewol: [34.1, 53.4], hallim: [31.0, 58.0], sinchang: [24.5, 65.3], moseulpo: [30.2, 77.0], mara: [31.2, 86.5], hwasun: [36.2, 75.6], seogwipo: [51.7, 74.6], seongsan: [76.9, 52.3], sehwa: [71.9, 47.3], gimnyeong: [65.0, 44.4] };
-const TD_CH = { chuja: [57, 11], jeju: [46, 31], gimnyeong: [68, 30], sehwa: [88, 37], seongsan: [88, 57], aewol: [17, 38], hallim: [10, 50], sinchang: [10, 63], moseulpo: [11, 76], mara: [20, 92], hwasun: [42, 90], seogwipo: [67, 87] };
+const TD_CH = { chuja: [50, 9], jeju: [40, 27], gimnyeong: [66, 24], sehwa: [86, 38], seongsan: [86, 53], aewol: [13, 31], hallim: [13, 46], sinchang: [13, 61], moseulpo: [13, 76], mara: [13, 91], hwasun: [40, 90], seogwipo: [66, 88] };
 const TD_REG = ['북부', '남부', '서부', '동부', '추자'];
 const tdHM = ms => new Date(ms + 9 * 3600e3).toISOString().slice(11, 16);
 const tdYmd = ms => new Date(ms + 9 * 3600e3).toISOString().slice(0, 10);
@@ -414,9 +414,9 @@ function tdSpringMsg(sp, now) {
 }
 function tdChip(id, p, now) {
   const c = TD_CH[id], xy = TD_XY[id]; if (!c || !xy) return { l: '', m: '' };
-  const i = tdInfo(p.ext, now), ev = i.nx.slice(0, 1), nm = (WX.td.list.find(x => x.id === id) || {}).n || id;
-  const e = ev.map(x => `<span class="e ${x.k === 'H' ? 'tdH' : 'tdL'}">${x.k === 'H' ? '▲' : '▼'}${tdHM(x.ms)}</span>`).join('');
-  return { l: `<line x1="${xy[0]}" y1="${xy[1]}" x2="${c[0]}" y2="${c[1]}" stroke="#16233b" stroke-width=".5" vector-effect="non-scaling-stroke"/>`, m: `<i class="wxdot" style="left:${xy[0]}%;top:${xy[1]}%"></i><div class="tdk" data-tp="${id}" style="left:${c[0]}%;top:${c[1]}%"><span class="n">${esc(nm)}</span>${e}</div>` };
+  const i = tdInfo(p.ext, now), nm = (WX.td.list.find(x => x.id === id) || {}).n || id;
+  const col = k => { const a = i.today.filter(e => e.k === k).slice(0, 2); return a.map(e => `<span class="${e.ms <= now ? 'pa' : i.next && e.ms === i.next.ms ? 'nx' : ''}">${tdHM(e.ms)}<em>(${e.h})</em></span>`).join('') || '<span>-</span>'; };
+  return { l: `<line x1="${xy[0]}" y1="${xy[1]}" x2="${c[0]}" y2="${c[1]}" stroke="#16233b" stroke-width=".5" vector-effect="non-scaling-stroke"/>`, m: `<i class="wxdot" style="left:${xy[0]}%;top:${xy[1]}%"></i><div class="tdk" data-tp="${id}" style="left:${c[0]}%;top:${c[1]}%"><span class="n">${esc(nm)}</span><div class="g"><div class="tdH"><b>만조▲</b>${col('H')}</div><div class="tdL"><b>간조▼</b>${col('L')}</div></div></div>` };
 }
 function tdCard(id, p, now) {
   const L = WX.td.list.find(x => x.id === id) || { n: id, r: '' }, i = tdInfo(p.ext, now);
@@ -433,22 +433,24 @@ function renderTide() {
   let body = '';
   if (T) {
     let lines = '', mk = '', cards = '';
-    T.ports.forEach(p => { const c = tdChip(p.id, p, now); lines += c.l; mk += c.m; cards += tdCard(p.id, p, now); });
+    const mains = T.ports.filter(p => (T.list.find(x => x.id === p.id) || {}).m); mains.forEach(p => { const c = tdChip(p.id, p, now); lines += c.l; mk += c.m; cards += tdCard(p.id, p, now); });
     const q = WX.tq.trim(), res = q ? T.list.filter(x => x.n.includes(q)) : WX.treg ? T.list.filter(x => x.r === WX.treg) : [];
-    const resHtml = (q || WX.treg) ? `<div class="tdres">${res.map(x => `<button data-tp="${x.id}">${esc(x.n)}</button>`).join('') || '<span class="mut">검색 결과가 없습니다</span>'}</div>` : '';
+    const resHtml = (q || WX.treg) ? `<div style="margin-top:6px">${res.map(x => { const pp = T.ports.find(y => y.id === x.id); return pp ? tdCard(x.id, pp, now) : ''; }).join('') || '<span class="mut">검색 결과가 없습니다</span>'}</div>` : '';
     body = `${tdSpringMsg(T.spring, now)}
     <div class="card"><div class="wxh"><b>제주 주요 포구 물때</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 기준 ' : ''}<button id="tdRef">${WX.tbusy ? '…' : '↻'}</button></span></div>
-    <div class="wxmap" id="tdMap"><svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>${mk}</div>
-    <div class="wxlg"><span class="tdH"><b>▲ 만조</b></span><span class="tdL"><b>▼ 간조</b></span><span>지도에는 다음 물때 1개 · 포구를 누르면 자세히</span></div></div>
+    <div class="tdscr" id="tdScr"><div class="wxmap" id="tdMap"><svg class="ln" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>${mk}</div></div>
+    <div class="wxlg"><span class="tdH"><b>▲ 만조</b></span><span class="tdL"><b>▼ 간조</b></span><span>시각(수위 cm) · 노란 칸=다음 물때 · 좌우로 밀어서 보기 · 포구를 누르면 자세히</span></div></div>
     <div class="card"><div class="wxh"><b>다른 항·포구 찾기</b></div>
     <div class="tdsch"><input id="tdQ" type="search" placeholder="항·포구 이름 검색 (예: 함덕)" value="${esc(WX.tq)}"></div>
     <div class="tdreg">${TD_REG.map(r => `<button data-treg="${r}" class="${WX.treg === r && !q ? 'on' : ''}">${r}</button>`).join('')}</div>${resHtml}</div>
-    <div class="card"><div class="wxh"><b>오늘 물때 (주요 ${T.ports.length}곳)</b></div>${cards}
+    <div class="card"><div class="wxh"><b>오늘 물때 (주요 ${mains.length}곳)</b></div>${cards}
     <div class="wxnote">조석 <b>예측값</b>입니다. 기상·기압·바람에 따라 실제 수위·시각이 달라질 수 있으니 참고용으로 보세요. 예보지점이 없는 포구는 가장 가까운 지점(카드에 '○○ 기준값' 표시) 값이라 시각이 다를 수 있습니다. (국립해양조사원 조석예보)</div></div>`;
   } else body = `<div class="card"><p class="mut">${WX.tbusy ? '조석 자료를 불러오는 중…' : '자료가 없습니다'}</p></div>`;
   const keep = $('tdQ') && document.activeElement === $('tdQ');
+  const sx = $('tdScr') ? $('tdScr').scrollLeft : null;
   el.innerHTML = wxLinks() + err + body;
   wxBindLinks(el);
+  const sc2 = $('tdScr'); if (sc2) sc2.scrollLeft = sx != null ? sx : (sc2.scrollWidth - sc2.clientWidth) / 2;
   const r = $('tdRef'); if (r) r.onclick = () => loadTide(true);
   el.querySelectorAll('[data-tp]').forEach(b => b.onclick = () => tdOpen(b.dataset.tp));
   el.querySelectorAll('[data-treg]').forEach(b => b.onclick = () => { WX.treg = WX.treg === b.dataset.treg ? '' : b.dataset.treg; WX.tq = ''; renderTide(); });
