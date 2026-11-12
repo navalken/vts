@@ -847,12 +847,20 @@ function lvCard(b, sec, box, f, off) {
 const WXC = [['제주', 33.5097, 126.5219], ['서귀포', 33.2541, 126.5601], ['한림', 33.4114, 126.2619], ['성산', 33.3869, 126.9367]];
 function wxText(c) { const ic = c === 0 ? 'sun' : (c === 1 || c === 2) ? 'part' : c === 3 ? 'cloud' : (c === 45 || c === 48) ? 'fog' : (c >= 51 && c <= 57) ? 'drizzle' : (c >= 61 && c <= 67) ? 'rain' : ((c >= 71 && c <= 77) || c === 85 || c === 86) ? 'snow' : (c >= 80 && c <= 82) ? 'shower' : c >= 95 ? 'thunder' : 'cloud'; return [ic, { sun: '맑음', part: c === 1 ? '대체로 맑음' : '구름조금', cloud: '흐림', fog: '안개', drizzle: '이슬비', rain: '비', snow: '눈', shower: '소나기', thunder: '뇌우' }[ic]]; }
 async function loadWx() { // 무료 Open-Meteo(키 없음)
+  if (!LV.wx) { try { const c = JSON.parse(localStorage.getItem('vts_wx') || 'null'); if (c && Array.isArray(c.wx) && c.wx.length === WXC.length && Date.now() - c.at < 6 * 3600e3) { LV.wx = c.wx; renderLive(); if (MY.poll) renderMy(); paintHdr(); } } catch (e) {} } // 인터넷이 잠깐 안 될 때는 마지막으로 받은 날씨(6시간 이내)를 보여준다
   if (Date.now() - LV.wxAt < 600000) return;
   LV.wxAt = Date.now();
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + WXC.map(x => x[1]).join(',') + '&longitude=' + WXC.map(x => x[2]).join(',') + '&current=temperature_2m,weather_code&timezone=Asia%2FSeoul');
-    const j = await r.json(); const arr = Array.isArray(j) ? j : [j];
-    LV.wx = arr.map(x => ({ t: Math.round(x.current.temperature_2m), c: x.current.weather_code }));
+    let wx = null;
+    if (S.token) { try { const d = await api('/wx'); if (Array.isArray(d) && d.length === WXC.length) wx = d; } catch (e) { /* 서버가 못 주면 아래에서 직접 */ } } // 1순위: 우리 서버가 모아 둔 날씨
+    if (!wx) {
+      const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=' + WXC.map(x => x[1]).join(',') + '&longitude=' + WXC.map(x => x[2]).join(',') + '&current=temperature_2m,weather_code&timezone=Asia%2FSeoul');
+      if (!r.ok) throw new Error('wx ' + r.status);
+      const j = await r.json(); const arr = Array.isArray(j) ? j : [j];
+      wx = arr.map(x => ({ t: Math.round(x.current.temperature_2m), c: x.current.weather_code }));
+    }
+    LV.wx = wx;
+    try { localStorage.setItem('vts_wx', JSON.stringify({ at: Date.now(), wx: LV.wx })); } catch (e) {}
     renderLive(); if (MY.poll) renderMy(); paintHdr();
   } catch (e) { LV.wxAt = Date.now() - 540000; /* 1분 뒤 재시도 */ }
 }
@@ -1076,7 +1084,7 @@ function myTickLoop() {
   };
   run();
 }
-function startMy() { stopMy(); if (!$('myBody')) return; renderMy(); if (S.token) loadMy(); myTickLoop(); MY.poll = setInterval(() => { if (!document.hidden && S.token) loadMy(); }, 60000); }
+function startMy() { stopMy(); if (!$('myBody')) return; renderMy(); loadWx(); if (S.token) loadMy(); myTickLoop(); MY.poll = setInterval(() => { if (!document.hidden && S.token) loadMy(); }, 60000); }
 function stopMy() { clearTimeout(MY.tick); MY.tick = null; if (MY.poll) { clearInterval(MY.poll); MY.poll = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && MY.poll && S.token) loadMy(); });
 
