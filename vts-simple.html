@@ -38,6 +38,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 </style></head>
 <body>
 <h1>VTS 근무표 — <span id="teamTitle">1팀</span></h1>
+<div id="regWarn" class="msg bad" style="display:none"></div>
 <div class="row" style="margin:0 0 6px;"><label>팀</label><div id="teamBtns" class="tbtns"><button type="button" data-t="1">1팀</button><button type="button" data-t="2">2팀</button><button type="button" data-t="3">3팀</button></div><select id="team" style="display:none"><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select></div>
 <p class="hint" style="margin:0 0 10px">패턴·직원 이름은 팀마다 따로 저장됩니다</p>
 
@@ -80,7 +81,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
   <p class="hint"><a href="card.html?v=6" target="_blank" style="color:#8ab4ff">알림 카드 미리보기</a> — 알림을 눌렀을 때 열리는 화면 예시</p>
   <div id="pubMsg" class="msg"></div>
 </div>
-<details><summary>설정 (처음 한 번만)</summary>
+<details><summary>설정 (앱에 등록돼 있으면 필요 없음)</summary>
   <div class="row"><label>Worker 주소</label><input id="gvWorker" style="width:100%" placeholder="https://vts-push.내계정.workers.dev"></div>
   <div class="row"><label>우리 팀 코드</label><input id="gvAdmin" type="password" style="width:100%"></div>
   <div class="row"><label>이 팀의 직원 이름 목록 (쉼표/줄바꿈, 이름 자동 교정용)</label><textarea id="knownNames" rows="3" style="width:100%"></textarea></div>
@@ -346,7 +347,12 @@ const pKey=()=>'vts_s_patterns_t'+team(), tabKey=h=>'vts_s_tab_t'+team()+'_'+h, 
 try{ const old=LS.get('vts_s_patterns'); if(old&&!LS.get('vts_s_patterns_t1')) LS.set('vts_s_patterns_t1',old);
      const on=LS.get('vts_known_names'); if(on&&!LS.get('vts_known_names_t1')) LS.set('vts_known_names_t1',on); }catch(e){}
 // ---- 설정(이 기기에만 저장) ----
-{ const v=LS.get('vts_gv_worker'); if(v) $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>{ LS.set('vts_gv_worker',e.target.value.trim()); loadServerPatterns().then(refreshPatServer); }); }
+setTimeout(()=>{ try{ const w=$('regWarn'); const hasCode=['1','2','3'].some(t=>LS.get('vts_team_code_t'+t)); if(!appTok()&&!hasCode){ w.style.display='block'; w.textContent='이 폰은 앱에 등록되어 있지 않습니다. 먼저 앱(홈 화면 VTS 아이콘)에서 설정 탭으로 등록한 뒤, 앱의 "근무표 올리기" 버튼으로 이 화면을 여세요.'; } }catch(e){} },0);
+const DEFAULT_WORKER='https://vts-push.navalken100.workers.dev';
+const appTok=()=>{ try{ return localStorage.getItem('vts_app_token')||''; }catch(e){ return ''; } };
+const hdrs=code=>{ const h={'Content-Type':'application/json'}; if(code) h['X-Team-Code']=code; const t=appTok(); if(t) h['X-Token']=t; return h; };
+const NOAUTH='앱에 먼저 등록하세요(설정 탭). 이미 등록했다면 앱 아이콘에서 "근무표 올리기" 버튼으로 열어 보세요. (또는 아래 "설정"에 팀 코드 입력)';
+{ const v=LS.get('vts_gv_worker')||DEFAULT_WORKER; $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>{ LS.set('vts_gv_worker',e.target.value.trim()); loadServerPatterns().then(refreshPatServer); }); }
 const adminKeyName=()=>'vts_team_code_t'+team();
 function loadAdminKey(){ $('gvAdmin').value=LS.get(adminKeyName())||''; } 
 $('gvAdmin').addEventListener('change',e=>{ LS.set(adminKeyName(),e.target.value.trim()); loadServerPatterns().then(refreshPatServer); });
@@ -375,11 +381,12 @@ function setPatterns(p,msg){
 // ---- 패턴: 팀별 서버 저장(누구나 내려받기·교체·삭제·복원) ----
 const wUrlV=()=>$('gvWorker').value.trim().replace(/\/+$/,'');
 const codeFor=t=>String(t)===team()?($('gvAdmin').value.trim()||LS.get('vts_team_code_t'+t)||''):(LS.get('vts_team_code_t'+t)||'');
-const serverReady=()=>!!(wUrlV()&&$('gvAdmin').value.trim());
+const serverReady=()=>!!(wUrlV()&&($('gvAdmin').value.trim()||appTok()));
 async function pcall(path,method,body,code){
-  if(!wUrlV()||!code) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
-  const res=await fetch(wUrlV()+path,{method,headers:{'Content-Type':'application/json','X-Team-Code':code},body:body?JSON.stringify(body):undefined});
+  if(!wUrlV()||(!code&&!appTok())) throw new Error(NOAUTH);
+  const res=await fetch(wUrlV()+path,{method,headers:hdrs(code),body:body?JSON.stringify(body):undefined});
   const j=await res.json().catch(()=>({}));
+  if(res.status===401&&method==='POST'&&path.indexOf('/patterns')===0&&!code) throw new Error('패턴 엑셀을 올리거나 지우는 일은 팀 코드가 필요합니다(팀장에게 문의). 근무표 올리기는 팀 코드 없이 됩니다.');
   if(!res.ok) throw new Error((j.error&&(j.error.message||j.error))||('서버 응답 '+res.status));
   return j;
 }
@@ -388,7 +395,7 @@ const fmtWhen=iso=>{ try{ return new Date(Date.parse(iso)+9*3600e3).toISOString(
 const fmtKB=n=>n?(n>=1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'):'';
 function renderPatList(){
   const box=$('patList');
-  if(!serverReady()){ box.innerHTML='<p class="hint">아래 "설정"에 Worker 주소와 팀 코드를 넣으면 패턴이 서버에 저장되어 다른 폰에서도 쓸 수 있습니다. 지금은 이 폰에만 저장됩니다.</p><div class="row"><button class="prow-up" data-t="'+team()+'">엑셀 올리기 (이 폰에만)</button></div>'; return; }
+  if(!serverReady()){ box.innerHTML='<p class="hint">앱에 등록된 폰이면 패턴이 서버에서 자동으로 불러와집니다. 이 폰은 앱 등록 정보가 없어 지금은 이 폰에만 저장됩니다 — 앱에 먼저 등록하세요(설정 탭).</p><div class="row"><button class="prow-up" data-t="'+team()+'">엑셀 올리기 (이 폰에만)</button></div>'; return; }
   if(!patServer){ box.innerHTML='<p class="hint">서버에서 불러오는 중…</p>'; return; }
   let h='';
   ['1','2','3'].forEach(t=>{
@@ -503,12 +510,12 @@ $('photoFile').addEventListener('change',e=>{
 async function callGoogle(){
   if(gv) return gv;
   const wUrl=$('gvWorker').value.trim().replace(/\/+$/,''), wKey=$('gvAdmin').value.trim();
-  if(!wUrl||!wKey) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
+  if(!wUrl||(!wKey&&!appTok())) throw new Error(NOAUTH);
   const sc=Math.min(1,2400/Math.max(photoImg.width,photoImg.height));
   const cv=document.createElement('canvas'); cv.width=Math.round(photoImg.width*sc); cv.height=Math.round(photoImg.height*sc);
   cv.getContext('2d').drawImage(photoImg,0,0,cv.width,cv.height);
   const b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];
-  const res=await fetch(wUrl+'/vision',{method:'POST',headers:{'Content-Type':'application/json','X-Team-Code':wKey},body:JSON.stringify({image:b64})});
+  const res=await fetch(wUrl+'/vision',{method:'POST',headers:hdrs(wKey),body:JSON.stringify({image:b64})});
   const json=await res.json().catch(()=>({}));
   if(!res.ok) throw new Error('Worker 응답 '+res.status+': '+((json.error&&(json.error.message||json.error))||''));
   gv={symbols:visionSymbols(json),words:visionWords(json),sentW:cv.width,sentH:cv.height};
@@ -789,8 +796,8 @@ const halvesForEngine=()=>activeHalves().map(x=>{
 });
 async function adminCall(path,method,body){
   const wUrl=$('gvWorker').value.trim().replace(/\/+$/,''), wKey=$('gvAdmin').value.trim();
-  if(!wUrl||!wKey) throw new Error('아래 "설정"에서 Worker 주소와 팀 코드를 먼저 입력하세요.');
-  const res=await fetch(wUrl+path,{method,headers:{'Content-Type':'application/json','X-Team-Code':wKey},body:body?JSON.stringify(body):undefined});
+  if(!wUrl||(!wKey&&!appTok())) throw new Error(NOAUTH);
+  const res=await fetch(wUrl+path,{method,headers:hdrs(wKey),body:body?JSON.stringify(body):undefined});
   const j=await res.json().catch(()=>({}));
   if(!res.ok) throw new Error((j.error&&(j.error.message||j.error))||('서버 응답 '+res.status));
   return j;
@@ -812,6 +819,9 @@ $('pubBtn').onclick=async()=>{
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)) return pubSay('위 ① 단계에서 날짜를 고르세요.','bad');
     const sh=mode==='both'?['day','night']:[mode];
     if(date<kstToday()&&!confirm(`${mdOf(date)}은(는) 지난 날짜입니다.\n이미 지난 시각의 알림은 건너뜁니다. 계속할까요?`)) return pubSay('취소했습니다.','');
+    { const un=new Set(); halvesForEngine().forEach(h=>h.occ.forEach(col=>col.forEach(o=>{ if(/^[A-Z]$/.test(String(o.name||''))) un.add(o.name); })));
+      if(un.size){ try{ document.querySelectorAll('details.box').forEach(d=>{ if(d.querySelector('.roster')) d.open=true; }); }catch(e){}
+        return pubSay('이름이 알파벳으로 남아 있어 예약할 수 없습니다: '+[...un].sort().join(', ')+'\n위 \"오늘 명단 확인·수정 (알파벳 → 이름)\"에서 이름을 입력한 뒤 다시 누르세요.','bad'); } }
     pubSay('예약 상태 확인 중…','');
     const st=await adminCall('/team/status?team='+team(),'GET');
     const ex=(st.reservations||[]).filter(r=>r.date===date&&(r.shift==='?'||sh.includes(r.shift)));

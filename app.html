@@ -146,7 +146,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .cell.flag img{width:calc(var(--w)*.7);height:calc(var(--w)*.7)}
 @keyframes myPulse{0%,100%{box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 6px 5px rgba(255,238,0,.85)}50%{box-shadow:0 0 0 3px #ffee00,0 0 0 4.5px rgba(20,30,50,.35),0 0 2px 1px rgba(255,238,0,.2)}}
 @media (prefers-reduced-motion:reduce){.cell.cur{animation:none}}
-.lbs{display:flex;gap:4px;margin-top:4px;margin-bottom:8px}
+.lbs{display:flex;align-items:flex-start;gap:4px;margin-top:4px;margin-bottom:8px}.lbs .wn{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:3px;font-style:normal;line-height:1.1;letter-spacing:-.5px}.lbs .wn u{text-decoration:none;font-size:10px;font-weight:700;color:#5d7f6d}.lbs .wn b{font-size:10.5px;font-weight:900;color:#0f5a32;background:#d6f3e1;border-radius:4px;padding:0 2px}.lbs .wn .l4{font-size:8.5px;letter-spacing:-.8px}
 .lbs i{flex:0 0 calc((100% - 4px*(var(--k) - 1))/var(--k));min-width:0;overflow:hidden;white-space:nowrap;text-align:center;font-style:normal;font-size:11px;color:#667085;font-weight:700;font-variant-numeric:tabular-nums}
 .lgd{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:12px;color:#667085;font-weight:600}
 .lgd span{display:inline-flex;align-items:center;gap:4px}
@@ -182,8 +182,8 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .nag .nh img{width:30px;height:30px}
 .nag .ni{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14.5px;line-height:1.4;font-weight:600;color:#12284a}
 .nag .ni b{flex:none;font-size:11.5px;padding:2px 8px;border-radius:99px;background:#c0392b;color:#fff;margin-top:1px}
-.nag .ni b.s{background:#1a6be0}
-.nag .ni span{white-space:pre-wrap;word-break:break-word;min-width:0}
+.nag .ni b.s{background:#1a6be0}.nag .ni b.s.o{background:#8a97ad}
+.nag .ni span{white-space:pre-wrap;word-break:break-word;min-width:0}.dhead{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px}.dlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:34vh;overflow:auto}.drow{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;background:var(--bg)}.drow .dt{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.4}.drow .dm{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:12.5px;color:var(--mut)}.drow .dx{width:auto;margin:0;padding:3px 10px;font-size:13px;background:#fde8e8;color:#b42318;border:1px solid #f5bcbc;border-radius:8px}
 .mstate{margin:12px 9px 0;text-align:center;padding:18px 14px 16px}
 .mstate img{height:150px;width:auto;max-width:80%}
 .mstate h3{margin:8px 0 4px;font-size:19px}
@@ -998,8 +998,10 @@ function myTimeline(m, now) {
       const ch = items.slice(o, o + per), k = Math.max(per, 5);
       const ai = anchor && anchor.row === ri ? ch.findIndex(x => x.c === anchor) : -1;
       const cap = ai >= 0 ? `<div class="cps"><img src="img/cap-${capK}.png" alt="" style="left:clamp(26px,${(ai + .5) / k * 100}%,calc(100% - 26px))"></div>` : '<div class="cps thin"></div>';
-      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}${kd === 'wait' && (c.with || []).length ? ' hasm' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-hourglass.png" alt=""><span>대기</span>' + ((c.with || []).length ? `<b class="wm">${c.with.map(n => '<i>' + esc(n) + '</i>').join('')}</b>` : '') : secLab(c.place)}</div>`; }).join('');
-      const lb = ch.map(x => { const t = hm(x.flag ? duty.to : x.c.from); return `<i>${t.slice(3) === '00' ? t.slice(0, 2) : t}</i>`; }).join('');
+      const cs = ch.map(x => { if (x.flag) return '<div class="cell flag"><img src="img/ic-flag.png" alt=""><span>퇴근</span></div>'; const c = x.c, kd = MYK(c.place), stc = now >= c.to ? 'done' : now >= c.from ? 'cur' : 'fut'; return `<div class="cell ${kd} ${stc}${c === nx && stc === 'fut' ? ' nx' : ''}">${kd === 'rest' ? '<img src="img/ic-coffee.png" alt=""><span>휴게</span>' : kd === 'wait' ? '<img src="img/ic-hourglass.png" alt=""><span>대기</span>' : secLab(c.place)}</div>`; }).join('');
+      const meN = (MY.d && MY.d.name) || '';
+      const wnOf = x => { if (x.flag) return ''; const sg = (r.waits || []).find(w => w.from === x.c.from), nn = sg ? sg.names : []; return nn.length ? `<em class="wn">${nn.map(n => `<${n === meN ? 'b' : 'u'}${n.length > 3 ? ' class="l4"' : ''}>${esc(n)}</${n === meN ? 'b' : 'u'}>`).join('')}</em>` : ''; };
+      const lb = ch.map(x => { const t = hm(x.flag ? duty.to : x.c.from); return `<i>${t.slice(3) === '00' ? t.slice(0, 2) : t}${wnOf(x)}</i>`; }).join('');
       out += `${cap}<div class="cells" style="--k:${k}">${cs}</div><div class="lbs" style="--k:${k}">${lb}</div>`;
     }
     return `<div class="trow">${tag}${out}</div>`;
@@ -1029,12 +1031,14 @@ function myCount(m, now) {
   return `<div class="card cd"><div class="cdh"><img src="img/ic-clock.png" alt=""><span>${pre ? '근무 시작까지' : '퇴근까지'}</span></div><div class="cdt" id="myCd">${hmsOf(t - now)}</div><div class="cds">${dayWord(t, now)} ${hm(t)} ${pre ? '출근' : '퇴근'}<br>(${myChip(m.duty)})</div><img class="cdi" src="img/cap-cheer.png" alt=""></div>`;
 }
 function myBtns() {
-  return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.code ? '<a class="mb2" href="vts-simple.html?own=1" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
+  return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.token ? '<a class="mb2" href="vts-simple.html?own=1" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
 }
 function myNag(m) {
-  const list = ((MY.d && MY.d.directives) || []).filter(x => x.mine && (!m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift)));
+  const list = ((MY.d && MY.d.directives) || []).filter(x => !m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift));
   if (!list.length) return '';
-  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 6).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}</span></div>`).join('')}</div>`;
+  const rank = x => (!x.sectors || !x.sectors.length) ? 0 : x.mine ? 1 : 2; // 전체 → 내 섹터 → 다른 섹터(섹터 번호순)
+  list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
+  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}</span></div>`).join('')}</div>`;
 }
 function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err].join('|'); }
 function renderMy() {
@@ -1160,20 +1164,46 @@ document.addEventListener('click', e => {
 
 function lvDirSheet(sec) {
   const b = lvBoard(); if (!b) return;
-  const all = isLead(sec), label = all ? '전체' : sec;
+  const all = isLead(sec), label = all ? '전체' : sec, code = S.code || '', DMAX = 10;
+  const hdr = { 'Content-Type': 'application/json', 'X-Team-Code': code };
   openModal(`<h3>${esc(label)} 지령 입력</h3>
     <p class="mut">${esc(b.team)}팀 ${SHN[b.shift]} · ${all ? '모든 섹터로 이동하는 근무자' : esc(sec) + '으로 이동하는 근무자'}의 알림에 붙습니다. 이미 나간 알림에는 붙지 않고, 근무가 끝나면 지워집니다.</p>
-    <textarea id="lvDirText" rows="4" maxlength="300" placeholder="지령 내용 (300자까지)" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)"></textarea>
-    <button id="lvDirGo">지령 올리기</button><button class="sec" onclick="closeModal()">닫기</button><div class="msg" id="lvDirMsg" hidden></div>`);
+    <div class="dhead"><b>올라간 지령</b><span id="lvDirCnt" class="mut"></span></div>
+    <div id="lvDirList" class="dlist"><div class="mut">불러오는 중…</div></div>
+    <textarea id="lvDirText" rows="4" maxlength="300" placeholder="추가할 지령 내용 (300자까지)" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)"></textarea>
+    <button id="lvDirGo">지령 추가하기</button><button class="sec" onclick="closeModal()">닫기</button><div class="msg" id="lvDirMsg" hidden></div>`);
+  let total = 0;
+  const fmt = at => { const d = new Date(Date.parse(at) + 9 * 3600000); return isNaN(d) ? '' : d.toISOString().slice(11, 16); };
+  const paint = list => {
+    total = list.length;
+    const mine = list.filter(x => (x.shift === 'both' || x.shift === b.shift) && (all ? !(x.sectors || []).length : (x.sectors || []).includes(sec)));
+    $('lvDirCnt').textContent = `오늘 ${total}/${DMAX}개`;
+    $('lvDirList').innerHTML = mine.length ? mine.map(x => `<div class="drow"><div class="dt">${esc(x.text)}</div><div class="dm"><span>${fmt(x.at)}</span><button class="dx" data-id="${esc(x.id)}">지우기</button></div></div>`).join('') : `<div class="mut">${esc(label)}에 올린 지령이 아직 없습니다.</div>`;
+  };
+  const load = async () => {
+    if (!code) { $('lvDirList').innerHTML = '<div class="mut">팀 코드가 이 기기에 없어 목록을 못 불러옵니다.</div>'; return; }
+    try { const res = await fetch(base() + '/directives?team=' + encodeURIComponent(b.team) + '&date=' + encodeURIComponent(b.date), { headers: hdr }); const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.error || ('서버 응답 ' + res.status)); paint(j.directives || []); }
+    catch (e) { $('lvDirList').innerHTML = `<div class="msg bad">목록 실패: ${esc(e.message)}</div>`; }
+  };
+  load();
+  $('lvDirList').onclick = async ev => {
+    const bt = ev.target.closest('.dx'); if (!bt) return;
+    if (!confirm('이 지령을 지울까요?')) return;
+    bt.disabled = true;
+    try { const res = await fetch(base() + '/directives/delete', { method: 'POST', headers: hdr, body: JSON.stringify({ team: b.team, date: b.date, id: bt.dataset.id }) }); const j = await res.json().catch(() => ({})); if (!res.ok) throw new Error(j.error || ('서버 응답 ' + res.status)); paint(j.directives || []); say($('lvDirMsg'), '지웠습니다.', 'ok'); }
+    catch (e) { bt.disabled = false; say($('lvDirMsg'), '실패: ' + e.message, 'bad'); }
+  };
   $('lvDirGo').onclick = async () => {
     const text = $('lvDirText').value.trim(); if (!text) return say($('lvDirMsg'), '지령 내용을 입력하세요.', 'bad');
-    const code = S.code || ''; if (!code) return say($('lvDirMsg'), '팀 코드가 이 기기에 없습니다. 설정에서 다시 등록하세요.', 'bad');
+    if (!code) return say($('lvDirMsg'), '팀 코드가 이 기기에 없습니다. 설정에서 다시 등록하세요.', 'bad');
+    $('lvDirGo').disabled = true;
     try {
-      const res = await fetch(base() + '/directives', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Team-Code': code }, body: JSON.stringify({ team: b.team, date: b.date, shift: b.shift, sectors: all ? [] : [sec], text }) });
+      const res = await fetch(base() + '/directives', { method: 'POST', headers: hdr, body: JSON.stringify({ team: b.team, date: b.date, shift: b.shift, sectors: all ? [] : [sec], text }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error || ('서버 응답 ' + res.status));
-      say($('lvDirMsg'), '지령을 올렸습니다.', 'ok'); $('lvDirGo').disabled = true;
+      paint(j.directives || []); $('lvDirText').value = ''; say($('lvDirMsg'), '지령을 올렸습니다. 아래에 더 추가할 수 있습니다.', 'ok');
     } catch (e) { say($('lvDirMsg'), '실패: ' + e.message, 'bad'); }
+    $('lvDirGo').disabled = false;
   };
 }
 // ---- 전체 근무표 탭: 지금 근무의 원본 근무표 사진(앱 사용자 누구나, 근무가 끝나면 서버에서 삭제). 탭하면 확대/축소 ----
