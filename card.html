@@ -141,6 +141,14 @@ body.night button.ok{color:#0b1b3a}
   if(h.indexOf('#c=')===0){ try{ c=JSON.parse(decodeURIComponent(h.slice(3))); }catch(e){ c=null; } }
   if(!c && q.get('demo') && SAMPLES[q.get('demo')]){ c=JSON.parse(JSON.stringify(SAMPLES[q.get('demo')])); c.sh=q.get('sh')==='night'?'night':'day'; }
   if(c) render(c); else gallery();
+  // 카드 창이 열려 있는 채로 새 알림을 누르면 주소 뒤쪽(#c=...)만 바뀐다 → 그때도 새 내용으로 다시 그린다
+  function reload(){
+    var hh=location.hash||'';
+    if(hh.indexOf('#c=')===0){ try{ var cc=JSON.parse(decodeURIComponent(hh.slice(3))); window.scrollTo(0,0); render(cc); }catch(e){} }
+  }
+  window.addEventListener('hashchange',reload);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) reload(); });
+  window.addEventListener('pageshow',function(e){ if(e.persisted) reload(); });
 })();
 </script>
 </body>

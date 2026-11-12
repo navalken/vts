@@ -3,7 +3,7 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 // 카드 화면·그림을 바꿨을 때 이 숫자를 올리면 폰에 남은 예전 화면 대신 새 화면이 열린다
-const CARD_VER = '7';
+const CARD_VER = '8';
 
 // 카드 화면 주소: 알림에 실린 카드 데이터를 주소 뒤(#c=...)에 담아 card.html로 연다
 function cardUrl(card) {
@@ -37,7 +37,9 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || new URL('app.html', self.registration.scope).href;
+  let url = (event.notification.data && event.notification.data.url) || new URL('app.html', self.registration.scope).href;
+  // 카드 주소에는 매번 다른 번호를 붙여, 이미 열려 있던 예전 카드 창도 반드시 새로 불러오게 한다
+  if (url.indexOf('card.html?') >= 0) url = url.replace('card.html?', 'card.html?n=' + Date.now() + '&');
   event.waitUntil((async () => {
     // 아이폰은 꺼져 있던 홈 화면 앱을 알림으로 열면 지정한 주소 대신 시작 화면을 열기도 한다.
     // 그래서 "누른 알림의 주소"를 적어 두고, 앱이 열리면 스스로 그 주소로 이동한다(2분 안에만 유효).
