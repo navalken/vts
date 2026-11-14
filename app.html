@@ -516,15 +516,21 @@ function wxBig() {
 }
 async function wxLoadModel() { // 관측소가 없는 바다 3곳: Open-Meteo 격자 예측(실제 관측 아님)
   if (WX.model && Date.now() - WX.mt < 10 * 60e3) return;
-  try {
-    const la = WX_MODEL.map(x => x[2]).join(','), lo = WX_MODEL.map(x => x[3]).join(',');
-    const [a, b] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FSeoul`).then(r => r.json()),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&current=wave_height&timezone=Asia%2FSeoul`).then(r => r.json()).catch(() => null)]);
-    const A = Array.isArray(a) ? a : [a], B = b ? (Array.isArray(b) ? b : [b]) : [];
-    WX.model = WX_MODEL.map((x, i) => { const c = A[i] && A[i].current || {}, w = B[i] && B[i].current || {}; return c.wind_speed_10m == null ? null : { c: x[0], nm: x[1], lat: x[2], lon: x[3], wd: c.wind_direction_10m, ws: Math.round(c.wind_speed_10m * 10) / 10, wh: w.wave_height != null ? w.wave_height : null, t: wxT(c.time), k: 'm' }; }).filter(Boolean);
-    WX.mt = Date.now();
-  } catch (e) { /* 모델 값이 없으면 그 3곳만 안 보임 */ }
+  const build = rows => WX_MODEL.map((x, i) => { const c = rows[i]; return !c || c.ws == null ? null : { c: x[0], nm: x[1], lat: x[2], lon: x[3], wd: c.wd, ws: Math.round(c.ws * 10) / 10, wh: c.wh != null ? c.wh : null, t: wxT(c.time), k: 'm' }; }).filter(Boolean);
+  let rows = null;
+  if (S.token) { try { const d = await api('/wxm'); if (Array.isArray(d)) rows = d; } catch (e) { /* 서버가 못 주면 아래에서 직접 */ } } // 1순위: 우리 서버가 모아 둔 값
+  if (!rows) {
+    try {
+      const la = WX_MODEL.map(x => x[2]).join(','), lo = WX_MODEL.map(x => x[3]).join(',');
+      const [a, b] = await Promise.all([
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=wind_speed_10m,wind_direction_10m&wind_speed_unit=ms&timezone=Asia%2FSeoul`).then(r => { if (!r.ok) throw new Error('m ' + r.status); return r.json(); }),
+        fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${la}&longitude=${lo}&current=wave_height&timezone=Asia%2FSeoul`).then(r => r.ok ? r.json() : null).catch(() => null)]);
+      const A = Array.isArray(a) ? a : [a], B = b ? (Array.isArray(b) ? b : [b]) : [];
+      rows = WX_MODEL.map((x, i) => { const c = (A[i] && A[i].current) || {}, w = (B[i] && B[i].current) || {}; return c.wind_speed_10m == null ? null : { wd: c.wind_direction_10m, ws: c.wind_speed_10m, wh: w.wave_height != null ? w.wave_height : null, time: c.time }; });
+    } catch (e) { rows = null; }
+  }
+  if (!rows) return; /* 못 받으면 그 3곳만 안 보임(1분 뒤 다시 시도) */
+  WX.model = build(rows); WX.mt = Date.now();
 }
 async function loadMarine(force) {
   if (WX.busy) return; if (!S.token) { WX.err = '앱 등록 후 볼 수 있습니다(설정에서 등록)'; renderWx(); return; }
