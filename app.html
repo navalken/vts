@@ -665,9 +665,11 @@ async function renderSet() {
   <div class="menu">
     <button id="mInfo">내 정보 <span class="arr">›</span></button>
     <button id="mAdmin">관리자 관리 <span class="arr">›</span></button>
+    <button id="mManual">📖 사용설명서 <span class="arr">›</span></button>
   </div>${S.msg ? `<div class="msg bad">${esc(S.msg)}</div>` : ''}`;
   $('mInfo').onclick = () => setView('info');
   $('mAdmin').onclick = () => setView('admin');
+  $('mManual').onclick = () => window.open('usage.html', '_blank');
 }
 
 function renderOnboard() {
@@ -688,7 +690,9 @@ function renderOnboard() {
       <button id="oReg">알림 허용하고 시작</button>
     </div>
     <div class="msg" id="oMsg" hidden></div>
-  </div>`;
+  </div>
+  <div class="menu"><button id="mManual0">📖 사용설명서 <span class="arr">›</span></button></div>`;
+  $('mManual0').onclick = () => window.open('usage.html', '_blank');
   $('oLoad').onclick = async () => {
     const team = $('oTeam').value, code = $('oCode').value.trim();
     if (!team || !code) return say($('oMsg'), '팀과 팀 코드를 입력하세요.', 'bad');
