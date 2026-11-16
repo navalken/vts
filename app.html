@@ -336,7 +336,7 @@ function paintHdr() { if (CURT === 'my' || CURT === 'live') return; try { $('hdr
 const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/mmis/m', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
 const WX = { mode: 'wind', td: null, tat: 0, tbusy: false, terr: '', tq: '', treg: '', d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
 // 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
-const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66], K22516: [11, 50], K22187: [88, 87], K22515: [86, 65], K22107: [10, 71] };
+const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66], K22516: [11, 50], K22187: [86, 84], K22515: [85, 63], K22107: [13, 71] };
 const WX_OFF = ['KG_0021', 'IE_0060'], WX_OFFTXT = { KG_0021: '▼ 구역 남쪽 바깥 약90km', IE_0060: '◀ 구역 남서쪽 바깥' };
 const WX_MODEL = [['M1', '북서 해상', 33.80, 126.31], ['M2', '서쪽 해상', 33.42, 126.11], ['M3', '남동 해상', 33.28, 126.98]];
 const WX_DIRS = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
