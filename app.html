@@ -269,6 +269,8 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .wxn{font-size:9.5px;font-weight:800;color:#2a4a86}.wxn em{font-style:normal;font-weight:600;color:#6b7a95;font-size:9px}
 .wxr{display:flex;align-items:center;justify-content:center;gap:2px}.wxr b{font-size:15px;line-height:1.1}.wxk small,.wxchip small{font-size:9px;color:#6b7a95}.wxw{font-size:10px;font-weight:700}
 .wxar{width:15px;height:15px;fill:#2f7be8;flex:none}
+#wxBody .wxmap .wxk{min-width:44px;padding:1px 4px 2px;border-width:1.5px;border-radius:7px}#wxBody .wxmap .wxn{font-size:8.5px}#wxBody .wxmap .wxn em{font-size:7.5px}#wxBody .wxmap .wxr b{font-size:12.5px}#wxBody .wxmap .wxk small{font-size:7.5px}#wxBody .wxmap .wxw{font-size:8.5px}#wxBody .wxmap .wxar{width:12px;height:12px}
+#wxBody .wxmap .wxk.sm{min-width:34px;padding:0 3px 1px}#wxBody .wxmap .wxk.sm .wxn{font-size:7.5px}#wxBody .wxmap .wxk.sm .wxr b{font-size:10.5px}#wxBody .wxmap .wxk.sm .wxar{width:10px;height:10px}#wxBody .wxmap .wxk.sm small{font-size:6.5px}#wxBody .wxmap .wxk.sm .wxw{font-size:7.5px}
 .wxk.l1,.wxchip.l1{border-color:#f59e0b}.wxk.l1 .wxar,.wxchip.l1 .wxar{fill:#f59e0b}.wxk.l2,.wxchip.l2{border-color:#e03b3b;background:#fff0f0f0}.wxk.l2 .wxar,.wxchip.l2 .wxar{fill:#e03b3b}.wxk.l3,.wxchip.l3{border-color:#7a1020;background:#ffe3e6}.wxk.l3 .wxar,.wxchip.l3 .wxar{fill:#7a1020}
 .wxsub{font-size:11px;color:var(--mut);margin:8px 2px 0;font-weight:700}
 .wxlg{display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;color:#51607c;padding:8px 4px 0}.wxlg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
@@ -336,7 +338,8 @@ function paintHdr() { if (CURT === 'my' || CURT === 'live') return; try { $('hdr
 const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/mmis/m', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
 const WX = { mode: 'wind', td: null, tat: 0, tbusy: false, terr: '', tq: '', treg: '', d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
 // 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
-const WX_POS = { KG_0028: [66, 24], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [15, 89], TW_0075: [39, 91], DT_0010: [63, 88], M1: [19, 20], M2: [11, 50], M3: [88, 66], K22516: [11, 50], K22187: [86, 84], K22515: [85, 63], K22107: [13, 71] };
+const WX_POS = { KG_0028: [66, 26], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [28, 62], TW_0075: [47, 68], DT_0010: [62, 90], M1: [19, 20], M2: [11, 50], M3: [88, 66], K22516: [10, 56], K22187: [88, 93], K22515: [87, 60], K22107: [14, 81] };
+const WX_SM = ['DT_0023', 'K22187', 'TW_0075'], WX_NM = { K22107: '마라도 해상' }; // 칸을 더 작게 그리는 지점(육지 안으로 넣은 모슬포, 남쪽 바다의 서귀포 남동)
 const WX_OFF = ['KG_0021', 'IE_0060'], WX_OFFTXT = { KG_0021: '▼ 구역 남쪽 바깥 약90km', IE_0060: '◀ 구역 남서쪽 바깥' };
 const WX_MODEL = [['M1', '북서 해상', 33.80, 126.31], ['M2', '서쪽 해상', 33.42, 126.11], ['M3', '남동 해상', 33.28, 126.98]];
 const WX_DIRS = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
@@ -348,11 +351,11 @@ const wxT = t => { const m = /(\d{2}):(\d{2})/.exec(t || ''); return m ? m[1] + 
 function wxCard(p, cls, pos, extra) {
   const w = p.wh != null ? `<div class="wxw">파고 <b>${p.wh.toFixed(1)}</b>m</div>` : '';
   const ws = p.ws == null ? '-' : p.ws.toFixed(1);
-  return `<div class="${cls} ${p.k} ${wxLvl(p.ws, p.wh)}" ${pos ? `style="left:${pos[0]}%;top:${pos[1]}%"` : ''}><div class="wxn">${esc(p.nm)}${extra ? ` <em>${extra}</em>` : ''}</div><div class="wxr">${wxArrow(p.ws === 0 ? null : p.wd)}<b>${ws}</b><small>m/s</small></div>${w}</div>`;
+  return `<div class="${cls}${WX_SM.includes(p.c) ? ' sm' : ''} ${p.k} ${wxLvl(p.ws, p.wh)}" ${pos ? `style="left:${pos[0]}%;top:${pos[1]}%"` : ''}><div class="wxn">${esc(p.nm)}${extra ? ` <em>${extra}</em>` : ''}</div><div class="wxr">${wxArrow(p.ws === 0 ? null : p.wd)}<b>${ws}</b><small>m/s</small></div>${w}</div>`;
 }
 function wxPoints() { // 관측(부이 b·관측소 t) + 모델(m) 합치기
   const out = [];
-  ((WX.d && WX.d.pts) || []).forEach(x => out.push({ c: x.c, nm: x.nm, lat: x.lat, lon: x.lon, wd: x.wd, ws: x.ws, wh: x.wh, t: wxT(x.t), k: x.src === 'b' ? 'b' : 't' }));
+  ((WX.d && WX.d.pts) || []).forEach(x => out.push({ c: x.c, nm: WX_NM[x.c] || x.nm, lat: x.lat, lon: x.lon, wd: x.wd, ws: x.ws, wh: x.wh, t: wxT(x.t), k: x.src === 'b' ? 'b' : 't' }));
   const have = c => out.some(x => x.c === c && x.ws != null); // 기상청 부이가 들어오면 같은 자리의 예측모델(서쪽·남동)은 뺌
   (WX.model || []).forEach(x => { if ((x.c === 'M2' && have('K22516')) || (x.c === 'M3' && have('K22187'))) return; out.push(x); });
   return out;
