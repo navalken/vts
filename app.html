@@ -183,6 +183,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .nag .ni{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14.5px;line-height:1.4;font-weight:600;color:#12284a}
 .nag .ni b{flex:none;font-size:11.5px;padding:2px 8px;border-radius:99px;background:#c0392b;color:#fff;margin-top:1px}
 .nag .ni b.s{background:#1a6be0}.nag .ni b.s.o{background:#8a97ad}
+.nag .ni .nt{font-size:10.5px;font-weight:600;color:#9a8a8a;margin-left:6px;white-space:nowrap}
 .nag .ni span{white-space:pre-wrap;word-break:break-word;min-width:0}.dhead{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px}.dlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:34vh;overflow:auto}.drow{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;background:var(--bg)}.drow .dt{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.4}.drow .dm{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:12.5px;color:var(--mut)}.drow .dx{width:auto;margin:0;padding:3px 10px;font-size:13px;background:#fde8e8;color:#b42318;border:1px solid #f5bcbc;border-radius:8px}
 .mstate{margin:12px 9px 0;text-align:center;padding:18px 14px 16px}
 .mstate img{height:150px;width:auto;max-width:80%}
@@ -1055,12 +1056,14 @@ function myCount(m, now) {
 function myBtns() {
   return `<div class="mbt"><button class="mb1" onclick="goTab('board')"><span>📋</span>근무표 원본 보기</button>${S.token ? '<a class="mb2" href="vts-simple.html?own=1" target="_blank" rel="noopener"><span>⬆</span>근무표 올리기</a>' : ''}</div>`;
 }
+const dirTm = at => { const d = new Date(Date.parse(at) + 9 * 3600000); return isNaN(d) ? '' : d.toISOString().slice(11, 16); }; // 지령 올린 시각(한국 시간 HH:MM)
+const dirWho = x => [dirTm(x.at), x.by || ''].filter(Boolean).join(' · ');
 function myNag(m) {
   const list = ((MY.d && MY.d.directives) || []).filter(x => !m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift));
   if (!list.length) return '';
   const rank = x => (!x.sectors || !x.sectors.length) ? 0 : x.mine ? 1 : 2; // 전체 → 내 섹터 → 다른 섹터(섹터 번호순)
   list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
-  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}</span></div>`).join('')}</div>`;
+  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}${dirWho(x) ? `<small class="nt">${esc(dirWho(x))}</small>` : ''}</span></div>`).join('')}</div>`;
 }
 function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err].join('|'); }
 function renderMy() {
@@ -1187,7 +1190,7 @@ document.addEventListener('click', e => {
 function lvDirSheet(sec) {
   const b = lvBoard(); if (!b) return;
   const all = isLead(sec), label = all ? '전체' : sec, code = S.code || '', DMAX = 10;
-  const hdr = { 'Content-Type': 'application/json', 'X-Team-Code': code };
+  const hdr = { 'Content-Type': 'application/json', 'X-Team-Code': code, 'X-Token': S.token || '' };
   openModal(`<h3>${esc(label)} 지령 입력</h3>
     <p class="mut">${esc(b.team)}팀 ${SHN[b.shift]} · ${all ? '모든 섹터로 이동하는 근무자' : esc(sec) + '으로 이동하는 근무자'}의 알림에 붙습니다. 이미 나간 알림에는 붙지 않고, 근무가 끝나면 지워집니다.</p>
     <div class="dhead"><b>올라간 지령</b><span id="lvDirCnt" class="mut"></span></div>
@@ -1200,7 +1203,7 @@ function lvDirSheet(sec) {
     total = list.length;
     const mine = list.filter(x => (x.shift === 'both' || x.shift === b.shift) && (all ? !(x.sectors || []).length : (x.sectors || []).includes(sec)));
     $('lvDirCnt').textContent = `오늘 ${total}/${DMAX}개`;
-    $('lvDirList').innerHTML = mine.length ? mine.map(x => `<div class="drow"><div class="dt">${esc(x.text)}</div><div class="dm"><span>${fmt(x.at)}</span><button class="dx" data-id="${esc(x.id)}">지우기</button></div></div>`).join('') : `<div class="mut">${esc(label)}에 올린 지령이 아직 없습니다.</div>`;
+    $('lvDirList').innerHTML = mine.length ? mine.map(x => `<div class="drow"><div class="dt">${esc(x.text)}</div><div class="dm"><span>${fmt(x.at)}${x.by ? ' · ' + esc(x.by) : ''}</span><button class="dx" data-id="${esc(x.id)}">지우기</button></div></div>`).join('') : `<div class="mut">${esc(label)}에 올린 지령이 아직 없습니다.</div>`;
   };
   const load = async () => {
     if (!code) { $('lvDirList').innerHTML = '<div class="mut">팀 코드가 이 기기에 없어 목록을 못 불러옵니다.</div>'; return; }
