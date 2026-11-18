@@ -1059,7 +1059,7 @@ function myBtns() {
 const dirTm = at => { const d = new Date(Date.parse(at) + 9 * 3600000); return isNaN(d) ? '' : d.toISOString().slice(11, 16); }; // 지령 올린 시각(한국 시간 HH:MM)
 const dirWho = x => [dirTm(x.at), x.by || ''].filter(Boolean).join(' · ');
 function myNag(m) {
-  const list = ((MY.d && MY.d.directives) || []).filter(x => !m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && r.shift === x.shift));
+  const list = ((MY.d && MY.d.directives) || []).filter(x => !m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && (r.shift === x.shift || m.duty.rows.length > 1))); // 종일(주간+야간) 근무는 같은 날 지령을 근무가 끝날 때까지 모두 보여줌
   if (!list.length) return '';
   const rank = x => (!x.sectors || !x.sectors.length) ? 0 : x.mine ? 1 : 2; // 전체 → 내 섹터 → 다른 섹터(섹터 번호순)
   list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
@@ -1201,9 +1201,9 @@ function lvDirSheet(sec) {
   const fmt = at => { const d = new Date(Date.parse(at) + 9 * 3600000); return isNaN(d) ? '' : d.toISOString().slice(11, 16); };
   const paint = list => {
     total = list.length;
-    const mine = list.filter(x => (x.shift === 'both' || x.shift === b.shift) && (all ? !(x.sectors || []).length : (x.sectors || []).includes(sec)));
+    const mine = list.filter(x => (x.shift === 'both' || x.shift === b.shift || (b.shift === 'night' && x.shift === 'day')) && (all ? !(x.sectors || []).length : (x.sectors || []).includes(sec))); // 야간에도 같은 날 주간에 올린 지령을 보여줌(종일 근무자는 다음날 아침까지 필요)
     $('lvDirCnt').textContent = `오늘 ${total}/${DMAX}개`;
-    $('lvDirList').innerHTML = mine.length ? mine.map(x => `<div class="drow"><div class="dt">${esc(x.text)}</div><div class="dm"><span>${fmt(x.at)}${x.by ? ' · ' + esc(x.by) : ''}</span><button class="dx" data-id="${esc(x.id)}">지우기</button></div></div>`).join('') : `<div class="mut">${esc(label)}에 올린 지령이 아직 없습니다.</div>`;
+    $('lvDirList').innerHTML = mine.length ? mine.map(x => `<div class="drow"><div class="dt">${x.shift === 'day' && b.shift === 'night' ? '<small class="mut">[주간에 올림] </small>' : ''}${esc(x.text)}</div><div class="dm"><span>${fmt(x.at)}${x.by ? ' · ' + esc(x.by) : ''}</span><button class="dx" data-id="${esc(x.id)}">지우기</button></div></div>`).join('') : `<div class="mut">${esc(label)}에 올린 지령이 아직 없습니다.</div>`;
   };
   const load = async () => {
     if (!code) { $('lvDirList').innerHTML = '<div class="mut">팀 코드가 이 기기에 없어 목록을 못 불러옵니다.</div>'; return; }

@@ -83,7 +83,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 </div>
 <details><summary>설정 (앱에 등록돼 있으면 필요 없음)</summary>
   <div class="row"><label>Worker 주소</label><input id="gvWorker" style="width:100%" placeholder="https://vts-push.내계정.workers.dev"></div>
-  <div class="row"><label>우리 팀 코드</label><input id="gvAdmin" type="password" style="width:100%"></div>
+  <div class="row"><label>팀 코드 (모든 팀 공통 — 한 번만 입력)</label><input id="gvAdmin" type="password" style="width:100%"></div>
   <div class="row"><label>이 팀의 직원 이름 목록 (쉼표/줄바꿈, 이름 자동 교정용)</label><textarea id="knownNames" rows="3" style="width:100%"></textarea></div>
   <div class="row"><button id="rawBtn" style="background:#6b7280;font-size:13px;padding:8px 12px;">문제 분석용: 구글 원본 데이터 저장</button></div>
 </details>
@@ -361,15 +361,16 @@ const pKey=()=>'vts_s_patterns_t'+team(), tabKey=h=>'vts_s_tab_t'+team()+'_'+h, 
 try{ const old=LS.get('vts_s_patterns'); if(old&&!LS.get('vts_s_patterns_t1')) LS.set('vts_s_patterns_t1',old);
      const on=LS.get('vts_known_names'); if(on&&!LS.get('vts_known_names_t1')) LS.set('vts_known_names_t1',on); }catch(e){}
 // ---- 설정(이 기기에만 저장) ----
-setTimeout(()=>{ try{ const w=$('regWarn'); const hasCode=['1','2','3'].some(t=>LS.get('vts_team_code_t'+t)); if(!appTok()&&!hasCode){ w.style.display='block'; w.textContent='이 폰은 앱에 등록되어 있지 않습니다. 먼저 앱(홈 화면 VTS 아이콘)에서 설정 탭으로 등록한 뒤, 앱의 "근무표 올리기" 버튼으로 이 화면을 여세요.'; } }catch(e){} },0);
+setTimeout(()=>{ try{ const w=$('regWarn'); const hasCode=!!anyCode(); if(!appTok()&&!hasCode){ w.style.display='block'; w.textContent='이 폰은 앱에 등록되어 있지 않습니다. 먼저 앱(홈 화면 VTS 아이콘)에서 설정 탭으로 등록한 뒤, 앱의 "근무표 올리기" 버튼으로 이 화면을 여세요.'; } }catch(e){} },0);
 const DEFAULT_WORKER='https://vts-push.navalken100.workers.dev';
 const appTok=()=>{ try{ return localStorage.getItem('vts_app_token')||''; }catch(e){ return ''; } };
 const hdrs=code=>{ const h={'Content-Type':'application/json'}; if(code) h['X-Team-Code']=code; const t=appTok(); if(t) h['X-Token']=t; return h; };
 const NOAUTH='앱에 먼저 등록하세요(설정 탭). 이미 등록했다면 앱 아이콘에서 "근무표 올리기" 버튼으로 열어 보세요. (또는 아래 "설정"에 팀 코드 입력)';
 { const v=LS.get('vts_gv_worker')||DEFAULT_WORKER; $('gvWorker').value=v; $('gvWorker').addEventListener('change',e=>{ LS.set('vts_gv_worker',e.target.value.trim()); loadServerPatterns().then(refreshPatServer); }); }
 const adminKeyName=()=>'vts_team_code_t'+team();
-function loadAdminKey(){ $('gvAdmin').value=LS.get(adminKeyName())||''; } 
-$('gvAdmin').addEventListener('change',e=>{ LS.set(adminKeyName(),e.target.value.trim()); loadServerPatterns().then(refreshPatServer); });
+const anyCode=()=>LS.get('vts_team_code_all')||LS.get('vts_team_code_t1')||LS.get('vts_team_code_t2')||LS.get('vts_team_code_t3')||''; // 팀 코드는 하나라서 한 번만 넣으면 모든 팀에 씀
+function loadAdminKey(){ $('gvAdmin').value=LS.get(adminKeyName())||anyCode(); } 
+$('gvAdmin').addEventListener('change',e=>{ LS.set(adminKeyName(),e.target.value.trim()); LS.set('vts_team_code_all',e.target.value.trim()); loadServerPatterns().then(refreshPatServer); });
 $('knownNames').addEventListener('change',e=>LS.set(nameKey(),e.target.value.trim()));
 const staff=()=>$('knownNames').value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
 const shiftMode=()=>$('shift').value;                       // both | day | night
@@ -394,7 +395,7 @@ function setPatterns(p,msg){
 ['patDay','patNight'].forEach(id=>$(id).addEventListener('change',()=>{ LS.set(tabKey(id==='patDay'?'day':'night'),$(id).value); if(ran) start(changeMode); }));
 // ---- 패턴: 팀별 서버 저장(누구나 내려받기·교체·삭제·복원) ----
 const wUrlV=()=>$('gvWorker').value.trim().replace(/\/+$/,'');
-const codeFor=t=>String(t)===team()?($('gvAdmin').value.trim()||LS.get('vts_team_code_t'+t)||''):(LS.get('vts_team_code_t'+t)||'');
+const codeFor=t=>String(t)===team()?($('gvAdmin').value.trim()||LS.get('vts_team_code_t'+t)||anyCode()):(LS.get('vts_team_code_t'+t)||anyCode());
 const serverReady=()=>!!(wUrlV()&&($('gvAdmin').value.trim()||appTok()));
 async function pcall(path,method,body,code){
   if(!wUrlV()||(!code&&!appTok())) throw new Error(NOAUTH);
