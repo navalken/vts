@@ -162,14 +162,24 @@ function autoSectorGrid(symbols,words,which){
   if(!(dl>4)) return {error:'행 간격을 계산하지 못했습니다'};
   const R={x:d.y/dl,y:-d.x/dl};
   const labHalf=median(g.map(l=>l.w))/2/dl;
-  const pts=[];
+  const cand=[];
   symbols.forEach(s=>{
     const ch=normCode(s.t); if(!/^[A-R]$/.test(ch)) return;
     const px=s.cx-O.x, py=s.cy-O.y;
-    const v=(px*d.x+py*d.y)/(dl*dl), u=(px*R.x+py*R.y)/dl;
-    if(v<0.5||v>9.5||Math.abs(v-Math.round(v))>0.42||u<labHalf+0.3) return;
-    pts.push({ch,row:Math.round(v)-1,u,conf:s.conf,raw:s.t});
+    cand.push({ch,v:(px*d.x+py*d.y)/(dl*dl),u:(px*R.x+py*R.y)/dl,conf:s.conf,raw:s.t});
   });
+  // 사진이 조금 기울거나 원근이 있으면 오른쪽 칸일수록 행이 어긋남 → 읽힌 글자로 어긋남(a+b*u)을 추정해 반복 보정
+  let dA=0,dB=0,pts=[];
+  for(let it=0;it<5;it++){
+    pts=[];
+    cand.forEach(c=>{ const vc=c.v-(dA+dB*c.u);
+      if(c.u<labHalf+0.3||vc<0.5||vc>9.5||Math.abs(vc-Math.round(vc))>0.42) return;
+      pts.push({ch:c.ch,row:Math.round(vc)-1,u:c.u,conf:c.conf,raw:c.raw,res:vc-Math.round(vc)}); });
+    if(pts.length<9) break;
+    const f=linfit(pts.map(q=>q.u),pts.map(q=>q.res));
+    if(Math.abs(f.slope)<0.0005&&Math.abs(f.icpt)<0.003) break;
+    dA+=f.icpt; dB+=f.slope;
+  }
   if(pts.length<9) return {error:'시간표 글자를 충분히 찾지 못했습니다('+pts.length+'개)'};
   const su=pts.slice().sort((a,b)=>a.u-b.u); const clusters=[[su[0]]];
   for(let i=1;i<su.length;i++){ if(su[i].u-su[i-1].u>0.8) clusters.push([]); clusters[clusters.length-1].push(su[i]); }
@@ -180,11 +190,11 @@ function autoSectorGrid(symbols,words,which){
   pts.forEach(p=>{ if(p.conf>conf[p.row][p.col]){ conf[p.row][p.col]=p.conf; grid[p.row][p.col]=p.ch; } });
   const alts=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!alts[p.row][p.col].includes(p.ch)) alts[p.row][p.col].push(p.ch); });
   const raws=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!raws[p.row][p.col].includes(p.raw)) raws[p.row][p.col].push(p.raw); }); // 보정 전 원본 글자(숫자 0·8 등 — 구글이 글자 모양에 자신 없을 때 숫자로 읽음) // 한 칸 안에서 구글이 읽은 모든 후보 글자
-  const centers=grid.map((row,i)=>row.map((_,k)=>({x:O.x+(i+1)*d.x+colU[k]*dl*R.x, y:O.y+(i+1)*d.y+colU[k]*dl*R.y})));
+  const centers=grid.map((row,i)=>row.map((_,k)=>({x:O.x+(i+1+dA+dB*colU[k])*d.x+colU[k]*dl*R.x, y:O.y+(i+1+dA+dB*colU[k])*d.y+colU[k]*dl*R.y})));
   const filled=grid.flat().filter(Boolean).length;
   const gaps=colU.slice(1).map((c,i)=>c-colU[i]);
   return {grid,alts,raws,conf,centers,rowPitch:dl,colPitch:(gaps.length?median(gaps):2)*dl,
-    diag:{tables:good.length,labels:g.length,letters:pts.length,cols:N,filled,total:9*N,angle:Math.atan2(R.y,R.x)*180/Math.PI}};
+    diag:{drift:+(dB*(colU[N-1]-colU[0])).toFixed(2),dropped:cand.length-pts.length,tables:good.length,labels:g.length,letters:pts.length,cols:N,filled,total:9*N,angle:Math.atan2(R.y,R.x)*180/Math.PI}};
 }
 // 명단표(번호·계급·서명 | 번호·계급·성명 × A~R 18줄)
 function autoRoster(symbols,words){
@@ -577,7 +587,7 @@ async function start(m){
         const sr=(act.length===2||tables>=2)?autoSectorGrid(g.symbols,g.words,h==='day'?0:1):probe;
         const st=S[h], pat=patOf(h);
         if(sr.error){ st.warn.push('시간표 인식 실패: '+sr.error); return; }
-        if(sr.grid[0].length!==pat.timeLabels.length){ st.warn.push(`시간 칸 수가 다릅니다(패턴 ${pat.timeLabels.length}칸 / 사진 ${sr.grid[0].length}칸) — 비교하지 않고 패턴 그대로 보여줍니다.`); return; }
+        if(sr.grid[0].length!==pat.timeLabels.length){ st.warn.push(`시간 칸 수가 다릅니다(패턴 ${pat.timeLabels.length}칸 / 사진 ${sr.grid[0].length}칸, 읽은 글자 ${sr.diag.letters}개·버린 글자 ${sr.diag.dropped}개·기울어짐 ${sr.diag.drift}칸) — 비교하지 않고 패턴 그대로 보여줍니다.`); return; }
         st.grid=sr.grid; st.alts=sr.alts; st.raws=sr.raws; st.conf=sr.conf;
       });
     }
