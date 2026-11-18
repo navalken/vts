@@ -37,7 +37,7 @@ details{margin-top:10px;} summary{color:var(--muted);font-size:13px;cursor:point
 .prow button.x{background:#7a2e2e}.prow button.sub{background:#6b7280}
 </style></head>
 <body>
-<h1>VTS 근무표 — <span id="teamTitle">1팀</span> <small style="font-size:11px;color:#8aa;font-weight:400">v1118-기울기보정</small></h1>
+<h1>VTS 근무표 — <span id="teamTitle">1팀</span> <small style="font-size:11px;color:#8aa;font-weight:400">v1118b-기울기추적</small></h1>
 <div id="regWarn" class="msg bad" style="display:none"></div>
 <div class="row" style="margin:0 0 6px;"><label>팀</label><div id="teamBtns" class="tbtns"><button type="button" data-t="1">1팀</button><button type="button" data-t="2">2팀</button><button type="button" data-t="3">3팀</button></div><select id="team" style="display:none"><option value="1">1팀</option><option value="2">2팀</option><option value="3">3팀</option></select></div>
 <p class="hint" style="margin:0 0 10px">패턴·직원 이름은 팀마다 따로 저장됩니다</p>
@@ -168,17 +168,20 @@ function autoSectorGrid(symbols,words,which){
     const px=s.cx-O.x, py=s.cy-O.y;
     cand.push({ch,v:(px*d.x+py*d.y)/(dl*dl),u:(px*R.x+py*R.y)/dl,conf:s.conf,raw:s.t});
   });
-  // 사진이 조금 기울거나 원근이 있으면 오른쪽 칸일수록 행이 어긋남 → 읽힌 글자로 어긋남(a+b*u)을 추정해 반복 보정
-  let dA=0,dB=0,pts=[];
-  for(let it=0;it<5;it++){
-    pts=[];
-    cand.forEach(c=>{ const vc=c.v-(dA+dB*c.u);
-      if(c.u<labHalf+0.3||vc<0.5||vc>9.5||Math.abs(vc-Math.round(vc))>0.42) return;
-      pts.push({ch:c.ch,row:Math.round(vc)-1,u:c.u,conf:c.conf,raw:c.raw,res:vc-Math.round(vc)}); });
-    if(pts.length<9) break;
-    const f=linfit(pts.map(q=>q.u),pts.map(q=>q.res));
-    if(Math.abs(f.slope)<0.0005&&Math.abs(f.icpt)<0.003) break;
-    dA+=f.icpt; dB+=f.slope;
+  // 사진이 기울거나 원근이 있으면 오른쪽 칸일수록 행이 어긋남(한 줄 이상도 가능).
+  // 왼쪽 칸(어긋남 0)에서 시작해 칸마다 "이웃 칸과 가장 이어지는" 어긋남을 추정해 따라간다.
+  const loose=cand.filter(c=>c.u>=labHalf+0.3&&c.v>-0.6&&c.v<10.6).sort((a,b)=>a.u-b.u);
+  let pts=[]; const tmp=[];
+  if(loose.length>=9){
+    const cl=[[loose[0]]]; for(let i=1;i<loose.length;i++){ if(loose[i].u-loose[i-1].u>0.8) cl.push([]); cl[cl.length-1].push(loose[i]); }
+    let prev=0;
+    cl.forEach(c=>{
+      let sn=0,cs=0; c.forEach(q=>{ sn+=Math.sin(2*Math.PI*q.v); cs+=Math.cos(2*Math.PI*q.v); });
+      const m=Math.atan2(sn,cs)/(2*Math.PI), o=m+Math.round(prev-m); prev=o;
+      c.forEach(q=>{ const vc=q.v-o, rr=Math.round(vc);
+        if(rr<1||rr>9||Math.abs(vc-rr)>0.42) return;
+        pts.push({ch:q.ch,row:rr-1,u:q.u,conf:q.conf,raw:q.raw,o}); });
+    });
   }
   if(pts.length<9) return {error:'시간표 글자를 충분히 찾지 못했습니다('+pts.length+'개)'};
   const su=pts.slice().sort((a,b)=>a.u-b.u); const clusters=[[su[0]]];
@@ -186,15 +189,16 @@ function autoSectorGrid(symbols,words,which){
   const colU=clusters.map(c=>c.reduce((a,b)=>a+b.u,0)/c.length);
   pts.forEach(p=>{ let k=0,best=1e9; colU.forEach((cu,i)=>{ const dd=Math.abs(p.u-cu); if(dd<best){best=dd;k=i;} }); p.col=k; });
   const N=colU.length;
+  const colOff=colU.map((_,k)=>{ const a=pts.filter(p=>p.col===k); return a.reduce((x,p)=>x+p.o,0)/a.length; });
   const grid=Array.from({length:9},()=>Array(N).fill('')), conf=Array.from({length:9},()=>Array(N).fill(-1));
   pts.forEach(p=>{ if(p.conf>conf[p.row][p.col]){ conf[p.row][p.col]=p.conf; grid[p.row][p.col]=p.ch; } });
   const alts=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!alts[p.row][p.col].includes(p.ch)) alts[p.row][p.col].push(p.ch); });
   const raws=Array.from({length:9},()=>Array.from({length:N},()=>[])); pts.forEach(p=>{ if(!raws[p.row][p.col].includes(p.raw)) raws[p.row][p.col].push(p.raw); }); // 보정 전 원본 글자(숫자 0·8 등 — 구글이 글자 모양에 자신 없을 때 숫자로 읽음) // 한 칸 안에서 구글이 읽은 모든 후보 글자
-  const centers=grid.map((row,i)=>row.map((_,k)=>({x:O.x+(i+1+dA+dB*colU[k])*d.x+colU[k]*dl*R.x, y:O.y+(i+1+dA+dB*colU[k])*d.y+colU[k]*dl*R.y})));
+  const centers=grid.map((row,i)=>row.map((_,k)=>({x:O.x+(i+1+colOff[k])*d.x+colU[k]*dl*R.x, y:O.y+(i+1+colOff[k])*d.y+colU[k]*dl*R.y})));
   const filled=grid.flat().filter(Boolean).length;
   const gaps=colU.slice(1).map((c,i)=>c-colU[i]);
   return {grid,alts,raws,conf,centers,rowPitch:dl,colPitch:(gaps.length?median(gaps):2)*dl,
-    diag:{drift:+(dB*(colU[N-1]-colU[0])).toFixed(2),dropped:cand.length-pts.length,tables:good.length,labels:g.length,letters:pts.length,cols:N,filled,total:9*N,angle:Math.atan2(R.y,R.x)*180/Math.PI}};
+    diag:{drift:+(colOff[N-1]-colOff[0]).toFixed(2),dropped:cand.length-pts.length,tables:good.length,labels:g.length,letters:pts.length,cols:N,filled,total:9*N,angle:Math.atan2(R.y,R.x)*180/Math.PI}};
 }
 // 명단표(번호·계급·서명 | 번호·계급·성명 × A~R 18줄)
 function autoRoster(symbols,words){
