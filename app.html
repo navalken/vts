@@ -326,6 +326,25 @@ const ls = { get: k => { try { return localStorage.getItem(k) || ''; } catch (e)
 const base = () => (WORKER_URL || ls.get('vts_app_worker')).replace(/\/+$/, '');
 const ua = navigator.userAgent;
 const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// 카카오톡·네이버·인스타 등 앱 안의 간이 브라우저(인앱)에서는 알림이 오지 않으므로 등록을 막고 크롬/사파리로 안내
+const inApp = /KAKAOTALK|NAVER\(inapp|NAVER\/|Instagram|FBAN|FBAV|FB_IAB|Line\/|DaumApps|BAND\/|MicroMessenger|; wv\)/i.test(ua);
+const isAndroid = /Android/i.test(ua);
+const inAppCard = () => `<div class="card" style="border:2px solid #e8590c">
+    <h3 style="color:#e8590c">⛔ 카카오톡에서는 등록할 수 없습니다</h3>
+    <div class="msg" style="margin:6px 0 10px"><b>사용설명서를 읽고, 크롬(Chrome) 또는 사파리(Safari)로 열어서 등록해야 합니다.</b><br>카카오톡 안에서는 이름을 등록할 수 없고, 알림도 오지 않습니다.</div>
+    <button data-act="manual">📖 사용설명서 읽기</button>
+    <button class="sec" data-act="copyLink" style="margin-top:8px">주소 복사하기</button>
+    <div class="msg" style="margin-top:10px">사용설명서의 순서대로 <b>주소를 복사한 뒤 크롬(아이폰은 사파리)을 열어 주소창에 붙여넣으세요.</b> 크롬에서 열면 설정에서 이름을 등록할 수 있습니다.</div>
+  </div>`;
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const url = location.href.split('#')[0];
+  if (b.dataset.act === 'manual') { window.open('usage.html', '_blank'); return; }
+  if (b.dataset.act === 'copyLink') {
+    let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (_) { try { const t = document.createElement('textarea'); t.value = url; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); } catch (__) {} }
+    b.textContent = ok ? '✅ 복사됨 — 크롬 주소창에 붙여넣기' : '주소를 길게 눌러 복사하세요: ' + url;
+  }
+});
 const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const ROLE = { chief: '총괄관리자', teamadmin: '팀관리자' };
 const S = { token: ls.get('vts_app_token'), code: ls.get('vts_app_code'), me: null, people: null, view: 'home', msg: '' };
@@ -618,7 +637,8 @@ async function loadMe() {
   try { S.me = (await api('/me')).person; if (S.me) ls.set('vts_app_team', S.me.team); }
   catch (e) { if (e.status === 401) { S.me = null; S.msg = '이 기기의 등록이 만료되었습니다. 다시 등록해 주세요.'; S.token = ''; ls.del('vts_app_token'); } else throw e; }
 }
-async function loadPeople() { const j = await api('/people'); S.people = j.people; S.me = j.me; }
+async function loadPeople() { const j = await api('/people'); S.people = j.people; S.me = j.me; S.attempts = j.attempts || []; }
+const reportAttempt = (team, name, code, reason) => { try { fetch(base() + '/attempt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team, name, code, reason }) }).catch(() => {}); } catch (_) {} };
 const isAdmin = () => S.me && (S.me.role === 'chief' || S.me.role === 'teamadmin');
 const canEditP = p => S.me && (S.me.role === 'chief' || (S.me.role === 'teamadmin' && S.me.team === p.team));
 const canAddTeam = t => S.me && (S.me.role === 'chief' || (S.me.role === 'teamadmin' && S.me.team === t));
@@ -643,6 +663,7 @@ window.addEventListener('focus', vtsPendingBurst); window.addEventListener('page
 try { navigator.serviceWorker.addEventListener('message', e => { const d = e.data; if (d && d.type === 'vts-open' && typeof d.url === 'string' && d.url !== location.href) location.href = d.url; }); } catch (_) { /* 구형 브라우저 */ } // 알림을 누르면 카드 화면으로 이동
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 async function subscribeAndRegister(team, name, code) {
+  if (inApp) throw new Error('카카오톡 같은 앱 안에서는 알림이 오지 않습니다. 크롬이나 사파리로 열어서 등록해 주세요.');
   if (!('PushManager' in window) || !('Notification' in window)) throw new Error(isIOS ? '이 화면에서는 알림을 쓸 수 없습니다. 홈 화면에 추가한 아이콘으로 다시 여세요.' : '이 브라우저는 푸시 알림을 지원하지 않습니다.');
   const perm = await Notification.requestPermission(); // 버튼을 누른 직접 동작 안에서 호출(iOS 필수)
   if (perm !== 'granted') throw new Error('알림이 허용되지 않았습니다. 기기 설정 → 알림에서 허용으로 바꾼 뒤 다시 시도하세요.');
@@ -680,7 +701,7 @@ async function renderSet() {
 function renderOnboard() {
   $('setBody').innerHTML = `<h2>설정</h2>
   ${S.msg ? `<div class="msg bad">${esc(S.msg)}</div>` : ''}
-  <div class="card">
+  ${inApp ? inAppCard() : `<div class="card">
     ${isIOS && !standalone ? `<div class="msg" style="margin:0 0 10px"><b>아이폰은 먼저 홈 화면에 추가하세요</b><br>Safari 공유 버튼(□↑) → 홈 화면에 추가 → 생긴 아이콘으로 다시 열어 등록합니다.</div>` : ''}
     <h3>처음 시작</h3>
     <label for="oTeam">팀</label>
@@ -695,9 +716,10 @@ function renderOnboard() {
       <button id="oReg">알림 허용하고 시작</button>
     </div>
     <div class="msg" id="oMsg" hidden></div>
-  </div>
+  </div>`}
   <div class="menu"><button id="mManual0">📖 사용설명서 <span class="arr">›</span></button></div>`;
   $('mManual0').onclick = () => window.open('usage.html', '_blank');
+  if (inApp) return; // 인앱 브라우저에서는 등록 화면을 아예 보여주지 않음
   $('oLoad').onclick = async () => {
     const team = $('oTeam').value, code = $('oCode').value.trim();
     if (!team || !code) return say($('oMsg'), '팀과 팀 코드를 입력하세요.', 'bad');
@@ -714,7 +736,7 @@ function renderOnboard() {
     if (!name) return say($('oMsg'), '이름을 선택하거나 입력하세요.', 'bad');
     $('oReg').disabled = true;
     try { await subscribeAndRegister($('oTeam').value, name, $('oCode').value.trim()); S.msg = ''; S.view = 'home'; renderSet(); }
-    catch (e) { say($('oMsg'), e.message, 'bad'); } finally { $('oReg').disabled = false; }
+    catch (e) { say($('oMsg'), e.message, 'bad'); reportAttempt($('oTeam').value, name, $('oCode').value.trim(), e.message); } finally { $('oReg').disabled = false; }
   };
 }
 
@@ -788,6 +810,10 @@ async function renderAdmin() {
   let h = backBar('관리자 관리') + `<div class="card" style="padding:12px"><div class="mut">내 권한: <b>${roleTxt}</b></div></div>`;
   const rank = p => p.pos === '팀장' ? 0 : p.pos === '부팀장' ? 1 : 2;
   if (['1', '2', '3'].some(canAddTeam)) h += '<button id="bulkBtn" class="sec" style="margin:0 0 10px">📋 명단 한꺼번에 추가</button>';
+  if ((S.attempts || []).length) {
+    const fm = t => { const d = new Date(t + 9 * 3600e3); return (d.getUTCMonth() + 1) + '.' + d.getUTCDate() + ' ' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+    h += `<div class="card" style="padding:12px;border:2px solid #e8590c"><h3 style="margin:0 0 4px;color:#e8590c">⚠ 등록하려다 실패한 사람 ${S.attempts.length}명</h3><div class="mut" style="margin-bottom:8px">쓰려고 시도했지만 알림 등록이 안 된 사람입니다. 크롬(아이폰은 사파리)으로 다시 등록하도록 안내해 주세요. 등록에 성공하면 이 목록에서 사라집니다.</div>` + S.attempts.map(x => `<div style="padding:6px 0;border-top:1px solid #eee"><b>${esc(x.name)}</b> <small>${esc(x.team)}팀 · ${fm(x.at)}${x.n > 1 ? ' · ' + x.n + '회' : ''}</small><br><small>${esc(x.reason)}</small></div>`).join('') + '</div>';
+  }
   h += '<div class="tg">';
   ['1', '2', '3'].forEach(t => {
     const list = S.people.filter(p => p.team === t).map((p, i) => [p, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
@@ -1069,7 +1095,7 @@ function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, 
 function renderMy() {
   const el = $('myBody'); if (!el) return;
   const now = myNowMs();
-  if (!S.token) { el.innerHTML = `<div class="my">${myHead(now)}${myStateCard('cap-nap', '아직 등록이 안 됐어요', '설정에서 이름을 등록하면<br>내 근무가 여기에 보여요.', true)}</div>`; return; }
+  if (!S.token) { el.innerHTML = `<div class="my">${myHead(now)}${inApp ? inAppCard() : ''}${myStateCard('cap-nap', '아직 등록이 안 됐어요', '설정에서 이름을 등록하면 <b>근무 알림</b>이 오고<br>내 근무가 여기에 보여요.<br><small>지금은 알림이 오지 않아요</small>', true)}</div>`; return; }
   const m = myModel(now);
   let body;
   if (!m) body = MY.err ? myStateCard('cap-nap', '불러오지 못했어요', esc(MY.err)) : myStateCard('cap-nap', '불러오는 중…', '잠시만 기다려 주세요.');
