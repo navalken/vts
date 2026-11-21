@@ -296,6 +296,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .tdpick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.tdpick input{width:auto;margin:0;padding:8px;font-size:16px}
 #wxBig.tdd .sc{background:#f4f7fb;padding:12px;color:#16233b}#wxBig.tdd .sc>*{position:static!important;width:auto!important;left:auto!important;top:auto!important}
 #wxBig{position:fixed;inset:0;z-index:9999;background:#0b1a33ee;display:flex;flex-direction:column}#wxBig .bar{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 14px 8px;color:#fff;font-weight:700;font-size:14px}#wxBig .bar button{width:auto;margin:0;padding:6px 14px;background:#fff;color:#12284a}#wxBig .sc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}#wxBig .wxmap{width:max(230%,820px);border-radius:0}
+.nag .nh{display:flex;align-items:center;gap:6px}.nsort{margin-left:auto;display:inline-flex;gap:4px}.nsort button{width:auto;margin:0;padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;background:var(--chip);color:var(--mut)}.nsort button.on{background:var(--pri);color:#fff}
 </style>
 </head>
 <body>
@@ -1104,12 +1105,16 @@ function myBtns() {
 }
 const dirTm = at => { const d = new Date(Date.parse(at) + 9 * 3600000); return isNaN(d) ? '' : d.toISOString().slice(11, 16); }; // 지령 올린 시각(한국 시간 HH:MM)
 const dirWho = x => [dirTm(x.at), x.by || ''].filter(Boolean).join(' · ');
+const nagSort = () => { try { return localStorage.getItem('vts_nag_sort') === 'time' ? 'time' : 'sec'; } catch (_) { return 'sec'; } };
+document.addEventListener('click', e => { const b = e.target.closest('[data-nsort]'); if (!b) return; try { localStorage.setItem('vts_nag_sort', b.dataset.nsort); } catch (_) {} if (typeof renderMy === 'function') renderMy(); });
 function myNag(m) {
   const list = ((MY.d && MY.d.directives) || []).filter(x => !m.duty || m.duty.rows.some(r => r.team === x.team && r.date === x.date && (r.shift === x.shift || m.duty.rows.length > 1))); // 종일(주간+야간) 근무는 같은 날 지령을 근무가 끝날 때까지 모두 보여줌
   if (!list.length) return '';
   const rank = x => (!x.sectors || !x.sectors.length) ? 0 : x.mine ? 1 : 2; // 전체 → 내 섹터 → 다른 섹터(섹터 번호순)
-  list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
-  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>팀장 잔소리 ♡</span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}${dirWho(x) ? `<small class="nt">${esc(dirWho(x))}</small>` : ''}</span></div>`).join('')}</div>`;
+  const byTime = nagSort() === 'time';
+  if (byTime) list.sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))); // 시간순: 방금 올린 지령이 맨 위
+  else list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
+  return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>섹터별 리마인더</span><span class="nsort"><button data-nsort="sec" class="${byTime ? '' : 'on'}">섹터순</button><button data-nsort="time" class="${byTime ? 'on' : ''}">시간순</button></span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}${dirWho(x) ? `<small class="nt">${esc(dirWho(x))}</small>` : ''}</span></div>`).join('')}</div>`;
 }
 function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err].join('|'); }
 function renderMy() {
