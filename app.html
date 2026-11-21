@@ -110,6 +110,8 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .mh .mclk .t{font-size:calc(var(--u)*40);letter-spacing:.5px;font-variant-numeric:tabular-nums}
 .mh .gear{right:calc(var(--u)*6);top:calc(var(--u)*6);background:none;border:0;padding:0;margin:0;width:auto;font-size:calc(var(--u)*26);opacity:.65;line-height:1}
 .mh .cap{left:calc(var(--u)*10);bottom:0;height:calc(var(--u)*150);width:auto}
+.mh .cap.th{left:calc(var(--u)*2);height:calc(var(--u)*166)}
+.mh .cap.th~.who{left:calc(var(--u)*164)}
 .mh .who{left:calc(var(--u)*130);bottom:calc(var(--u)*14);background:rgba(255,255,255,.88);border-radius:calc(var(--u)*14);padding:calc(var(--u)*6) calc(var(--u)*12);max-width:calc(var(--u)*190);line-height:1.15}
 .mh .who b{display:block;font-size:calc(var(--u)*26);color:#12284a}
 .mh .who span{display:block;font-size:calc(var(--u)*13);color:#475467;font-weight:600}
@@ -949,7 +951,7 @@ function lvHeader() {
     return `<div class="wx" style="${P(wxBox[i][0], 12, wxBox[i][1], 100, 0, LX.eh)}"><div class="c">${c[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`;
   }).join('');
   const cp = clkParts();
-  return `<div class="hd" style="height:calc(var(--u)*${108 + LX.eh})"></div><img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS" style="${P(14, 8, 310, 100, LX.eh / 2)}">${wx}
+  return `<div class="hd" style="height:calc(var(--u)*${108 + LX.eh})"></div><img class="logo" src="img/logo-cap-b.webp" onerror="this.onerror=null;this.src='img/16_jeju_vts_logo.png'" alt="Jeju VTS" style="${P(14, 8, 310, 100, LX.eh / 2)}">${wx}
     <div class="clk" style="${P(985, 8, 1180, 104, LX.eh / 2)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>`;
 }
 const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
@@ -1128,7 +1130,7 @@ function myHead(now, pfx) {
     ${night ? mhMoon(now, pfx) : ''}${mhFx()}
     <img class="logo" src="img/logo-cap-b.webp" onerror="this.onerror=null;this.src='img/16_jeju_vts_logo.png'" alt="Jeju VTS">
     <div class="mclk"><div class="d" id="${pfx}Date">${c.d}</div><div class="t" id="${pfx}Time">${c.t}</div></div>
-    ${capImg('head', now, 'class="cap" alt=""')}
+    ${capImg('head', now, `class="cap${mhTheme(now) ? ' th' : ''}" alt=""`)}
     ${nm ? `<div class="who"><b>${esc(nm)} 님</b><span>오늘도 수고하고 있습니다!</span></div>` : ''}
     <div class="mwx" id="${pfx}Wx">${wx}</div></div>`;
 }
