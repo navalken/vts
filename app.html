@@ -120,6 +120,21 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .mh .mwx .wx .r img{width:calc(var(--u)*32);height:calc(var(--u)*32)}
 .mh .mwx .wx .r b{font-size:calc(var(--u)*20)}
 .mh .mwx .wx .r small{font-size:calc(var(--u)*11)}
+.mh .moon{left:calc(var(--u)*528);top:calc(var(--u)*8);width:calc(var(--u)*46);height:calc(var(--u)*46);pointer-events:none}
+.mh .moon .gl{position:absolute;inset:-60%;border-radius:50%;background:radial-gradient(circle,rgba(255,236,180,.55) 0,rgba(255,226,160,.22) 32%,rgba(255,220,150,0) 68%)}
+.mh .moon svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.mh .fx{inset:0;pointer-events:none;overflow:hidden}
+.mh .fx.dim{background:linear-gradient(rgba(25,35,55,.42),rgba(25,35,55,.22))}
+.mh .fx.snow.dim{background:linear-gradient(rgba(70,85,110,.38),rgba(70,85,110,.18))}
+.mh .fx i{position:absolute;top:0;display:block}
+.mh .fx.rain i{width:calc(var(--u)*2.6);height:calc(var(--u)*34);border-radius:3px;background:linear-gradient(rgba(255,255,255,0),rgba(240,248,255,.95));box-shadow:0 0 calc(var(--u)*1.5) rgba(0,30,70,.35);animation:mhRain linear infinite}
+.mh .fx.drz i{width:calc(var(--u)*1.8);height:calc(var(--u)*18)}
+.mh .fx.snow i{border-radius:50%;background:radial-gradient(circle,#fff 55%,rgba(255,255,255,.85) 70%,rgba(255,255,255,0) 100%);box-shadow:0 0 calc(var(--u)*2) rgba(20,40,80,.45);animation:mhSnow linear infinite}
+.mh .fx .fl{inset:0;width:auto;height:auto;background:#fff;opacity:0;box-shadow:none;animation:mhFlash 9s infinite}
+@keyframes mhRain{from{transform:translate(0,calc(var(--u)*-30)) rotate(12deg)}to{transform:translate(calc(var(--u)*-60),calc(var(--u)*270)) rotate(12deg)}}
+@keyframes mhSnow{0%{transform:translate(0,calc(var(--u)*-12))}25%{transform:translate(calc(var(--u)*10),calc(var(--u)*55))}50%{transform:translate(calc(var(--u)*-6),calc(var(--u)*125))}75%{transform:translate(calc(var(--u)*9),calc(var(--u)*195))}100%{transform:translate(0,calc(var(--u)*262))}}
+@keyframes mhFlash{0%,90%,94%,100%{opacity:0}91%{opacity:.55}92%{opacity:.1}93%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){.mh .fx i{animation:none!important;display:none}}
 .mg{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:8px 9px 0}
 .mg .card{margin:0;padding:10px 9px;border-radius:14px;box-shadow:0 1px 6px rgba(20,60,120,.1)}
 .tl{padding:12px 10px 12px!important}.st{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1044,14 +1059,76 @@ function myModel(now) {
 const myChip = duty => duty.rows.length > 1 ? '종일 근무' : duty.rows[0].shift === 'night' ? '야간 근무' : '주간 근무';
 const secLab = p => { const m = /^(\d+)섹터$/.exec(p); return m ? `<span class="nm">${m[1]}</span><span>섹터</span>` : `<span>${esc(p)}</span>`; };
 
+// ===== 머리 그림 효과: 제주 날씨(비·눈), 달의 위상, 12월 산타 카피바라 =====
+const MHQ = new URLSearchParams(location.search); // 미리보기: ?fx=rain|drizzle|snow|thunder|none&moon=0~1(0 삭·0.5 망)&night=1&d=2027-10-31(그날 카피바라)&cap=hanbok
+const MOON_REF = Date.UTC(2000, 0, 6, 18, 14), MOON_SYN = 29.530588853 * 864e5; // 기준 삭(새달)과 삭망월
+function moonPhase(now) { const q = parseFloat(MHQ.get('moon')); return isFinite(q) ? ((q % 1) + 1) % 1 : ((((now - MOON_REF) / MOON_SYN) % 1) + 1) % 1; }
+function mhFxKind() {
+  const q = MHQ.get('fx'); if (q) return q === 'none' ? '' : q;
+  const d = LV.wx && LV.wx[0]; if (!d) return ''; // 0번 = 제주
+  const k = wxText(d.c)[0];
+  return k === 'drizzle' ? 'drizzle' : (k === 'rain' || k === 'shower') ? 'rain' : k === 'thunder' ? 'thunder' : k === 'snow' ? 'snow' : '';
+}
+function mhRnd(i, k) { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); } // 다시 그려도 같은 자리
+function mhFx() {
+  const k = mhFxKind(); if (!k) return '';
+  const t = Date.now() / 1000, snow = k === 'snow', drz = k === 'drizzle', n = snow ? 64 : drz ? 55 : 95;
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const dur = snow ? 6 + mhRnd(i, 1) * 5 : drz ? 1.1 + mhRnd(i, 1) * 0.5 : 0.55 + mhRnd(i, 1) * 0.35;
+    const del = -((t + mhRnd(i, 2) * 50) % dur); // 시계 기준 지연 → 1분마다 다시 그려도 끊기지 않음
+    const left = (mhRnd(i, 3) * 112 - 2).toFixed(1), sz = snow ? `width:calc(var(--u)*${(5 + mhRnd(i, 4) * 7).toFixed(1)});height:calc(var(--u)*${(5 + mhRnd(i, 4) * 7).toFixed(1)});opacity:${(0.75 + mhRnd(i, 5) * 0.25).toFixed(2)};` : `opacity:${(0.6 + mhRnd(i, 5) * 0.4).toFixed(2)};`;
+    h += `<i style="left:${left}%;${sz}animation-duration:${dur.toFixed(2)}s;animation-delay:${del.toFixed(2)}s"></i>`;
+  }
+  if (k === 'thunder') h += `<i class="fl" style="animation-delay:${(-(t % 9)).toFixed(2)}s"></i>`;
+  return `<div class="fx ${snow ? 'snow' : 'rain'}${drz ? ' drz' : ''} dim" aria-hidden="true">${h}</div>`;
+}
+function mhMoon(now, pfx) {
+  const p = moonPhase(now), lit = (1 - Math.cos(2 * Math.PI * p)) / 2, wax = p < 0.5;
+  const c = Math.cos(2 * Math.PI * (wax ? p : 1 - p)), rx = Math.abs(c).toFixed(4);
+  // 오른쪽 반원(밝은 가장자리) + 명암 경계(타원). 초승·그믐이면 경계가 오른쪽으로, 상현~보름이면 왼쪽으로 볼록
+  const d = `M0,-1 A1,1 0 0 1 0,1 A${rx},1 0 0 ${c > 0 ? 0 : 1} 0,-1Z`, id = 'mc' + (pfx || 'my');
+  const d0 = LV.wx && LV.wx[0], k = d0 ? wxText(d0.c)[0] : '', veil = mhFxKind() || ['cloud', 'fog'].includes(k); // 흐리거나 비·눈이면 희미하게
+  return `<div class="moon" aria-hidden="true" style="opacity:${veil ? 0.35 : 1}"><div class="gl" style="opacity:${(0.15 + lit * 0.85).toFixed(2)}"></div>
+    <svg viewBox="-1 -1 2 2"><defs><clipPath id="${id}"><path d="${d}"${wax ? '' : ' transform="scale(-1,1)"'}/></clipPath></defs>
+    <image href="img/moon.png" x="-1" y="-1" width="2" height="2" opacity=".13"/><image href="img/moon.png" x="-1" y="-1" width="2" height="2" clip-path="url(#${id})"/></svg></div>`;
+}
+// ===== 위쪽 카피바라 계절·기념일 그림(img/cap-head-{테마}.webp) =====
+// 설·추석은 음력이라 해마다 직접 추가(우주항공청 월력요항 기준, 앞뒤 주말·대체공휴일 포함). [시작, 끝, 명절 당일]
+const MH_SEOL = { 2027: ['02-06', '02-09'], 2028: ['01-26', '01-30'], 2029: ['02-10', '02-14'], 2030: ['02-02', '02-05'] };
+const MH_CHU = { 2027: ['09-14', '09-16', '09-15'], 2028: ['09-30', '10-05', '10-03'], 2029: ['09-21', '09-24', '09-22'], 2030: ['09-11', '09-15', '09-12'] };
+const MH_BUDDHA = { 2027: '05-13', 2028: '05-02', 2029: '05-20', 2030: '05-09', 2031: '05-28' }; // 부처님오신날(음력 4/8), 6일 전부터 일주일
+const MH_DAY = { '02-13': 'valentine', '02-14': 'valentine', '03-01': 'samil', '03-13': 'white', '03-14': 'white', '06-06': 'memorial', '06-25': 'korwar',
+  '08-15': 'liberation', '10-01': 'armed', '10-03': 'gaecheon', '10-09': 'hangul', '11-10': 'pepero', '11-11': 'pepero', '12-24': 'winter4', '12-25': 'winter4' };
+function mhTheme(now) { // 기념일 > 부처님오신날 주간 > 할로윈 주간 > 추석 연휴 > 계절
+  const q = MHQ.get('cap'); if (q !== null) return q;
+  const k = MHQ.get('d') || new Date(now + 9 * 3600e3).toISOString().slice(0, 10), y = +k.slice(0, 4), md = k.slice(5), mo = +md.slice(0, 2), dd = +md.slice(3);
+  if (MH_DAY[md]) return MH_DAY[md];
+  const bd = MH_BUDDHA[y]; if (bd) { const t = Date.UTC(y, +bd.slice(0, 2) - 1, +bd.slice(3)), c = Date.UTC(y, mo - 1, dd); if (c <= t && c >= t - 6 * 864e5) return 'buddha'; }
+  if (mo === 10 && dd >= 25) return dd % 2 ? 'halloween1' : 'halloween2';
+  const ch = MH_CHU[y]; if (ch && md >= ch[0] && md <= ch[1]) return md < ch[2] ? 'chuseok2' : 'chuseok1';
+  const se = MH_SEOL[y], seEnd = se ? se[1] : '01-31'; // 표에 없는 해는 1월만 한복
+  if (md <= seEnd) return 'hanbok';
+  if (mo <= 3) return 'spring1';
+  if (mo <= 5) return 'spring2';
+  if (mo <= 8) return 'summer';
+  if (mo <= 11) return 'autumn';
+  return 'winter' + ((dd - 1) % 6 + 1); // 12월: 붕어빵·눈사람·이불 귤·산타·귤 트리·핫초코 하루씩
+}
+// 위쪽 카피바라 그림: 테마 그림이 없으면 평소 그림(cap-head.png)으로
+function capImg(kind, now, attrs) {
+  const th = mhTheme(now == null ? myNowMs() : now), base = `img/cap-${kind}.png`;
+  return th ? `<img src="img/cap-${kind}-${th}.webp" onerror="this.onerror=null;this.src='${base}'" ${attrs}>` : `<img src="${base}" ${attrs}>`;
+}
 function myHead(now, pfx) {
   pfx = pfx || 'my';
-  const night = myIsNight(now), c = myKstClock(now), nm = (MY.d && MY.d.name) || (S.me && S.me.name) || '';
+  const night = MHQ.get('night') ? MHQ.get('night') === '1' : myIsNight(now), c = myKstClock(now), nm = (MY.d && MY.d.name) || (S.me && S.me.name) || '';
   const wx = WXC.map((x, i) => { const d = LV.wx && LV.wx[i], [ic, tx] = d ? wxText(d.c) : ['', '']; return `<div class="wx"><div class="c">${x[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`; }).join('');
-  return `<div class="mh${night ? ' n' : ''}" style="background-image:url(img/${night ? 'my-hd-n' : 'my-hd'}.jpg)">
+  return `<div class="mh${night ? ' n' : ''}" style="background-image:url(img/${night ? 'my-hd-n2' : 'my-hd'}.jpg)">
+    ${night ? mhMoon(now, pfx) : ''}${mhFx()}
     <img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS">
     <div class="mclk"><div class="d" id="${pfx}Date">${c.d}</div><div class="t" id="${pfx}Time">${c.t}</div></div>
-    <img class="cap" src="img/cap-head.png" alt="">
+    ${capImg('head', now, 'class="cap" alt=""')}
     ${nm ? `<div class="who"><b>${esc(nm)} 님</b><span>오늘도 수고하고 있습니다!</span></div>` : ''}
     <div class="mwx" id="${pfx}Wx">${wx}</div></div>`;
 }
