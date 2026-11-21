@@ -103,7 +103,7 @@ body.ismy main{padding:0 0 96px;max-width:560px}
 .my{font-family:-apple-system,"Noto Sans KR",sans-serif;color:#12284a}
 .mh{position:relative;width:100%;aspect-ratio:815/250;container-type:inline-size;--u:calc(100cqw/815);background:#8cc8ff center/cover no-repeat;overflow:hidden}
 .mh>*{position:absolute}
-.mh .logo{left:calc(var(--u)*12);top:calc(var(--u)*10);width:calc(var(--u)*196);height:calc(var(--u)*72);object-fit:contain;object-position:left center;background:rgba(255,255,255,.86);border-radius:calc(var(--u)*14);padding:calc(var(--u)*5) calc(var(--u)*10);box-sizing:border-box}
+.mh .logo{left:calc(var(--u)*12);top:calc(var(--u)*8);width:auto;height:calc(var(--u)*78);object-fit:contain;object-position:left center;background:rgba(255,255,255,.86);border-radius:calc(var(--u)*14);padding:calc(var(--u)*5) calc(var(--u)*10);box-sizing:border-box}
 .mh .mclk{right:calc(var(--u)*44);top:calc(var(--u)*12);text-align:right;font-weight:800;line-height:1.05;color:#0d2a63;text-shadow:0 0 calc(var(--u)*6) rgba(255,255,255,.9)}
 .mh.n .mclk{color:#fff;text-shadow:0 1px calc(var(--u)*6) rgba(0,0,20,.7)}
 .mh .mclk .d{font-size:calc(var(--u)*20);font-weight:700}
@@ -1126,7 +1126,7 @@ function myHead(now, pfx) {
   const wx = WXC.map((x, i) => { const d = LV.wx && LV.wx[i], [ic, tx] = d ? wxText(d.c) : ['', '']; return `<div class="wx"><div class="c">${x[0]}</div><div class="r">${ic ? `<img src="img/w-${ic}.png" alt="">` : '<i>·</i>'}<span><b>${d ? d.t + '°C' : '–'}</b><small>${tx}</small></span></div></div>`; }).join('');
   return `<div class="mh${night ? ' n' : ''}" style="background-image:url(img/${night ? 'my-hd-n2' : 'my-hd'}.jpg)">
     ${night ? mhMoon(now, pfx) : ''}${mhFx()}
-    <img class="logo" src="img/16_jeju_vts_logo.png" alt="Jeju VTS">
+    <img class="logo" src="img/logo-cap-b.webp" onerror="this.onerror=null;this.src='img/16_jeju_vts_logo.png'" alt="Jeju VTS">
     <div class="mclk"><div class="d" id="${pfx}Date">${c.d}</div><div class="t" id="${pfx}Time">${c.t}</div></div>
     ${capImg('head', now, 'class="cap" alt=""')}
     ${nm ? `<div class="who"><b>${esc(nm)} 님</b><span>오늘도 수고하고 있습니다!</span></div>` : ''}
