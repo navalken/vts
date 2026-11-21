@@ -608,12 +608,31 @@ window.addEventListener('popstate', e => {
   if (st.t === 'lib') { if (st.l) { LIBS.view = st.l[0]; LIBS.folder = st.l[1]; } else { LIBS.view = 'home'; LIBS.folder = null; } }
   show(st.t || 'my');
 });
+// 등록하지 않은 기기는 실시간 근무현황·전체 근무표·해상기상을 볼 수 없고 안내 화면만 보인다
+const GATED = ['live', 'board', 'wx'];
+function gateCard() {
+  return inApp ? inAppCard() : `<div class="card" style="border:2px solid #e8590c">
+    <h3 style="color:#e8590c">🔒 앱 등록 후 사용할 수 있습니다</h3>
+    <div class="msg" style="margin:6px 0 10px"><b>이름을 등록한 사람만 볼 수 있는 화면입니다.</b><br>사용설명서를 읽고, <b>크롬(Chrome) 또는 사파리(Safari)</b>로 열어서 설정에서 이름을 등록해 주세요. 등록하면 근무 알림도 받을 수 있습니다.</div>
+    <button data-act="manual">📖 사용설명서 읽기</button>
+    <button class="sec" onclick="goTab('set')" style="margin-top:8px">설정에서 등록하기</button>
+  </div>`;
+}
+function syncGate(t) {
+  let g = document.getElementById('gate');
+  if (!g) { g = document.createElement('div'); g.id = 'gate'; g.style.cssText = 'position:fixed;left:0;right:0;top:0;bottom:calc(58px + env(safe-area-inset-bottom));overflow:auto;background:var(--bg);z-index:4;padding:16px'; document.body.appendChild(g); }
+  const on = !S.token && GATED.includes(t);
+  g.hidden = !on; g.style.display = on ? '' : 'none';
+  if (on) g.innerHTML = gateCard();
+  return on;
+}
 function show(t) { // 하단 메뉴 5개 + 설정(톱니바퀴)
   CURT = t;
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.t === t));
   ['my', 'live', 'board', 'lib', 'wx', 'set'].forEach(k => $('tab-' + k).classList.toggle('hide', k !== t));
   document.body.classList.toggle('islive', t === 'live');
   document.body.classList.toggle('ismy', t === 'my');
+  if (syncGate(t)) { stopLive(); stopMy(); stopWx(); return; }
   if (t !== 'my' && t !== 'live') { paintHdr(); loadWx(); }
   if (t === 'set') renderSet();
   if (t === 'live') startLive(); else stopLive();
@@ -888,6 +907,7 @@ function lvCard(b, sec, box, f, off) {
 const WXC = [['제주', 33.5097, 126.5219], ['서귀포', 33.2541, 126.5601], ['한림', 33.4114, 126.2619], ['성산', 33.3869, 126.9367]];
 function wxText(c) { const ic = c === 0 ? 'sun' : (c === 1 || c === 2) ? 'part' : c === 3 ? 'cloud' : (c === 45 || c === 48) ? 'fog' : (c >= 51 && c <= 57) ? 'drizzle' : (c >= 61 && c <= 67) ? 'rain' : ((c >= 71 && c <= 77) || c === 85 || c === 86) ? 'snow' : (c >= 80 && c <= 82) ? 'shower' : c >= 95 ? 'thunder' : 'cloud'; return [ic, { sun: '맑음', part: c === 1 ? '대체로 맑음' : '구름조금', cloud: '흐림', fog: '안개', drizzle: '이슬비', rain: '비', snow: '눈', shower: '소나기', thunder: '뇌우' }[ic]]; }
 async function loadWx() { // 무료 Open-Meteo(키 없음)
+  if (!S.token) return; // 앱 등록 전에는 날씨도 보여주지 않음
   if (!LV.wx) { try { const c = JSON.parse(localStorage.getItem('vts_wx') || 'null'); if (c && Array.isArray(c.wx) && c.wx.length === WXC.length && Date.now() - c.at < 6 * 3600e3) { LV.wx = c.wx; renderLive(); if (MY.poll) renderMy(); paintHdr(); } } catch (e) {} } // 인터넷이 잠깐 안 될 때는 마지막으로 받은 날씨(6시간 이내)를 보여준다
   if (Date.now() - LV.wxAt < 600000) return;
   LV.wxAt = Date.now();
