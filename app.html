@@ -955,7 +955,18 @@ function lvHeader() {
     <div class="clk" style="${P(985, 8, 1180, 104, LX.eh / 2)}"><div class="d" id="lvDate">${cp.d}</div><div class="t" id="lvTime">${cp.t}</div></div>`;
 }
 const WAVE = '<svg viewBox="0 0 76 24"><path d="M2 14c8-10 14-10 20 0s12 10 20 0 14-10 20 0" fill="none" stroke="#1a7be0" stroke-width="5" stroke-linecap="round"/></svg>';
-function lvIsNightClock() { const m = parseInt(clkParts().t.slice(0, 2)) * 60 + parseInt(clkParts().t.slice(3)); return m >= 18 * 60 + 30 || m < 6 * 60; } // 근무표가 없을 때는 시계로 낮/밤 구분
+// 제주 일출·일몰(위도 33.5, 경도 126.53, NOAA 근사식 ±1분). 인터넷 없이 날짜로 계산
+function jejuSun(now) {
+  const lat = 33.5 * Math.PI / 180, lon = 126.53, k = new Date(now + 9 * 3600e3), y = k.getUTCFullYear(), mo = k.getUTCMonth(), d = k.getUTCDate();
+  const n = Math.round((Date.UTC(y, mo, d) - Date.UTC(y, 0, 1)) / 864e5) + 1, g = 2 * Math.PI / 365 * (n - 1);
+  const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const dec = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const ha = Math.acos(Math.cos(90.833 * Math.PI / 180) / (Math.cos(lat) * Math.cos(dec)) - Math.tan(lat) * Math.tan(dec)) * 180 / Math.PI;
+  const base = Date.UTC(y, mo, d); // 그날 0시(UTC 기준 분)
+  return { rise: base + (720 - 4 * (lon + ha) - eq) * 60e3, set: base + (720 - 4 * (lon - ha) - eq) * 60e3 };
+}
+const jejuIsNight = now => { const s = jejuSun(now); return now < s.rise || now >= s.set; }; // 일출 전·일몰 후는 밤 그림
+function lvIsNightClock() { return jejuIsNight(myNowMs()); } // 낮/밤 그림은 제주 일출·일몰 기준
 const DOZERS = ['tiger', 'rabbit', 'monkey', 'dog', 'mouse', 'pig'];
 function dozeHtml(names) {
   const used = {}, n = names.length;
@@ -970,7 +981,7 @@ function dozeHtml(names) {
 function renderLive() {
   const el = $('liveBody'); if (!el) return;
   const b = lvBoard();
-  const night = lvIsNightClock(); // 낮/밤 그림은 시계로: 06:00~18:30 낮
+  const night = lvIsNightClock(); // 낮/밤 그림은 제주 일출·일몰 기준
   lvFit();
   const EX = LX.eh + LX.e1 + LX.e2;
   let h = `<div class="cv" style="aspect-ratio:${CW}/${CH + EX}">${lvHeader()}`, cardsHtml = '', below = LX.eh;
@@ -1022,7 +1033,7 @@ function fmtIn(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); if (s < 60) re
 const hmsOf = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor(s % 3600 / 60)) + ':' + pad2(s % 60); };
 const dayWord = (ms, now) => { const a = new Date(ms + 9 * 3600e3).toISOString().slice(0, 10), b = new Date(now + 9 * 3600e3).toISOString().slice(0, 10); if (a === b) return '오늘'; const d = Math.round((Date.parse(a) - Date.parse(b)) / 86400000); return d === 1 ? '내일' : d === -1 ? '어제' : a.slice(5).replace('-', '/') ; };
 function myKstClock(now) { const s = new Date(now + 9 * 3600e3).toISOString(), w = '일월화수목금토'[new Date(now + 9 * 3600e3).getUTCDay()]; return { d: `${s.slice(0, 4)}. ${s.slice(5, 7)}. ${s.slice(8, 10)}. (${w})`, t: s.slice(11, 19) }; }
-const myIsNight = now => { const m = parseInt(hm(now).slice(0, 2)) * 60 + parseInt(hm(now).slice(3)); return m >= 18 * 60 + 30 || m < 6 * 60; };
+const myIsNight = now => jejuIsNight(now); // 제주 일출·일몰 기준
 
 async function loadMy() {
   try { const t0 = Date.now(), d = await api('/my'), t1 = Date.now(); MY.off = d.now - (t0 + t1) / 2; MY.d = d; MY.err = ''; }

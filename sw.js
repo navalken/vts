@@ -23,7 +23,8 @@ self.addEventListener('push', event => {
   const kind = card ? (card.k === 'q' ? 'wait' : card.k === 'r' ? 'rest' : 'work') : 'work';
   const opts = {
     body: (d.body != null ? d.body : '알림이 도착했습니다.'),
-    // icon 생략: 접힌 알림 오른쪽 큰 그림을 빼서 글자 자리를 넓힘
+    // 카피바라 아이콘(갤럭시: 알림 오른쪽 동그란 그림). 홈 화면 앱 아이콘이 옛것이어도 바로 카피바라가 보이게(11/23)
+    icon: 'img/n-cap.png',
     badge: 'img/b-' + kind + '.png',
     tag: d.tag || ('vts-' + Date.now()),
     data: { url: card ? cardUrl(card) : (d.url || new URL('app.html', self.registration.scope).href), receivedAt: Date.now() }
