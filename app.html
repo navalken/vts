@@ -304,6 +304,8 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .tdban{border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13px;line-height:1.5;font-weight:700;background:#eaf2ff;color:#1d3f7a;border:1.5px solid #bcd3f7}.tdban.big{background:#fff4d6;color:#7a4a00;border-color:#f3c75a}.tdban small{display:block;font-weight:600;font-size:11px;opacity:.85}
 .myspr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:#fff4d6;border:2.5px solid #e03131;animation:mySprB 1.6s ease-in-out infinite;box-sizing:border-box;color:#7a4a00;text-align:left;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;position:relative}
 .myspr span{display:block;font-size:12px;font-weight:600;opacity:.85}
+.myspr span.cr{opacity:1;margin-top:2px}
+.myspr span.cr b{color:#c92a2a}
 .myspr.moon{background:#1f2a44;color:#fff}
 .myspr.moon span{opacity:.9}
 @keyframes mySprB{0%,100%{border-color:#e03131;box-shadow:0 0 0 0 rgba(224,49,49,.45)}50%{border-color:#ff8787;box-shadow:0 0 0 4px rgba(224,49,49,0)}}
@@ -456,12 +458,24 @@ function tdSpringGroups(sp, now) { // 대조기 날짜를 이어진 구간으로
   const today = Date.parse(tdYmd(now) + 'T00:00:00Z');
   return { today, cur: groups.find(x => today >= x.s && today <= x.e), nxt: groups.find(x => x.s > today) };
 }
+// 조류 최강유속(서버 /tide/current, crsp cm/s → 노트). 오늘 가장 센 흐름 1개씩
+const CR_DIR = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+function crntLine(cr, now) {
+  if (!cr || !cr.pts) return '';
+  const day = tdYmd(now), parts = [];
+  cr.pts.forEach(p => {
+    const td = (p.ev || []).filter(e => e[2] > 0 && tdYmd(e[0]) === day); if (!td.length) return;
+    const m = td.reduce((a, b) => b[2] > a[2] ? b : a), kn = (m[2] / 51.44).toFixed(1);
+    parts.push(`${p.n.replace('항', '')} <b>${kn}kn</b> ${hm(m[0])}(${CR_DIR[Math.round(m[1] / 45) % 8]}쪽)`);
+  });
+  return parts.length ? '최강유속 ' + parts.join(' · ') : '';
+}
 const tdRng = x => { const f = d => d.slice(5).replace('-', '/'); return x.sd === x.ed ? f(x.sd) : f(x.sd) + '~' + f(x.ed); };
 function tdSpringMsg(sp, now) {
   if (!sp || !sp.big || !sp.big.length) return '';
   const { today, cur, nxt } = tdSpringGroups(sp, now), rng = tdRng;
   const note = sp.max ? `<small>제주항 하루 조차 최대 약 ${sp.max}cm (앞으로 16일 예측 기준)</small>` : '';
-  if (cur) return `<div class="tdban big">🌊 지금 대조기 구간입니다 (${rng(cur)})<small>조차가 커서 조류가 빠르고 수위 변화가 큽니다. 좌초·접안 사고 때 유의</small>${note}</div>`;
+  if (cur) { const cl = crntLine(MY.crnt, now); return `<div class="tdban big">🌊 지금 대조기 구간입니다 (${rng(cur)})<small>조차가 커서 조류가 빠르고 수위 변화가 큽니다. 좌초·접안 사고 때 유의</small>${cl ? `<small>${cl}</small>` : ''}${note}</div>`; }
   if (nxt) return `<div class="tdban">🌊 다음 대조기: ${rng(nxt)} (${Math.round((nxt.s - today) / 86400e3)}일 후)${note}</div>`;
   return '';
 }
@@ -521,12 +535,12 @@ function tdNeed(res) { // 목록에 없는 포구의 물때를 서버에서 받�
   WX.txbusy = true;
   libCall('/tide/ports?ids=' + ids.join(',')).then(r => { (r.ports || []).forEach(p => { WX.tx[p.id] = p; }); WX.txf = WX.txf || {}; ids.forEach(id => { if (!WX.tx[id]) WX.txf[id] = 1; }); }).catch(() => { WX.txf = WX.txf || {}; ids.forEach(id => { WX.txf[id] = 1; }); }).then(() => { WX.txbusy = false; if (WX.mode === 'tide') renderTide(); });
 }
-async function loadTideSpring() { try { const r = await libCall('/tide/spring'); if (WX.td && r.spring) { WX.td.spring = r.spring; if (WX.mode === 'tide' && !(document.activeElement && document.activeElement.id === 'tdQ')) renderTide(); } } catch (e) { /* 대조기 없이도 표시 */ } }
+async function loadTideSpring() { try { const r = await libCall('/tide/spring'); if (WX.td && r.spring) { WX.td.spring = r.spring; if (r.spring.big && tdSpringGroups(r.spring, Date.now()).cur) loadMyCrnt(); if (WX.mode === 'tide' && !(document.activeElement && document.activeElement.id === 'tdQ')) renderTide(); } } catch (e) { /* 대조기 없이도 표시 */ } }
 async function loadTide(force) {
   if (WX.tbusy) return; if (!S.token) { WX.terr = '앱 등록 후 볼 수 있습니다(설정에서 등록)'; renderTide(); return; }
   if (!force && WX.td && Date.now() - WX.tat < 10 * 60e3) { if (!(document.activeElement && document.activeElement.id === 'tdQ')) renderTide(); return; }
   WX.tbusy = true; renderTide();
-  try { WX.td = await libCall('/tide'); WX.terr = ''; WX.tat = Date.now(); WX.tx = {}; WX.txf = {}; if (!WX.td.spring) loadTideSpring(); } catch (e) { WX.terr = '조석 자료를 불러오지 못했습니다: ' + e.message; }
+  try { WX.td = await libCall('/tide'); WX.terr = ''; WX.tat = Date.now(); WX.tx = {}; WX.txf = {}; if (!WX.td.spring) loadTideSpring(); else if (WX.td.spring.big && tdSpringGroups(WX.td.spring, Date.now()).cur) loadMyCrnt(); } catch (e) { WX.terr = '조석 자료를 불러오지 못했습니다: ' + e.message; }
   WX.tbusy = false; renderTide();
 }
 async function tdOpen(id) {
@@ -1221,7 +1235,8 @@ function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, 
 function mySpringCur(now) { const sp = MY.spring; return sp && sp.big && sp.big.length ? tdSpringGroups(sp, now).cur : null; }
 function mySpring(now) {
   const c = mySpringCur(now); if (!c) return '';
-  return `<button class="myspr" id="mySpr">🌊 <b>지금 대조기 (${tdRng(c)})</b><span>조류가 빠르고 수위 변화가 커요 · 좌초·접안 유의</span><i>물때 보기 ›</i></button>`;
+  const cl = crntLine(MY.crnt, now);
+  return `<button class="myspr" id="mySpr">🌊 <b>지금 대조기 (${tdRng(c)})</b><span>조류가 빠르고 수위 변화가 커요 · 좌초·접안 유의</span>${cl ? `<span class="cr">${cl}</span>` : ''}<i>물때 보기 ›</i></button>`;
 }
 // 무월광기: 삭(새달) 앞뒤 3일(한국 날짜 기준, 7일). 달 계산(MOON_REF·MOON_SYN)으로 인터넷 없이 구함
 function myMoonless(now) {
@@ -1233,10 +1248,15 @@ function myMoonBand(now) {
   const c = myMoonless(now); if (!c) return '';
   return `<div class="myspr moon">🌑 <b>무월광기 (${tdRng(c)})</b><span>밀입국·미식별 접촉물 경계 강화</span></div>`;
 }
+async function loadMyCrnt() {
+  if (!MY.crnt) { try { const c = JSON.parse(localStorage.getItem('vts_crnt') || 'null'); if (c && c.d) { MY.crnt = c.d; MY.crAt = c.at; } } catch (_) { /* 없음 */ } }
+  if (MY.crAt && Date.now() - MY.crAt < 6 * 3600e3) return;
+  try { const r = await libCall('/tide/current'); if (r.pts) { MY.crnt = r; MY.crAt = Date.now(); try { localStorage.setItem('vts_crnt', JSON.stringify({ d: r, at: MY.crAt })); } catch (_) { /* 무시 */ } renderMy(); if (WX.mode === 'tide' && typeof renderTide === 'function' && $('wxBody')) renderTide(); } } catch (_) { /* 유속 없이 표시 */ }
+}
 async function loadMySpring() {
   if (!MY.spring) { try { const c = JSON.parse(localStorage.getItem('vts_spring') || 'null'); if (c && c.sp) { MY.spring = c.sp; MY.spAt = c.at; } } catch (_) { /* 없음 */ } }
-  if (MY.spAt && Date.now() - MY.spAt < 6 * 3600e3) return;
-  try { const r = await libCall('/tide/spring'); if (r.spring) { MY.spring = r.spring; MY.spAt = Date.now(); try { localStorage.setItem('vts_spring', JSON.stringify({ sp: r.spring, at: MY.spAt })); } catch (_) { /* 저장 실패 무시 */ } renderMy(); } } catch (_) { /* 대조기 없이도 표시 */ }
+  if (MY.spAt && Date.now() - MY.spAt < 6 * 3600e3) { if (mySpringCur(Date.now())) loadMyCrnt(); return; }
+  try { const r = await libCall('/tide/spring'); if (r.spring) { MY.spring = r.spring; MY.spAt = Date.now(); try { localStorage.setItem('vts_spring', JSON.stringify({ sp: r.spring, at: MY.spAt })); } catch (_) { /* 저장 실패 무시 */ } renderMy(); if (mySpringCur(Date.now())) loadMyCrnt(); } } catch (_) { /* 대조기 없이도 표시 */ }
 }
 function renderMy() {
   const el = $('myBody'); if (!el) return;
