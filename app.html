@@ -309,6 +309,12 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .myspr span{display:block;font-size:12px;font-weight:600;opacity:.85}
 .myspr span.cr{opacity:1;margin-top:2px}
 .crar{width:14px;height:14px;fill:#c92a2a;vertical-align:-2px;margin:0 2px 0 1px}
+.flr{display:grid;grid-template-columns:1.3fr 1fr 1.3fr;gap:4px;align-items:center;padding:6px 2px;border-top:1px solid #eef1f6;font-size:13px}
+.flr.hd{border-top:0;font-size:11px;font-weight:700;color:var(--mut)}
+.flr span:first-child{font-weight:700}.flr small{font-size:10px;color:var(--mut);margin-left:1px}.flr .crar{width:16px;height:16px}
+.fpk{padding:6px 0;border-top:1px solid #eef1f6}.fpk>b{font-size:13px}.fpk div{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px}
+.fe{font-size:12px;white-space:nowrap}.fe b{font-size:12px}.fe i{font-style:normal;color:#1c7ed6;font-weight:700}.fe em{font-style:normal;font-size:10px;color:var(--mut);margin-right:2px}.fe.past{opacity:.4}
+.flhelp p{margin:6px 0 0;font-size:12.5px;line-height:1.55}.flhelp p.mut{font-size:11px}
 .myspr span.cr b{color:#c92a2a}
 .myspr.moon{background:#1f2a44;color:#fff}
 .myspr.moon span{opacity:.9}
@@ -413,12 +419,13 @@ function wxPoints() { // 관측(부이 b·관측소 t) + 모델(m) 합치기
 }
 function wxLinks() {
   const m = WX.mode;
-  return `<div class="wxlinks"><a href="${WXLINK_1}" data-ext="1">①기상특보<small>날씨누리↗</small></a><span data-wxm="wind" class="${m === 'wind' ? '' : 'off'}">②관제구역<small>풍향·풍속</small></span><a href="${WXLINK_3}" data-ext="1">③해상특보<small>기상청↗</small></a><a href="${WXLINK_4}" data-ext="1">④윈디<small>바람지도↗</small></a><span data-wxm="tide" class="${m === 'tide' ? '' : 'off'}">⑤조석<small>만조·간조</small></span></div>`;
+  return `<div class="wxlinks"><a href="${WXLINK_1}" data-ext="1">①기상특보<small>날씨누리↗</small></a><span data-wxm="wind" class="${m === 'wind' ? '' : 'off'}">②관제구역<small>풍향·풍속</small></span><a href="${WXLINK_3}" data-ext="1">③해상특보<small>기상청↗</small></a><a href="${WXLINK_4}" data-ext="1">④윈디<small>바람지도↗</small></a><span data-wxm="tide" class="${m === 'tide' ? '' : 'off'}">⑤조석<small>만조·간조</small></span><span data-wxm="flow" class="${m === 'flow' ? '' : 'off'}">⑥조류<small>흐름·유속</small></span></div>`;
 }
-function wxBindLinks(el) { el.querySelectorAll('[data-wxm]').forEach(b => { b.onclick = () => { if (WX.mode === b.dataset.wxm) return; WX.mode = b.dataset.wxm; if (WX.mode === 'tide') { renderTide(); loadTide(false); } else { renderWx(); if (WX.view === 'flow') loadFlow(false); else loadMarine(false); } }; }); }
+function wxBindLinks(el) { el.querySelectorAll('[data-wxm]').forEach(b => { b.onclick = () => { if (WX.mode === b.dataset.wxm) return; WX.mode = b.dataset.wxm; if (WX.mode === 'tide') { renderTide(); loadTide(false); } else { renderWx(); if (WX.mode === 'flow') { loadFlow(false); loadMyCrnt(); } else loadMarine(false); } }; }); }
 function renderWx() {
   const el = $('wxBody'); if (!el) return;
   if (WX.mode === 'tide') { renderTide(); return; }
+  if (WX.mode === 'flow') { renderFlow(el); return; }
   const pts = wxPoints(), on = [], off = [];
   pts.forEach(p => { if (WX_OFF.includes(p.c)) off.push(p); else if (WX_POS[p.c] && p.lat != null) on.push(p); });
   let lines = '', mk = '';
@@ -428,20 +435,17 @@ function renderWx() {
   const rows = pts.filter(p => p.ws != null).sort((a, b) => b.ws - a.ws).map(p => `<div class="wxrow ${wxLvl(p.ws, p.wh)}"><div class="rn"><b>${esc(p.nm)}</b><small>${p.t} · ${p.k === 'b' ? '부이' : p.k === 't' ? '관측소' : '예측모델'}${WX_OFF.includes(p.c) ? ' · 구역 밖' : ''}</small></div><div class="rw">${wxArrow(p.ws === 0 ? null : p.wd)}<span>${p.ws === 0 ? '무풍' : wxDir(p.wd)}</span></div><div class="rs"><b>${p.ws.toFixed(1)}</b><small>m/s</small></div><div class="rh">${p.wh != null ? `<b>${p.wh.toFixed(1)}</b><small>m</small>` : '<small>-</small>'}</div></div>`).join('');
   const d = WX.at ? new Date(WX.at) : null, hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
   const err = WX.err ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.err)}</p></div>` : '';
-  if (WX.view === 'flow') { renderFlow(el); return; }
   el.innerHTML = `${wxLinks()}${err}
-  ${wxViewBtns()}<div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
+  <div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
   <div class="wxmap" id="wxMap">${mapHtml}</div>${chips ? `<div class="wxsub">관제구역 밖 (참고)</div>${chips}` : ''}
   <div class="wxlg"><span><i style="background:#2f7be8"></i>보통</span><span><i style="background:#f59e0b"></i>주의 풍속10↑·파고2↑</span><span><i style="background:#e03b3b"></i>위험 풍속14↑·파고3↑</span></div>
   <div class="wxlg"><span>실선=부이(파고 포함)</span><span>점선=관측소(풍향·풍속만)</span><span>작은 점선=예측모델(관측 아님)</span></div><div class="wxnote">지도를 누르면 크게 볼 수 있습니다.</div></div>
   <div class="card"><div class="wxhd"><span>지점 (풍속 센 순)</span><span>바람</span><span>풍속</span><span>파고</span></div>${rows || '<p class="mut">자료를 불러오는 중…</p>'}<div class="wxnote">화살표는 바람이 불어가는 쪽입니다. 부이·관측소는 해양조사원 최신 관측값(시각 표시), 모델은 Open-Meteo 예측으로 실제 관측이 아닙니다. 서귀포 등 항구 관측소는 지형 영향을 받을 수 있습니다.</div></div>`;
   $('wxRef').onclick = () => loadMarine(true);
   $('wxMap').onclick = wxBig;
-  wxBindLinks(el); wxBindView(el);
+  wxBindLinks(el);
 }
 // ---- 조류 흐름 지도(예측): 서버 /tide/flow, 격자 0.1°, 노트×10 ----
-const wxViewBtns = () => `<div class="wxvw"><button data-wv="wind" class="${WX.view === 'wind' ? 'on' : ''}">🌬 바람·파고</button><button data-wv="flow" class="${WX.view === 'flow' ? 'on' : ''}">🌊 조류 흐름</button></div>`;
-function wxBindView(el) { el.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { if (WX.view === b.dataset.wv) return; WX.view = b.dataset.wv; if (WX.view === 'flow') { renderWx(); loadFlow(false); } else { renderWx(); loadMarine(false); } }; }); }
 const flowCol = kn => kn >= 1.5 ? '#e03131' : kn >= 1 ? '#f08c00' : kn >= 0.5 ? '#2b8a3e' : '#1c7ed6';
 function flowIdx() { const f = WX.flow; if (!f || !f.t || !f.t.length) return -1; const want = Date.now() + WX.fsel * 3600e3; let bi = 0, bd = 1e15; f.t.forEach((t, i) => { const d = Math.abs(t - want); if (d < bd) { bd = d; bi = i; } }); return bi; }
 function flowSvg(i) {
@@ -464,12 +468,41 @@ function renderFlow(el) {
     <input type="range" id="flSel" min="0" max="24" step="1" value="${WX.fsel}" aria-label="몇 시간 뒤">
     <div class="flk"><span>지금</span><span>+6</span><span>+12</span><span>+18</span><span>+24시간</span></div>
     <div class="wxlg"><span><i style="background:#1c7ed6"></i>0.5kn 미만</span><span><i style="background:#2b8a3e"></i>0.5~1</span><span><i style="background:#f08c00"></i>1~1.5</span><span><i style="background:#e03131"></i>1.5kn 이상</span></div>`;
-  el.innerHTML = `${wxLinks()}${wxViewBtns()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
-  <div class="wxnote">화살표는 물이 흘러가는 쪽, 길이·색은 세기입니다. 메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함)이라 연안·항내·좁은 수도는 실제와 다를 수 있습니다. 항해 판단용이 아닌 참고용입니다. 지도를 누르면 크게 볼 수 있습니다.</div></div>`;
+  el.innerHTML = `${wxLinks()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
+  <div class="wxnote">화살표는 물이 흘러가는 쪽, 길이·색은 세기입니다. 지도를 누르면 크게 볼 수 있습니다.</div></div>
+  <div class="card" id="flPts">${i >= 0 ? flowPtsHtml(i) : ''}</div>
+  ${flowPeakHtml()}
+  <div class="card flhelp"><b>📘 조류 읽는 법</b>
+    <p><b>창조류</b>: 밀물 때 흐름(제주항 앞은 대체로 동쪽으로). <b>낙조류</b>: 썰물 때 흐름(대체로 서쪽으로).</p>
+    <p><b>정조(전류)</b>: 흐름이 바뀌며 거의 멈추는 때. 흐름이 가장 약해 접안·이안, 좁은 수도 통과에 유리합니다.</p>
+    <p><b>대조기</b>(보름·그믐 뒤 1~3일)에는 조류가 가장 세고, <b>소조기</b>에는 약합니다.</p>
+    <p>바람이 조류와 반대 방향이면 파도가 가파르게 서니(역조) 소형선 운항에 주의하세요.</p>
+    <p class="mut">자료: 지도·지점 표는 메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함), 최강·정조 시각은 국립해양조사원 조류예보입니다. 연안·항내·좁은 수도는 실제와 다를 수 있어 참고용입니다.</p></div>`;
   $('flRef').onclick = () => loadFlow(true);
   if ($('wxMap')) $('wxMap').onclick = wxBig;
-  const sl = $('flSel'); if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); };
-  wxBindLinks(el); wxBindView(el);
+  const sl = $('flSel'); if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); const fp = $('flPts'); if (fp) fp.innerHTML = flowPtsHtml(k); };
+  wxBindLinks(el);
+}
+// 주요 지점 조류(지도 격자에서 가장 가까운 칸): 선택한 시각과 3시간 뒤
+const FL_PTS = [['제주항 앞', 33.53, 126.54], ['제주해협', 33.75, 126.45], ['추자도 앞', 33.92, 126.33], ['우도·성산 앞', 33.48, 126.97], ['서귀포항 앞', 33.21, 126.57], ['마라도 부근', 33.10, 126.27], ['차귀도 앞', 33.30, 126.12], ['한림·비양도 앞', 33.43, 126.22]];
+const flArrow = (d, kn) => `<svg class="crar" viewBox="0 0 24 24" style="transform:rotate(${d}deg);fill:${flowCol(kn)}"><path d="M12 2 L19 20 L12 16 L5 20 Z"/></svg>`;
+function flowNear(la, lo) { let best = null, bd = 0.03; (WX.flow.pts || []).forEach(p => { const d = (p[0] - la) ** 2 + ((p[1] - lo) * 0.84) ** 2; if (d < bd) { bd = d; best = p; } }); return best; }
+function flowPtsHtml(i) {
+  const f = WX.flow; if (!f || i < 0) return '';
+  const j = Math.min(f.t.length - 1, i + 3), cell = (p, k) => { const v = p[2][k], d = p[3][k]; if (v == null || d == null) return '<span class="mut">-</span>'; const kn = v / 10; return `${flArrow(d, kn)}<b style="color:${flowCol(kn)}">${kn.toFixed(1)}</b><small>kn</small>`; };
+  const rows = FL_PTS.map(([n, la, lo]) => { const p = flowNear(la, lo); return p ? `<div class="flr"><span>${n}</span><span>${cell(p, i)}</span><span>${cell(p, j)}</span></div>` : ''; }).join('');
+  return `<div class="flr hd"><span>주요 지점</span><span>${hm(f.t[i])}</span><span>${hm(f.t[j])} (3시간 뒤)</span></div>${rows || '<p class="mut">지점 자료가 없습니다.</p>'}`;
+}
+// 제주항·서귀포항 오늘·내일 최강 유속과 정조 시각(국립해양조사원 조류예보)
+function flowPeakHtml() {
+  const cr = MY.crnt; if (!cr || !cr.pts) return '';
+  const now = Date.now(), days = [tdYmd(now), tdYmd(now + 86400e3)];
+  const blk = cr.pts.map(p => {
+    const ev = (p.ev || []).filter(e => days.includes(tdYmd(e[0]))); if (!ev.length) return '';
+    const list = ev.map(e => { const past = e[0] < now, kn = e[2] / 51.44; return `<span class="fe${past ? ' past' : ''}">${tdYmd(e[0]) !== days[0] ? '<em>내일</em>' : ''}${hm(e[0])} ${e[2] > 0 ? `${flArrow(e[1], kn)}<b>${kn.toFixed(1)}kn</b>` : '<i>정조</i>'}</span>`; }).join('');
+    return `<div class="fpk"><b>${p.n}</b><div>${list}</div></div>`;
+  }).join('');
+  return blk ? `<div class="card"><div class="wxh"><b>최강 유속·정조 시각</b><span class="mut" style="font-size:11px">국립해양조사원 예보</span></div>${blk}</div>` : '';
 }
 function renderFlowTxt(i) { const f = WX.flow, t = f.t[i], el = document.querySelector('.flt'); if (!el) return; let mx = 0; f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); }); el.innerHTML = `<b>${hm(t)}</b> <span>${dayWord(t, Date.now())} · ${WX.fsel === 0 ? '지금' : '+' + WX.fsel + '시간'}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span>`; }
 async function loadFlow(force) {
@@ -650,7 +683,7 @@ async function loadMarine(force) {
   try { WX.d = await libCall('/marine'); WX.err = ''; WX.at = Date.now(); } catch (e) { WX.err = '관측 자료를 불러오지 못했습니다: ' + e.message; }
   await wxLoadModel(); WX.busy = false; renderWx();
 }
-function startWx() { renderWx(); if (WX.mode === 'tide') loadTide(false); else if (WX.view === 'flow') loadFlow(false); else loadMarine(false); stopWx(); WX.timer = setInterval(() => { if (!document.hidden) { if (WX.mode === 'tide') loadTide(false); else if (WX.view === 'flow') loadFlow(false); else loadMarine(false); } }, 60e3); }
+function startWx() { renderWx(); if (WX.mode === 'tide') loadTide(false); else if (WX.mode === 'flow') { loadFlow(false); loadMyCrnt(); } else loadMarine(false); stopWx(); WX.timer = setInterval(() => { if (!document.hidden) { if (WX.mode === 'tide') loadTide(false); else if (WX.mode === 'flow') loadFlow(false); else loadMarine(false); } }, 60e3); }
 function stopWx() { if (WX.timer) { clearInterval(WX.timer); WX.timer = null; } }
 
 // ---- 탭 ----
@@ -1296,7 +1329,7 @@ function myMoonBand(now) {
 async function loadMyCrnt() {
   if (!MY.crnt) { try { const c = JSON.parse(localStorage.getItem('vts_crnt') || 'null'); if (c && c.d) { MY.crnt = c.d; MY.crAt = c.at; } } catch (_) { /* 없음 */ } }
   if (MY.crAt && Date.now() - MY.crAt < 6 * 3600e3) return;
-  try { const r = await libCall('/tide/current'); if (r.pts) { MY.crnt = r; MY.crAt = Date.now(); try { localStorage.setItem('vts_crnt', JSON.stringify({ d: r, at: MY.crAt })); } catch (_) { /* 무시 */ } renderMy(); if (WX.mode === 'tide' && typeof renderTide === 'function' && $('wxBody')) renderTide(); } } catch (_) { /* 유속 없이 표시 */ }
+  try { const r = await libCall('/tide/current'); if (r.pts) { MY.crnt = r; MY.crAt = Date.now(); try { localStorage.setItem('vts_crnt', JSON.stringify({ d: r, at: MY.crAt })); } catch (_) { /* 무시 */ } renderMy(); if (WX.mode === 'tide' && typeof renderTide === 'function' && $('wxBody')) renderTide(); if (WX.mode === 'flow' && $('wxBody')) renderWx(); } } catch (_) { /* 유속 없이 표시 */ }
 }
 async function loadMySpring() {
   if (!MY.spring) { try { const c = JSON.parse(localStorage.getItem('vts_spring') || 'null'); if (c && c.sp) { MY.spring = c.sp; MY.spAt = c.at; } } catch (_) { /* 없음 */ } }
