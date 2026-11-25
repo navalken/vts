@@ -302,8 +302,12 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .tdk .n{font-size:10px;font-weight:800;color:#16233b;display:block}.tdk .g{display:flex;gap:6px;justify-content:center}.tdk .g>div{display:flex;flex-direction:column;align-items:center}.tdk .g b{font-size:8.5px;font-weight:800}.tdk .g span{font-size:9.5px;font-weight:800;color:#16233b;white-space:nowrap}.tdk .g em{font-style:normal;font-weight:600;font-size:8.5px;color:#51607c}.tdk .g span.pa{opacity:.4}.tdk .g span.nx{background:#fff2c2;border-radius:3px}.tdscr{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}.tdscr .wxmap{width:155%}
 .tdH{color:#d12d2d}.tdL{color:#1f5fd0}
 .tdban{border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:13px;line-height:1.5;font-weight:700;background:#eaf2ff;color:#1d3f7a;border:1.5px solid #bcd3f7}.tdban.big{background:#fff4d6;color:#7a4a00;border-color:#f3c75a}.tdban small{display:block;font-weight:600;font-size:11px;opacity:.85}
-.myspr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:#fff4d6;border:1.5px solid #f3c75a;color:#7a4a00;text-align:left;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;position:relative}
+.myspr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:#fff4d6;border:2.5px solid #e03131;animation:mySprB 1.6s ease-in-out infinite;box-sizing:border-box;color:#7a4a00;text-align:left;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;position:relative}
 .myspr span{display:block;font-size:12px;font-weight:600;opacity:.85}
+.myspr.moon{background:#1f2a44;color:#fff}
+.myspr.moon span{opacity:.9}
+@keyframes mySprB{0%,100%{border-color:#e03131;box-shadow:0 0 0 0 rgba(224,49,49,.45)}50%{border-color:#ff8787;box-shadow:0 0 0 4px rgba(224,49,49,0)}}
+@media (prefers-reduced-motion:reduce){.myspr{animation:none}}
 .myspr i{position:absolute;right:12px;top:10px;font-style:normal;font-size:12px;font-weight:700;color:#b06b00}
 .tdsch{display:flex;gap:6px;margin:0 0 8px}.tdsch input{flex:1;min-width:0;margin:0;padding:10px 12px;font-size:15px}
 .tdreg{display:flex;gap:5px;margin:0 0 6px}.tdreg button{flex:1;margin:0;padding:8px 0;font-size:13px;background:#fff;border:1.5px solid var(--bd);color:#2a4a86;font-weight:800}.tdreg button.on{background:var(--pri);border-color:var(--pri);color:#fff}
@@ -1212,12 +1216,22 @@ function myNag(m) {
   else list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
   return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>섹터별 리마인더</span><span class="nsort"><button data-nsort="sec" class="${byTime ? '' : 'on'}">섹터순</button><button data-nsort="time" class="${byTime ? 'on' : ''}">시간순</button></span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}${dirWho(x) ? `<small class="nt">${esc(dirWho(x))}</small>` : ''}</span></div>`).join('')}</div>`;
 }
-function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err, mySpringCur(now) ? 's' : ''].join('|'); }
+function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err, mySpringCur(now) ? 's' : '', myMoonless(now) ? 'm' : ''].join('|'); }
 // 내 근무: 대조기 구간이면 위쪽에 알림 띠(누르면 해상기상 ⑤조석). 자료는 6시간마다 새로 받고 기기에 기억
 function mySpringCur(now) { const sp = MY.spring; return sp && sp.big && sp.big.length ? tdSpringGroups(sp, now).cur : null; }
 function mySpring(now) {
   const c = mySpringCur(now); if (!c) return '';
   return `<button class="myspr" id="mySpr">🌊 <b>지금 대조기 (${tdRng(c)})</b><span>조류가 빠르고 수위 변화가 커요 · 좌초·접안 유의</span><i>물때 보기 ›</i></button>`;
+}
+// 무월광기: 삭(새달) 앞뒤 3일(한국 날짜 기준, 7일). 달 계산(MOON_REF·MOON_SYN)으로 인터넷 없이 구함
+function myMoonless(now) {
+  const kd = t => Math.floor((t + 9 * 3600e3) / 864e5), today = kd(now), k = Math.round((now - MOON_REF) / MOON_SYN);
+  for (const i of [k - 1, k, k + 1]) { const nd = kd(MOON_REF + i * MOON_SYN); if (today >= nd - 3 && today <= nd + 3) return { sd: new Date((nd - 3) * 864e5).toISOString().slice(0, 10), ed: new Date((nd + 3) * 864e5).toISOString().slice(0, 10) }; }
+  return null;
+}
+function myMoonBand(now) {
+  const c = myMoonless(now); if (!c) return '';
+  return `<div class="myspr moon">🌑 <b>무월광기 (${tdRng(c)})</b><span>밀입국·미식별 접촉물 경계 강화</span></div>`;
 }
 async function loadMySpring() {
   if (!MY.spring) { try { const c = JSON.parse(localStorage.getItem('vts_spring') || 'null'); if (c && c.sp) { MY.spring = c.sp; MY.spAt = c.at; } } catch (_) { /* 없음 */ } }
@@ -1236,7 +1250,7 @@ function renderMy() {
   else if (m.st === 'none') body = myStateCard('cap-nap', '오늘은 근무가 없어요', '근무표가 올라오면 여기에 보여요.<br><small>(근무표 예약 후 이름이 시간표에 있어야 해요)</small>');
   else body = `<div class="mg">${myTimeline(m, now)}${myCount(m, now)}<div class="st">${myHero(m, now)}${myMinis(m, now)}</div></div>`;
   const nag = m && (m.st === 'on' || m.st === 'pre' || m.st === 'later' || m.st === 'none') ? myNag(m) : '';
-  el.innerHTML = `<div class="my">${myHead(now)}${mySpring(now)}${body}${nag}${myBtns()}</div>`;
+  el.innerHTML = `<div class="my">${myHead(now)}${mySpring(now)}${myMoonBand(now)}${body}${nag}${myBtns()}</div>`;
   const sb = $('mySpr'); if (sb) sb.onclick = () => { WX.mode = 'tide'; WX.tq = ''; WX.treg = ''; goTab('wx'); };
   MY.sig = mySig(now);
 }
