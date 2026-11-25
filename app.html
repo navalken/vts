@@ -277,7 +277,10 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 
 /* 해상기상 탭 */
 .wxlinks{display:flex;gap:6px;margin:2px 0 10px}.wxlinks a,.wxlinks span{flex:1;min-width:0;text-align:center;padding:9px 2px;border-radius:12px;background:#fff;border:1.5px solid var(--bd);font-weight:800;font-size:13px;color:#2a4a86;text-decoration:none;line-height:1.25}.wxlinks span{background:var(--pri);border-color:var(--pri);color:#fff}.wxlinks small{display:block;font-weight:600;font-size:10px;opacity:.85}
-.wxh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.wxh b{font-size:16px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
+.wxh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.wxh b{font-size:16px}
+.wxvw{display:flex;gap:6px;margin:0 0 8px}.wxvw button{flex:1;margin:0;padding:8px 6px;font-size:13px;font-weight:800;border-radius:10px;background:#eef3fb;color:#41506b;border:1.5px solid #d5e0f0}.wxvw button.on{background:#1c64d8;color:#fff;border-color:#1c64d8}
+.flt{display:flex;align-items:baseline;gap:6px;margin:8px 2px 2px;font-size:13px}.flt b{font-size:18px}.flt .mx{margin-left:auto;font-size:12px;font-weight:700;color:#c92a2a}
+#flSel{width:100%;margin:4px 0 0;accent-color:#1c64d8}.flk{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin:0 2px 6px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
 .wxmap{position:relative;width:100%;aspect-ratio:1500/1300;border-radius:12px;overflow:hidden;background:url(img/wx-map.jpg) center/100% 100%}
 .wxmap svg.ln{position:absolute;inset:0;width:100%;height:100%}
 .wxdot{position:absolute;width:8px;height:8px;border-radius:50%;background:#16233b;border:2px solid #fff;transform:translate(-50%,-50%)}
@@ -305,6 +308,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .myspr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:#fff4d6;border:2.5px solid #e03131;animation:mySprB 1.6s ease-in-out infinite;box-sizing:border-box;color:#7a4a00;text-align:left;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;position:relative}
 .myspr span{display:block;font-size:12px;font-weight:600;opacity:.85}
 .myspr span.cr{opacity:1;margin-top:2px}
+.crar{width:14px;height:14px;fill:#c92a2a;vertical-align:-2px;margin:0 2px 0 1px}
 .myspr span.cr b{color:#c92a2a}
 .myspr.moon{background:#1f2a44;color:#fff}
 .myspr.moon span{opacity:.9}
@@ -383,7 +387,7 @@ function paintHdr() { if (CURT === 'my' || CURT === 'live') return; try { $('hdr
 
 // ---- 해상기상 탭 ----
 const WXLINK_1 = 'https://www.weather.go.kr/w/special-report/overall.do', WXLINK_3 = 'https://marine.kma.go.kr/mmis/m', WXLINK_4 = 'https://www.windy.com/33.400/126.550?33.400,126.550,8';
-const WX = { mode: 'wind', td: null, tat: 0, tbusy: false, terr: '', tq: '', treg: '', d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
+const WX = { view: 'wind', flow: null, fat: 0, fbusy: false, ferr: '', fsel: 0, mode: 'wind', td: null, tat: 0, tbusy: false, terr: '', tq: '', treg: '', d: null, err: '', model: null, mt: 0, busy: false, timer: null, at: 0 };
 // 지도 위 카드 자리(%): 점(관측 위치)에서 선으로 이어 겹치지 않게 놓음
 const WX_POS = { KG_0028: [66, 26], DT_0021: [50, 7], DT_0004: [33, 41], DT_0022: [87, 45], DT_0023: [31, 66], TW_0075: [47, 68], DT_0010: [62, 90], M1: [19, 20], M2: [11, 50], M3: [88, 66], K22516: [10, 55], K22187: [88, 93], K22515: [87, 67], K22107: [13, 80] };
 const WX_SM = ['DT_0023', 'K22187', 'TW_0075', 'K22516', 'K22107', 'K22515'], WX_NM = { K22107: '마라도 해상' }; // 칸을 더 작게 그리는 지점(육지 안으로 넣은 모슬포, 남쪽 바다의 서귀포 남동)
@@ -411,7 +415,7 @@ function wxLinks() {
   const m = WX.mode;
   return `<div class="wxlinks"><a href="${WXLINK_1}" data-ext="1">①기상특보<small>날씨누리↗</small></a><span data-wxm="wind" class="${m === 'wind' ? '' : 'off'}">②관제구역<small>풍향·풍속</small></span><a href="${WXLINK_3}" data-ext="1">③해상특보<small>기상청↗</small></a><a href="${WXLINK_4}" data-ext="1">④윈디<small>바람지도↗</small></a><span data-wxm="tide" class="${m === 'tide' ? '' : 'off'}">⑤조석<small>만조·간조</small></span></div>`;
 }
-function wxBindLinks(el) { el.querySelectorAll('[data-wxm]').forEach(b => { b.onclick = () => { if (WX.mode === b.dataset.wxm) return; WX.mode = b.dataset.wxm; if (WX.mode === 'tide') { renderTide(); loadTide(false); } else { renderWx(); loadMarine(false); } }; }); }
+function wxBindLinks(el) { el.querySelectorAll('[data-wxm]').forEach(b => { b.onclick = () => { if (WX.mode === b.dataset.wxm) return; WX.mode = b.dataset.wxm; if (WX.mode === 'tide') { renderTide(); loadTide(false); } else { renderWx(); if (WX.view === 'flow') loadFlow(false); else loadMarine(false); } }; }); }
 function renderWx() {
   const el = $('wxBody'); if (!el) return;
   if (WX.mode === 'tide') { renderTide(); return; }
@@ -424,15 +428,56 @@ function renderWx() {
   const rows = pts.filter(p => p.ws != null).sort((a, b) => b.ws - a.ws).map(p => `<div class="wxrow ${wxLvl(p.ws, p.wh)}"><div class="rn"><b>${esc(p.nm)}</b><small>${p.t} · ${p.k === 'b' ? '부이' : p.k === 't' ? '관측소' : '예측모델'}${WX_OFF.includes(p.c) ? ' · 구역 밖' : ''}</small></div><div class="rw">${wxArrow(p.ws === 0 ? null : p.wd)}<span>${p.ws === 0 ? '무풍' : wxDir(p.wd)}</span></div><div class="rs"><b>${p.ws.toFixed(1)}</b><small>m/s</small></div><div class="rh">${p.wh != null ? `<b>${p.wh.toFixed(1)}</b><small>m</small>` : '<small>-</small>'}</div></div>`).join('');
   const d = WX.at ? new Date(WX.at) : null, hm = d ? String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') : '';
   const err = WX.err ? `<div class="card"><p class="mut" style="color:var(--bad)">${esc(WX.err)}</p></div>` : '';
+  if (WX.view === 'flow') { renderFlow(el); return; }
   el.innerHTML = `${wxLinks()}${err}
-  <div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
+  ${wxViewBtns()}<div class="card"><div class="wxh"><b>제주 관제구역 실황</b><span style="font-size:11px;color:var(--mut)">${hm ? hm + ' 확인 ' : ''}<button id="wxRef">${WX.busy ? '…' : '↻'}</button></span></div>
   <div class="wxmap" id="wxMap">${mapHtml}</div>${chips ? `<div class="wxsub">관제구역 밖 (참고)</div>${chips}` : ''}
   <div class="wxlg"><span><i style="background:#2f7be8"></i>보통</span><span><i style="background:#f59e0b"></i>주의 풍속10↑·파고2↑</span><span><i style="background:#e03b3b"></i>위험 풍속14↑·파고3↑</span></div>
   <div class="wxlg"><span>실선=부이(파고 포함)</span><span>점선=관측소(풍향·풍속만)</span><span>작은 점선=예측모델(관측 아님)</span></div><div class="wxnote">지도를 누르면 크게 볼 수 있습니다.</div></div>
   <div class="card"><div class="wxhd"><span>지점 (풍속 센 순)</span><span>바람</span><span>풍속</span><span>파고</span></div>${rows || '<p class="mut">자료를 불러오는 중…</p>'}<div class="wxnote">화살표는 바람이 불어가는 쪽입니다. 부이·관측소는 해양조사원 최신 관측값(시각 표시), 모델은 Open-Meteo 예측으로 실제 관측이 아닙니다. 서귀포 등 항구 관측소는 지형 영향을 받을 수 있습니다.</div></div>`;
   $('wxRef').onclick = () => loadMarine(true);
   $('wxMap').onclick = wxBig;
-  wxBindLinks(el);
+  wxBindLinks(el); wxBindView(el);
+}
+// ---- 조류 흐름 지도(예측): 서버 /tide/flow, 격자 0.1°, 노트×10 ----
+const wxViewBtns = () => `<div class="wxvw"><button data-wv="wind" class="${WX.view === 'wind' ? 'on' : ''}">🌬 바람·파고</button><button data-wv="flow" class="${WX.view === 'flow' ? 'on' : ''}">🌊 조류 흐름</button></div>`;
+function wxBindView(el) { el.querySelectorAll('[data-wv]').forEach(b => { b.onclick = () => { if (WX.view === b.dataset.wv) return; WX.view = b.dataset.wv; if (WX.view === 'flow') { renderWx(); loadFlow(false); } else { renderWx(); loadMarine(false); } }; }); }
+const flowCol = kn => kn >= 1.5 ? '#e03131' : kn >= 1 ? '#f08c00' : kn >= 0.5 ? '#2b8a3e' : '#1c7ed6';
+function flowIdx() { const f = WX.flow; if (!f || !f.t || !f.t.length) return -1; const want = Date.now() + WX.fsel * 3600e3; let bi = 0, bd = 1e15; f.t.forEach((t, i) => { const d = Math.abs(t - want); if (d < bd) { bd = d; bi = i; } }); return bi; }
+function flowSvg(i) {
+  let g = '';
+  (WX.flow.pts || []).forEach(p => {
+    const v = p[2][i], d = p[3][i]; if (v == null || d == null) return;
+    const kn = v / 10, [x, y] = wxXY(p[0], p[1]); if (x < 1 || x > 99 || y < 1 || y > 99) return;
+    const L = 2.2 + Math.min(kn, 2) * 2.6, c = flowCol(kn);
+    g += `<g transform="translate(${(x * 1.5).toFixed(1)},${(y * 1.3).toFixed(1)}) rotate(${d})" opacity="${kn < 0.15 ? .45 : .95}"><line x1="0" y1="${(L / 2).toFixed(2)}" x2="0" y2="${(-L / 2 + 1).toFixed(2)}" stroke="${c}" stroke-width=".7" stroke-linecap="round"/><path d="M0,${(-L / 2 - .3).toFixed(2)} L1.3,${(-L / 2 + 1.6).toFixed(2)} L-1.3,${(-L / 2 + 1.6).toFixed(2)}Z" fill="${c}"/></g>`;
+  });
+  return `<svg class="ln" viewBox="0 0 150 130" preserveAspectRatio="none">${g}</svg>`;
+}
+function renderFlow(el) {
+  const f = WX.flow, i = flowIdx(), t = i >= 0 ? f.t[i] : 0;
+  const lbl = h => h === 0 ? '지금' : '+' + h + '시간';
+  let mx = 0; if (i >= 0) f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); });
+  const body = i < 0 ? `<p class="mut">${WX.ferr ? esc(WX.ferr) : '조류 예측을 불러오는 중…'}</p>` : `
+    <div class="wxmap" id="wxMap">${flowSvg(i)}</div>
+    <div class="flt"><b>${hm(t)}</b> <span>${dayWord(t, Date.now())} · ${lbl(WX.fsel)}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span></div>
+    <input type="range" id="flSel" min="0" max="24" step="1" value="${WX.fsel}" aria-label="몇 시간 뒤">
+    <div class="flk"><span>지금</span><span>+6</span><span>+12</span><span>+18</span><span>+24시간</span></div>
+    <div class="wxlg"><span><i style="background:#1c7ed6"></i>0.5kn 미만</span><span><i style="background:#2b8a3e"></i>0.5~1</span><span><i style="background:#f08c00"></i>1~1.5</span><span><i style="background:#e03131"></i>1.5kn 이상</span></div>`;
+  el.innerHTML = `${wxLinks()}${wxViewBtns()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
+  <div class="wxnote">화살표는 물이 흘러가는 쪽, 길이·색은 세기입니다. 메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함)이라 연안·항내·좁은 수도는 실제와 다를 수 있습니다. 항해 판단용이 아닌 참고용입니다. 지도를 누르면 크게 볼 수 있습니다.</div></div>`;
+  $('flRef').onclick = () => loadFlow(true);
+  if ($('wxMap')) $('wxMap').onclick = wxBig;
+  const sl = $('flSel'); if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); };
+  wxBindLinks(el); wxBindView(el);
+}
+function renderFlowTxt(i) { const f = WX.flow, t = f.t[i], el = document.querySelector('.flt'); if (!el) return; let mx = 0; f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); }); el.innerHTML = `<b>${hm(t)}</b> <span>${dayWord(t, Date.now())} · ${WX.fsel === 0 ? '지금' : '+' + WX.fsel + '시간'}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span>`; }
+async function loadFlow(force) {
+  if (WX.fbusy) return; if (!S.token) { WX.ferr = '앱 등록 후 볼 수 있습니다(설정에서 등록)'; renderWx(); return; }
+  if (!force && WX.flow && Date.now() - WX.fat < 30 * 60e3) { renderWx(); return; }
+  WX.fbusy = true; renderWx();
+  try { const r = await libCall('/tide/flow'); if (r.pts) { WX.flow = r; WX.fat = Date.now(); WX.ferr = ''; } } catch (e) { WX.ferr = '조류 예측을 불러오지 못했습니다: ' + e.message; }
+  WX.fbusy = false; renderWx();
 }
 // ---- 조석 ----
 const TD_XY = { chuja: [33.5, 6.4], jeju: [50.2, 47.2], aewol: [34.1, 53.4], hallim: [31.0, 58.0], sinchang: [24.5, 65.3], moseulpo: [30.2, 77.0], mara: [31.2, 86.5], hwasun: [36.2, 75.6], seogwipo: [51.7, 74.6], seongsan: [76.9, 52.3], sehwa: [71.9, 47.3], gimnyeong: [65.0, 44.4] };
@@ -466,7 +511,7 @@ function crntLine(cr, now) {
   cr.pts.forEach(p => {
     const td = (p.ev || []).filter(e => e[2] > 0 && tdYmd(e[0]) === day); if (!td.length) return;
     const m = td.reduce((a, b) => b[2] > a[2] ? b : a), kn = (m[2] / 51.44).toFixed(1);
-    parts.push(`${p.n.replace('항', '')} <b>${kn}kn</b> ${hm(m[0])}(${CR_DIR[Math.round(m[1] / 45) % 8]}쪽)`);
+    parts.push(`${p.n.replace('항', '')} <svg class="crar" viewBox="0 0 24 24" style="transform:rotate(${m[1]}deg)" aria-label="${CR_DIR[Math.round(m[1] / 45) % 8]}쪽으로"><path d="M12 2 L19 20 L12 16 L5 20 Z"/></svg><b>${kn}kn</b> ${hm(m[0])}`); // 화살표 = 물이 흘러가는 쪽
   });
   return parts.length ? '최강유속 ' + parts.join(' · ') : '';
 }
@@ -605,7 +650,7 @@ async function loadMarine(force) {
   try { WX.d = await libCall('/marine'); WX.err = ''; WX.at = Date.now(); } catch (e) { WX.err = '관측 자료를 불러오지 못했습니다: ' + e.message; }
   await wxLoadModel(); WX.busy = false; renderWx();
 }
-function startWx() { renderWx(); if (WX.mode === 'tide') loadTide(false); else loadMarine(false); stopWx(); WX.timer = setInterval(() => { if (!document.hidden) { if (WX.mode === 'tide') loadTide(false); else loadMarine(false); } }, 60e3); }
+function startWx() { renderWx(); if (WX.mode === 'tide') loadTide(false); else if (WX.view === 'flow') loadFlow(false); else loadMarine(false); stopWx(); WX.timer = setInterval(() => { if (!document.hidden) { if (WX.mode === 'tide') loadTide(false); else if (WX.view === 'flow') loadFlow(false); else loadMarine(false); } }, 60e3); }
 function stopWx() { if (WX.timer) { clearInterval(WX.timer); WX.timer = null; } }
 
 // ---- 탭 ----
