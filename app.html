@@ -308,6 +308,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .myspr{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;border-radius:14px;background:#fff4d6;border:2.5px solid #e03131;animation:mySprB 1.6s ease-in-out infinite;box-sizing:border-box;color:#7a4a00;text-align:left;font:inherit;font-size:14px;line-height:1.45;cursor:pointer;position:relative}
 .myspr span{display:block;font-size:12px;font-weight:600;opacity:.85}
 .myspr span.cr{opacity:1;margin-top:2px}
+.crdeg{font-size:.85em;font-weight:700;opacity:.8;margin-right:1px}
 .crar{width:14px;height:14px;fill:#c92a2a;vertical-align:-2px;margin:0 2px 0 1px}
 .flr{display:grid;grid-template-columns:1.3fr 1fr 1.3fr;gap:4px;align-items:center;padding:6px 2px;border-top:1px solid #eef1f6;font-size:13px}
 .flr.hd{border-top:0;font-size:11px;font-weight:700;color:var(--mut)}
@@ -499,7 +500,7 @@ function flowPeakHtml() {
   const now = Date.now(), days = [tdYmd(now), tdYmd(now + 86400e3)];
   const blk = cr.pts.map(p => {
     const ev = (p.ev || []).filter(e => days.includes(tdYmd(e[0]))); if (!ev.length) return '';
-    const list = ev.map(e => { const past = e[0] < now, kn = e[2] / 51.44; return `<span class="fe${past ? ' past' : ''}">${tdYmd(e[0]) !== days[0] ? '<em>내일</em>' : ''}${hm(e[0])} ${e[2] > 0 ? `${flArrow(e[1], kn)}<b>${kn.toFixed(1)}kn</b>` : '<i>정조</i>'}</span>`; }).join('');
+    const list = ev.map(e => { const past = e[0] < now, kn = e[2] / 51.44; return `<span class="fe${past ? ' past' : ''}">${tdYmd(e[0]) !== days[0] ? '<em>내일</em>' : ''}${hm(e[0])} ${e[2] > 0 ? `${flArrow(e[1], kn)}${crDeg(e[1])} <b>${kn.toFixed(1)}kn</b>` : '<i>정조</i>'}</span>`; }).join('');
     return `<div class="fpk"><b>${p.n}</b><div>${list}</div></div>`;
   }).join('');
   return blk ? `<div class="card"><div class="wxh"><b>최강 유속·정조 시각</b><span class="mut" style="font-size:11px">국립해양조사원 예보</span></div>${blk}</div>` : '';
@@ -538,13 +539,14 @@ function tdSpringGroups(sp, now) { // 대조기 날짜를 이어진 구간으로
 }
 // 조류 최강유속(서버 /tide/current, crsp cm/s → 노트). 오늘 가장 센 흐름 1개씩
 const CR_DIR = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
+const crDeg = d => '<small class="crdeg">' + String(Math.round(d) % 360).padStart(3, '0') + '°</small>'; // 흐름이 가는 방향(진북 기준)
 function crntLine(cr, now) {
   if (!cr || !cr.pts) return '';
   const day = tdYmd(now), parts = [];
   cr.pts.forEach(p => {
     const td = (p.ev || []).filter(e => e[2] > 0 && tdYmd(e[0]) === day); if (!td.length) return;
     const m = td.reduce((a, b) => b[2] > a[2] ? b : a), kn = (m[2] / 51.44).toFixed(1);
-    parts.push(`${p.n.replace('항', '')} <svg class="crar" viewBox="0 0 24 24" style="transform:rotate(${m[1]}deg)" aria-label="${CR_DIR[Math.round(m[1] / 45) % 8]}쪽으로"><path d="M12 2 L19 20 L12 16 L5 20 Z"/></svg><b>${kn}kn</b> ${hm(m[0])}`); // 화살표 = 물이 흘러가는 쪽
+    parts.push(`${p.n.replace('항', '')} <svg class="crar" viewBox="0 0 24 24" style="transform:rotate(${m[1]}deg)" aria-label="${CR_DIR[Math.round(m[1] / 45) % 8]}쪽으로"><path d="M12 2 L19 20 L12 16 L5 20 Z"/></svg>${crDeg(m[1])} <b>${kn}kn</b> ${hm(m[0])}`); // 화살표 = 물이 흘러가는 쪽
   });
   return parts.length ? '최강유속 ' + parts.join(' · ') : '';
 }
