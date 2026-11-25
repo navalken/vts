@@ -280,7 +280,8 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .wxh{display:flex;justify-content:space-between;align-items:center;margin:0 2px 6px}.wxh b{font-size:16px}
 .wxvw{display:flex;gap:6px;margin:0 0 8px}.wxvw button{flex:1;margin:0;padding:8px 6px;font-size:13px;font-weight:800;border-radius:10px;background:#eef3fb;color:#41506b;border:1.5px solid #d5e0f0}.wxvw button.on{background:#1c64d8;color:#fff;border-color:#1c64d8}
 .flt{display:flex;align-items:baseline;gap:6px;margin:8px 2px 2px;font-size:13px}.flt b{font-size:18px}.flt .mx{margin-left:auto;font-size:12px;font-weight:700;color:#c92a2a}
-#flSel{width:100%;margin:4px 0 0;accent-color:#1c64d8}.flk{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin:0 2px 6px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
+#flSel{width:100%;margin:4px 0 0;accent-color:#1c64d8}.flhint{font-size:12px;font-weight:700;color:#1c64d8;background:#eef4ff;border-radius:8px;padding:5px 8px;margin:6px 0 2px}
+.flk{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin:0 2px 6px}.wxh button{width:auto;margin:0;padding:4px 10px;font-size:12px;background:var(--chip);color:var(--pri)}
 .wxmap{position:relative;width:100%;aspect-ratio:1500/1300;border-radius:12px;overflow:hidden;background:url(img/wx-map.jpg) center/100% 100%}
 .wxmap svg.ln{position:absolute;inset:0;width:100%;height:100%}
 .wxdot{position:absolute;width:8px;height:8px;border-radius:50%;background:#16233b;border:2px solid #fff;transform:translate(-50%,-50%)}
@@ -486,6 +487,7 @@ function renderFlow(el) {
   const body = i < 0 ? `<p class="mut">${WX.ferr ? esc(WX.ferr) : '조류 예측을 불러오는 중…'}</p>` : `
     <div class="wxmap" id="wxMap">${flowSvg(i)}</div>
     <div class="flt"><b>${hm(t)}</b> <span>${dayWord(t, Date.now())} · ${lbl(WX.fsel)}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span></div>
+    <div class="flhint">👆 아래 동그라미를 좌우로 밀면 시간대별 흐름을 볼 수 있어요</div>
     <input type="range" id="flSel" min="0" max="24" step="1" value="${WX.fsel}" aria-label="몇 시간 뒤">
     <div class="flk"><span>지금</span><span>+6</span><span>+12</span><span>+18</span><span>+24시간</span></div>
     <div class="wxlg"><span><i style="background:#1c7ed6"></i>0.5kn 미만</span><span><i style="background:#2b8a3e"></i>0.5~1</span><span><i style="background:#f08c00"></i>1~1.5</span><span><i style="background:#e03131"></i>1.5kn 이상</span></div>`;
