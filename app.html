@@ -492,7 +492,7 @@ function renderFlow(el) {
     <input type="range" id="flSel" min="0" max="24" step="1" value="${WX.fsel}" aria-label="시각 선택">
     <div class="flk">${[0, 6, 12, 18, 24].map(h => '<span>' + flTick(h) + '</span>').join('')}</div>
     <div class="wxlg"><span><i style="background:#1c7ed6"></i>0.5kn 미만</span><span><i style="background:#2b8a3e"></i>0.5~1</span><span><i style="background:#f08c00"></i>1~1.5</span><span><i style="background:#e03131"></i>1.5kn 이상</span></div>`;
-  el.innerHTML = `${wxLinks()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
+  el.innerHTML = `${wxLinks()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)${f && f.src === 'khoa' ? '<small style="display:block;font-size:11px;color:#1c64d8">국립해양조사원 수치조류도</small>' : ''}</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
   <div class="wxnote">화살표는 물이 흘러가는 쪽, 길이·색은 세기입니다. 지도를 누르면 크게 볼 수 있습니다.</div></div>
   <div class="card" id="flPts">${i >= 0 ? flowPtsHtml(i) : ''}</div>
   ${flowPeakHtml()}
@@ -501,7 +501,7 @@ function renderFlow(el) {
     <p><b>정조(전류)</b>: 흐름이 바뀌며 거의 멈추는 때. 흐름이 가장 약해 접안·이안, 좁은 수도 통과에 유리합니다.</p>
     <p><b>대조기</b>(보름·그믐 뒤 1~3일)에는 조류가 가장 세고, <b>소조기</b>에는 약합니다.</p>
     <p>바람이 조류와 반대 방향이면 파도가 가파르게 서니(역조) 소형선 운항에 주의하세요.</p>
-    <p class="mut">자료: 지도·지점 표는 메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함), 최강·정조 시각은 국립해양조사원 조류예보입니다. 연안·항내·좁은 수도는 실제와 다를 수 있어 참고용입니다.</p></div>`;
+    <p class="mut">자료: 지도·지점 표는 ${WX.flow && WX.flow.src === 'khoa' ? '국립해양조사원 수치조류도 예측(1km 모델)' : '메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함)'}, 최강·정조 시각은 국립해양조사원 조류예보입니다. 연안·항내·좁은 수도는 실제와 다를 수 있어 참고용입니다.</p></div>`;
   $('flRef').onclick = () => loadFlow(true);
   if ($('wxMap')) $('wxMap').onclick = wxBig;
   const sl = $('flSel'); if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); const fp = $('flPts'); if (fp) fp.innerHTML = flowPtsHtml(k); };
