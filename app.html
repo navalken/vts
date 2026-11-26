@@ -489,7 +489,7 @@ function renderFlow(el) {
     <div class="wxmap" id="wxMap">${flowSvg(i)}</div>
     <div class="flt"><b>${hm(t)}</b> <span>${dayWord(t, Date.now())}${WX.fsel === 0 ? ' · 지금' : ''}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span></div>
     <div class="flhint">👆 아래 동그라미를 좌우로 밀면 시간대별 흐름을 볼 수 있어요</div>
-    <input type="range" id="flSel" min="0" max="24" step="1" value="${WX.fsel}" aria-label="시각 선택">
+    <input type="range" id="flSel" autocomplete="off" min="0" max="24" step="1" value="${WX.fsel}" aria-label="시각 선택">
     <div class="flk">${[0, 6, 12, 18, 24].map(h => '<span>' + flTick(h) + '</span>').join('')}</div>
     <div class="wxlg"><span><i style="background:#1c7ed6"></i>0.5kn 미만</span><span><i style="background:#2b8a3e"></i>0.5~1</span><span><i style="background:#f08c00"></i>1~1.5</span><span><i style="background:#e03131"></i>1.5kn 이상</span></div>`;
   el.innerHTML = `${wxLinks()}<div class="card"><div class="wxh"><b>제주 관제구역 조류 흐름 (예측)${f && f.src === 'khoa' ? '<small style="display:block;font-size:11px;color:#1c64d8">국립해양조사원 수치조류도</small>' : ''}</b><span style="font-size:11px;color:var(--mut)"><button id="flRef">${WX.fbusy ? '…' : '↻'}</button></span></div>${body}
@@ -504,7 +504,7 @@ function renderFlow(el) {
     <p class="mut">자료: 지도·지점 표는 ${WX.flow && WX.flow.src === 'khoa' ? '국립해양조사원 수치조류도 예측(1km 모델)' : '메테오프랑스 해류 예측(Open-Meteo, 약 8km 격자, 조석 포함)'}, 최강·정조 시각은 국립해양조사원 조류예보입니다. 연안·항내·좁은 수도는 실제와 다를 수 있어 참고용입니다.</p></div>`;
   $('flRef').onclick = () => loadFlow(true);
   if ($('wxMap')) $('wxMap').onclick = wxBig;
-  const sl = $('flSel'); if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); const fp = $('flPts'); if (fp) fp.innerHTML = flowPtsHtml(k); };
+  const sl = $('flSel'); if (sl) sl.value = WX.fsel; /* 브라우저가 예전 위치를 되살려 글자와 어긋나지 않게 */ if (sl) sl.oninput = () => { WX.fsel = +sl.value; const k = flowIdx(); $('wxMap').innerHTML = flowSvg(k); renderFlowTxt(k); const fp = $('flPts'); if (fp) fp.innerHTML = flowPtsHtml(k); };
   wxBindLinks(el);
 }
 // 주요 지점 조류(지도 격자에서 가장 가까운 칸): 선택한 시각과 3시간 뒤
