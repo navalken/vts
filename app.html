@@ -487,7 +487,7 @@ function renderFlow(el) {
   let mx = 0; if (i >= 0) f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); });
   const body = i < 0 ? `<p class="mut">${WX.ferr ? esc(WX.ferr) : '조류 예측을 불러오는 중…'}</p>` : `
     <div class="wxmap" id="wxMap">${flowSvg(i)}</div>
-    <div class="flt"><b>${hm(t)}</b> <span>${dayWord(t, Date.now())}${WX.fsel === 0 ? ' · 지금' : ''}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span></div>
+    <div class="flt" id="flTxt"><b>${hm(t)}</b> <span>${dayWord(t, Date.now())}${WX.fsel === 0 ? ' · 지금' : ''}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span></div>
     <div class="flhint">👆 아래 동그라미를 좌우로 밀면 시간대별 흐름을 볼 수 있어요</div>
     <input type="range" id="flSel" autocomplete="off" min="0" max="24" step="1" value="${WX.fsel}" aria-label="시각 선택">
     <div class="flk">${[0, 6, 12, 18, 24].map(h => '<span>' + flTick(h) + '</span>').join('')}</div>
@@ -531,7 +531,7 @@ function flowPeakHtml() {
   }).join('');
   return blk ? `<div class="card"><div class="wxh"><b>최강 유속·정조 시각</b><span class="mut" style="font-size:11px">국립해양조사원 예보</span></div>${blk}</div>` : '';
 }
-function renderFlowTxt(i) { const f = WX.flow, t = f.t[i], el = document.querySelector('.flt'); if (!el) return; let mx = 0; f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); }); el.innerHTML = `<b>${hm(t)}</b> <span>${dayWord(t, Date.now())}${WX.fsel === 0 ? ' · 지금' : ''}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span>`; }
+function renderFlowTxt(i) { const f = WX.flow, t = f.t[i], el = document.getElementById('flTxt'); /* .flt 이름이 실시간 근무현황에도 있어 id로 찾음 */ if (!el) return; let mx = 0; f.pts.forEach(p => { if (p[2][i] != null) mx = Math.max(mx, p[2][i] / 10); }); el.innerHTML = `<b>${hm(t)}</b> <span>${dayWord(t, Date.now())}${WX.fsel === 0 ? ' · 지금' : ''}</span><span class="mx">구역 최대 약 ${mx.toFixed(1)}kn</span>`; }
 async function loadFlow(force) {
   if (WX.fbusy) return; if (!S.token) { WX.ferr = '앱 등록 후 볼 수 있습니다(설정에서 등록)'; renderWx(); return; }
   if (!force && WX.flow && Date.now() - WX.fat < 30 * 60e3) { renderWx(); return; }
