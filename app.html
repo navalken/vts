@@ -319,7 +319,7 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 .fe{font-size:12px;white-space:nowrap}.fe b{font-size:12px}.fe i{font-style:normal;color:#1c7ed6;font-weight:700}.fe em{font-style:normal;font-size:10px;color:var(--mut);margin-right:2px}.fe.past{opacity:.4}
 .flhelp p{margin:6px 0 0;font-size:12.5px;line-height:1.55}.flhelp p.mut{font-size:11px}
 .myspr span.cr b{color:#c92a2a}
-.myspr.moon{background:#1f2a44;color:#fff}
+.myspr.moon{background:#1f2a44;color:#fff}.myspr.berth{background:#e8f1ff;color:#123a7a;border-color:#2f7df0;animation:none}.myspr.berth i{color:#1c64d8}
 .myspr.moon span{opacity:.9}
 @keyframes mySprB{0%,100%{border-color:#e03131;box-shadow:0 0 0 0 rgba(224,49,49,.45)}50%{border-color:#ff8787;box-shadow:0 0 0 4px rgba(224,49,49,0)}}
 @media (prefers-reduced-motion:reduce){.myspr{animation:none}}
@@ -1347,8 +1347,16 @@ function myNag(m) {
   else list.sort((a, b) => rank(a) - rank(b) || String((a.sectors || [])[0] || '').localeCompare(String((b.sectors || [])[0] || ''), 'ko', { numeric: true }) || String(a.at || '').localeCompare(String(b.at || '')));
   return `<div class="card nag"><div class="nh"><img src="img/ic-mega.png" alt=""><span>섹터별 리마인더</span><span class="nsort"><button data-nsort="sec" class="${byTime ? '' : 'on'}">섹터순</button><button data-nsort="time" class="${byTime ? 'on' : ''}">시간순</button></span></div>${list.slice(0, 10).map(x => `<div class="ni">${x.sectors && x.sectors.length ? `<b class="s${x.mine ? '' : ' o'}">${esc(x.sectors.join('·'))}</b>` : '<b>전체</b>'}<span>${esc(x.text)}${dirWho(x) ? `<small class="nt">${esc(dirWho(x))}</small>` : ''}</span></div>`).join('')}</div>`;
 }
-function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err, mySpringCur(now) ? 's' : '', myMoonless(now) ? 'm' : ''].join('|'); }
+function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, m.duty ? m.duty.from : '', m.cur ? m.cur.from : '', m.cells ? m.cells.filter(c => now >= c.to).length : '', myIsNight(now) ? 'n' : 'd', MY.err, mySpringCur(now) ? 's' : '', myMoonless(now) ? 'm' : '', myBerth(now) ? 'b' + MY.d.berth.seq : ''].join('|'); }
 // 내 근무: 대조기 구간이면 위쪽에 알림 띠(누르면 해상기상 ⑤조석). 자료는 6시간마다 새로 받고 기기에 기억
+// 제주항 선석배정표: 새 글이 올라오면 24시간 동안(또는 눌러 볼 때까지) 내 근무 위에 띠. 서버가 10분마다 도청 자료실을 확인
+function myBerthSeen() { try { return +(localStorage.getItem('vts_berth_seen') || 0); } catch (_) { return 0; } }
+function myBerth(now) {
+  const b = MY.d && MY.d.berth; if (!b || !b.seq || now - (b.at || 0) > 24 * 3600e3 || myBerthSeen() >= b.seq) return '';
+  const ago = Math.max(0, Math.round((now - b.at) / 60e3)), t = ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전';
+  return `<button class="myspr berth" data-berth="${b.seq}">📋 <b>선석표 새로 올라옴</b><span>${esc(b.title || '')} · ${t}</span><i>열기 ›</i></button>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-berth]'); if (!b) return; const d = MY.d && MY.d.berth; if (d && d.url) window.open(d.url, '_blank'); try { localStorage.setItem('vts_berth_seen', b.dataset.berth); } catch (_) { /* 무시 */ } renderMy(); });
 function mySpringCur(now) { const sp = MY.spring; return sp && sp.big && sp.big.length ? tdSpringGroups(sp, now).cur : null; }
 function mySpring(now) {
   if (!mySpringCur(now)) return '';
@@ -1386,7 +1394,7 @@ function renderMy() {
   else if (m.st === 'none') body = myStateCard('cap-nap', '오늘은 근무가 없어요', '근무표가 올라오면 여기에 보여요.<br><small>(근무표 예약 후 이름이 시간표에 있어야 해요)</small>');
   else body = `<div class="mg">${myTimeline(m, now)}${myCount(m, now)}<div class="st">${myHero(m, now)}${myMinis(m, now)}</div></div>`;
   const nag = m && (m.st === 'on' || m.st === 'pre' || m.st === 'later' || m.st === 'none') ? myNag(m) : '';
-  el.innerHTML = `<div class="my">${myHead(now)}${mySpring(now)}${myMoonBand(now)}${body}${nag}${myBtns()}</div>`;
+  el.innerHTML = `<div class="my">${myHead(now)}${myBerth(now)}${mySpring(now)}${myMoonBand(now)}${body}${nag}${myBtns()}</div>`;
 
   MY.sig = mySig(now);
 }
