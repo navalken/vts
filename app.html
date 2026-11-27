@@ -1353,8 +1353,10 @@ function mySig(now) { const m = myModel(now); if (!m) return 'x'; return [m.st, 
 function myBerthSeen() { try { return +(localStorage.getItem('vts_berth_seen') || 0); } catch (_) { return 0; } }
 function myBerth(now) {
   const b = MY.d && MY.d.berth; if (!b || !b.seq || now - (b.at || 0) > 24 * 3600e3 || myBerthSeen() >= b.seq) return '';
-  const ago = Math.max(0, Math.round((now - b.at) / 60e3)), t = ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전';
-  return `<button class="myspr berth" data-berth="${b.seq}">📋 <b>선석표 새로 올라옴</b><span>${esc(b.title || '')} · ${t}</span><i>열기 ›</i></button>`;
+  if (!((MY.d.shifts || []).some(x => b.at >= x.from - 2 * 3600e3 && b.at < x.to))) return ''; // 대상 근무자만: 내 근무 중에, 또는 내 근무 시작 2시간 전 안에 올라왔을 때(교대 전 07~09시·16~18시는 다음 팀도)
+  const k = new Date(b.at + 9 * 3600e3), wd = '일월화수목금토'[k.getUTCDay()], hhmm = String(k.getUTCHours()).padStart(2, '0') + ':' + String(k.getUTCMinutes()).padStart(2, '0');
+  const ago = Math.max(0, Math.round((now - b.at) / 60e3)), rel = ago < 60 ? ago + '분 전' : Math.floor(ago / 60) + '시간 전';
+  return `<button class="myspr berth" data-berth="${b.seq}">📋 <b>선석표 새로 올라옴 ${k.getUTCMonth() + 1}/${k.getUTCDate()}(${wd}) ${hhmm}</b><span>${esc(b.title || '')} · ${rel}</span><i>열기 ›</i></button>`;
 }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-berth]'); if (!b) return; const d = MY.d && MY.d.berth; if (d && d.url) window.open(d.url, '_blank'); try { localStorage.setItem('vts_berth_seen', b.dataset.berth); } catch (_) { /* 무시 */ } renderMy(); });
 function mySpringCur(now) { const sp = MY.spring; return sp && sp.big && sp.big.length ? tdSpringGroups(sp, now).cur : null; }
