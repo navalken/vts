@@ -336,6 +336,14 @@ nav button.on{color:var(--pri);border-bottom:3px solid var(--pri)}
 #wxBig.tdd .sc{background:#f4f7fb;padding:12px;color:#16233b}#wxBig.tdd .sc>*{position:static!important;width:auto!important;left:auto!important;top:auto!important}
 #wxBig{position:fixed;inset:0;z-index:9999;background:#0b1a33ee;display:flex;flex-direction:column}#wxBig .bar{display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 14px 8px;color:#fff;font-weight:700;font-size:14px}#wxBig .bar button{width:auto;margin:0;padding:6px 14px;background:#fff;color:#12284a}#wxBig .sc{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}#wxBig .wxmap{width:max(230%,820px);border-radius:0}
 .nag .nh{display:flex;align-items:center;gap:6px}.nsort{margin-left:auto;display:inline-flex;gap:4px}.nsort button{width:auto;margin:0;padding:3px 9px;font-size:11px;font-weight:600;border-radius:12px;background:var(--chip);color:var(--mut)}.nsort button.on{background:var(--pri);color:#fff}
+#splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:radial-gradient(circle at 50% 38%,#3d77c4 0,#1d3f74 55%,#0f2346 100%);color:#fff;transition:opacity .45s ease;cursor:pointer}
+#splash.out{opacity:0;pointer-events:none}
+#splash img.sc{width:min(64vw,270px);filter:drop-shadow(0 10px 22px rgba(0,0,0,.35));animation:spIn .7s cubic-bezier(.2,1.4,.4,1) both}
+#splash img.sl{width:min(52vw,210px);margin-top:4px;opacity:.95;background:#fff;border-radius:14px;padding:6px 10px}
+#splash b{font-size:22px;font-weight:900;letter-spacing:-.3px;animation:spUp .6s .25s both}
+#splash small{font-size:13px;opacity:.8;animation:spUp .6s .35s both}
+@keyframes spIn{from{transform:scale(.4) translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes spUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -1673,6 +1681,18 @@ function openEdit(p) {
     try { if (!(history.state && history.state.t === ret.t)) history.pushState({ t: ret.t, d: 1 }, ''); } catch (_) { /* 무시 */ }
     show(ret.t);
   }
+})();
+
+// 앱을 열 때 오늘의 카피바라를 크게 보여 주는 첫 화면(앱을 새로 열 때 한 번, 눌러서 바로 넘기기)
+const SPLASH_MSG = { hanbok: '새해 복 많이 받으세요', spring1: '유채꽃 피는 봄이에요', spring2: '벚꽃 피는 봄이에요', summer: '시원한 여름 보내세요', autumn: '선선한 가을이에요', winter1: '따뜻한 겨울 보내세요', winter2: '따뜻한 겨울 보내세요', winter3: '따뜻한 겨울 보내세요', winter4: '메리 크리스마스', winter5: '따뜻한 겨울 보내세요', winter6: '따뜻한 겨울 보내세요', chuseok1: '풍성한 한가위 보내세요', chuseok2: '풍성한 한가위 보내세요', halloween1: '해피 할로윈', halloween2: '해피 할로윈', buddha: '부처님오신날', valentine: '해피 발렌타인', white: '해피 화이트데이', pepero: '빼빼로데이', samil: '3·1절', memorial: '현충일, 감사합니다', korwar: '6·25 전쟁을 기억합니다', liberation: '광복절', armed: '국군의 날', gaecheon: '개천절', hangul: '한글날' };
+(function splash() {
+  try { if (sessionStorage.getItem('vts_splash') || MHQ.get('nosplash') !== null) return; sessionStorage.setItem('vts_splash', '1'); } catch (_) { /* 저장 안 되면 그냥 보여 줌 */ }
+  const now = myNowMs(), th = mhTheme(now), d = new Date(now + 9 * 3600e3);
+  const el = document.createElement('div'); el.id = 'splash';
+  el.innerHTML = `${capImg('head', now, 'class="sc" alt=""')}<b>${SPLASH_MSG[th] || '오늘도 안전한 바다'}</b><small>${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 ${'일월화수목금토'[d.getUTCDay()]}요일 · 오늘도 수고하세요!</small><img class="sl" src="img/logo-cap-b.webp" alt="" onerror="this.remove()">`;
+  document.body.appendChild(el);
+  let done = false; const close = () => { if (done) return; done = true; el.classList.add('out'); setTimeout(() => el.remove(), 500); };
+  el.onclick = close; setTimeout(close, 2200);
 })();
 </script>
 </body>
